@@ -60,6 +60,7 @@ export interface Device {
   health: DeviceHealth;
   firmware?: string;
   serialNumber?: string;
+  companionModuleIds?: string[]; // Companion module IDs this device supports
 }
 
 // --- Brompton-specific ---
@@ -220,6 +221,75 @@ export interface TimecodeGenerator {
   jamSyncSource?: string;
   freeRunning: boolean;
   createdAt: string;
+}
+
+// --- Bitfocus Companion Integration ---
+
+export type CompanionConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+
+export type CompanionProtocol = 'http' | 'tcp' | 'osc' | 'websocket';
+
+export interface CompanionConnection {
+  id: string;
+  name: string;
+  host: string;
+  port: number; // default 8000 for HTTP
+  protocol: CompanionProtocol;
+  status: CompanionConnectionStatus;
+  version?: string;
+  lastSeen?: string;
+}
+
+export interface CompanionModuleAction {
+  id: string;
+  name: string;
+  description?: string;
+  options: {
+    id: string;
+    type: 'textinput' | 'number' | 'dropdown' | 'checkbox';
+    label: string;
+    default?: string | number | boolean;
+    choices?: { id: string; label: string }[];
+  }[];
+}
+
+export interface CompanionModuleFeedback {
+  id: string;
+  name: string;
+  description?: string;
+  type: 'boolean' | 'advanced';
+}
+
+export interface CompanionModuleVariable {
+  id: string;
+  name: string;
+  value?: string;
+}
+
+export interface CompanionModule {
+  id: string;
+  moduleId: string; // e.g. 'bmd-videohub', 'disguise-osc'
+  name: string;
+  manufacturer: DeviceManufacturer;
+  protocol: string; // e.g. 'TCP port 9990', 'HTTP REST', 'OSC/UDP'
+  defaultPort?: number;
+  description: string;
+  actions: CompanionModuleAction[];
+  feedbacks: CompanionModuleFeedback[];
+  variables: CompanionModuleVariable[];
+  supportedModels: string[];
+}
+
+export interface CompanionModuleInstance {
+  id: string;
+  moduleId: string; // references CompanionModule.moduleId
+  connectionId: string; // references CompanionConnection.id
+  deviceId?: string; // optional link to a Device
+  label: string;
+  enabled: boolean;
+  status: 'ok' | 'warning' | 'error' | 'disabled';
+  config: Record<string, string | number | boolean>;
+  variableValues: Record<string, string>;
 }
 
 // --- Commands ---

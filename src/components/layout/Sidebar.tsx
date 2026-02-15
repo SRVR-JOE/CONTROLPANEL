@@ -11,6 +11,7 @@ import {
   HardDrive,
   Save,
   Clock,
+  Blocks,
 } from 'lucide-react';
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/brompton', label: 'Brompton', icon: Monitor },
   { href: '/pinboard', label: 'Pin Board', icon: Pin },
   { href: '/timecode', label: 'Timecode', icon: Clock },
+  { href: '/companion', label: 'Companion', icon: Blocks },
   { href: '/devices', label: 'Devices', icon: HardDrive },
   { href: '/presets', label: 'Presets', icon: Save },
 ];

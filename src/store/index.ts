@@ -17,6 +17,8 @@ import {
   TimecodeFormat,
   TimecodeOutputType,
   AudioOutput,
+  CompanionConnection,
+  CompanionModuleInstance,
 } from '@/types';
 
 // ============================================================
@@ -80,56 +82,56 @@ const initialDevices: Device[] = [
     status: 'online', ipAddress: '10.0.1.10', rackId: 'rack-1', rackSlot: 1, rackUnits: 4,
     ports: createMixedPorts({ sdiOut: 4, dpOut: 2, ethPorts: 2 }),
     health: { ...createMockHealth('disguise'), temperature: 42, cpuUsage: 55, gpuUsage: 72, gpuTemp: 68 },
-    firmware: '22.3.2', serialNumber: 'DGX3-2024-0042',
+    firmware: '22.3.2', serialNumber: 'DGX3-2024-0042', companionModuleIds: ['disguise-osc', 'disguise-smc', 'disguise-liveupdate'],
   },
   {
     id: 'dev-disguise-gx3-2', name: 'Disguise GX3 #2', manufacturer: 'disguise', model: 'gx 3', category: 'media-server',
     status: 'online', ipAddress: '10.0.1.11', rackId: 'rack-1', rackSlot: 5, rackUnits: 4,
     ports: createMixedPorts({ sdiOut: 4, dpOut: 2, ethPorts: 2 }),
     health: { ...createMockHealth('disguise'), temperature: 44, cpuUsage: 48, gpuUsage: 65, gpuTemp: 62 },
-    firmware: '22.3.2', serialNumber: 'DGX3-2024-0043',
+    firmware: '22.3.2', serialNumber: 'DGX3-2024-0043', companionModuleIds: ['disguise-osc', 'disguise-smc', 'disguise-liveupdate'],
   },
   {
     id: 'dev-disguise-gx2c', name: 'Disguise GX2c', manufacturer: 'disguise', model: 'gx 2c', category: 'media-server',
     status: 'online', ipAddress: '10.0.1.12', rackUnits: 4,
     ports: createMixedPorts({ sdiOut: 4, dpOut: 4, ethPorts: 2 }),
     health: { ...createMockHealth('disguise'), temperature: 40, cpuUsage: 38, gpuUsage: 50, gpuTemp: 55 },
-    firmware: '22.3.2', serialNumber: 'DGX2C-2024-018',
+    firmware: '22.3.2', serialNumber: 'DGX2C-2024-018', companionModuleIds: ['disguise-osc', 'disguise-smc', 'disguise-liveupdate'],
   },
   {
     id: 'dev-disguise-vx4', name: 'Disguise VX4', manufacturer: 'disguise', model: 'vx 4', category: 'media-server',
     status: 'online', ipAddress: '10.0.1.13', rackUnits: 4,
     ports: createMixedPorts({ sdiOut: 8, dpOut: 4, hdmiOut: 1, ethPorts: 2 }),
     health: { ...createMockHealth('disguise'), temperature: 46, cpuUsage: 60, gpuUsage: 78, gpuTemp: 72 },
-    firmware: '22.3.2', serialNumber: 'DVX4-2024-007',
+    firmware: '22.3.2', serialNumber: 'DVX4-2024-007', companionModuleIds: ['disguise-osc', 'disguise-smc', 'disguise-liveupdate'],
   },
   {
     id: 'dev-disguise-vx2', name: 'Disguise VX2', manufacturer: 'disguise', model: 'vx 2', category: 'media-server',
     status: 'online', ipAddress: '10.0.1.14', rackUnits: 4,
     ports: createMixedPorts({ sdiOut: 4, dpOut: 2, ethPorts: 2 }),
     health: { ...createMockHealth('disguise'), temperature: 39, cpuUsage: 35, gpuUsage: 45, gpuTemp: 50 },
-    firmware: '22.3.2', serialNumber: 'DVX2-2024-031',
+    firmware: '22.3.2', serialNumber: 'DVX2-2024-031', companionModuleIds: ['disguise-osc', 'disguise-smc', 'disguise-liveupdate'],
   },
   {
     id: 'dev-disguise-vx1', name: 'Disguise VX1', manufacturer: 'disguise', model: 'vx 1', category: 'media-server',
     status: 'offline', ipAddress: '10.0.1.15', rackUnits: 2,
     ports: createMixedPorts({ sdiOut: 2, dpOut: 2, ethPorts: 1 }),
     health: { ...createMockHealth('disguise'), temperature: 25, cpuUsage: 0, gpuUsage: 0, gpuTemp: 25 },
-    firmware: '22.3.2', serialNumber: 'DVX1-2024-055',
+    firmware: '22.3.2', serialNumber: 'DVX1-2024-055', companionModuleIds: ['disguise-osc', 'disguise-smc', 'disguise-liveupdate'],
   },
   {
     id: 'dev-disguise-solo', name: 'Disguise Solo', manufacturer: 'disguise', model: 'solo', category: 'media-server',
     status: 'online', ipAddress: '10.0.1.16', rackUnits: 1,
     ports: createMixedPorts({ hdmiOut: 1, dpOut: 1, ethPorts: 1 }),
     health: { ...createMockHealth('disguise'), temperature: 35, cpuUsage: 28, gpuUsage: 32, gpuTemp: 40 },
-    firmware: '22.3.2', serialNumber: 'DSOLO-2024-090',
+    firmware: '22.3.2', serialNumber: 'DSOLO-2024-090', companionModuleIds: ['disguise-osc', 'disguise-smc', 'disguise-liveupdate'],
   },
   {
     id: 'dev-disguise-rx2', name: 'Disguise RX II', manufacturer: 'disguise', model: 'rx II', category: 'media-server',
     status: 'online', ipAddress: '10.0.1.17', rackUnits: 2,
     ports: createMixedPorts({ sdiIn: 2, sdiOut: 2, hdmiIn: 1, ethPorts: 1 }),
     health: { ...createMockHealth('disguise'), temperature: 37, cpuUsage: 22, gpuUsage: 30, gpuTemp: 42 },
-    firmware: '22.3.2', serialNumber: 'DRXII-2024-014',
+    firmware: '22.3.2', serialNumber: 'DRXII-2024-014', companionModuleIds: ['disguise-osc', 'disguise-smc', 'disguise-liveupdate'],
   },
 
   // ============================================================
@@ -140,42 +142,42 @@ const initialDevices: Device[] = [
     status: 'online', ipAddress: '10.0.1.20', rackId: 'rack-1', rackSlot: 9, rackUnits: 4,
     ports: createSDIPorts(8, 8),
     health: { ...createMockHealth('barco'), temperature: 38 },
-    firmware: '7.2.1', serialNumber: 'BAR-E2-2024-105',
+    firmware: '7.2.1', serialNumber: 'BAR-E2-2024-105', companionModuleIds: ['barco-eventmaster'],
   },
   {
     id: 'dev-barco-ex', name: 'Barco EX', manufacturer: 'barco', model: 'EX', category: 'video-processor',
     status: 'online', ipAddress: '10.0.1.21', rackUnits: 2,
     ports: createMixedPorts({ sdiIn: 4, sdiOut: 4, hdmiIn: 2, hdmiOut: 2, ethPorts: 1 }),
     health: { ...createMockHealth('barco'), temperature: 35 },
-    firmware: '7.2.1', serialNumber: 'BAR-EX-2024-043',
+    firmware: '7.2.1', serialNumber: 'BAR-EX-2024-043', companionModuleIds: ['barco-eventmaster'],
   },
   {
     id: 'dev-barco-s3', name: 'Barco S3-4K', manufacturer: 'barco', model: 'S3-4K', category: 'video-processor',
     status: 'online', ipAddress: '10.0.1.22', rackUnits: 1,
     ports: createMixedPorts({ sdiIn: 4, sdiOut: 2, hdmiIn: 4, hdmiOut: 4, dpOut: 2, ethPorts: 1 }),
     health: { ...createMockHealth('barco'), temperature: 34 },
-    firmware: '2.8.0', serialNumber: 'BAR-S3-2024-088',
+    firmware: '2.8.0', serialNumber: 'BAR-S3-2024-088', companionModuleIds: ['barco-eventmaster'],
   },
   {
     id: 'dev-barco-ec210', name: 'Barco EC-210', manufacturer: 'barco', model: 'EC-210', category: 'video-processor',
     status: 'online', ipAddress: '10.0.1.23', rackUnits: 1,
     ports: createMixedPorts({ sdiIn: 2, sdiOut: 2, hdmiIn: 1, hdmiOut: 1, ethPorts: 1 }),
     health: { ...createMockHealth('barco'), temperature: 32 },
-    firmware: '2.8.0', serialNumber: 'BAR-EC210-2024-120',
+    firmware: '2.8.0', serialNumber: 'BAR-EC210-2024-120', companionModuleIds: ['barco-eventmaster'],
   },
   {
     id: 'dev-barco-pds4k', name: 'Barco PDS-4K', manufacturer: 'barco', model: 'PDS-4K', category: 'video-processor',
     status: 'warning', ipAddress: '10.0.1.24', rackUnits: 1,
     ports: createMixedPorts({ sdiIn: 6, sdiOut: 2, hdmiIn: 2, hdmiOut: 2, ethPorts: 1 }),
     health: { ...createMockHealth('barco'), temperature: 52, warnings: ['Fan 2 running at reduced speed'] },
-    firmware: '6.1.3', serialNumber: 'BAR-PDS4K-2024-067',
+    firmware: '6.1.3', serialNumber: 'BAR-PDS4K-2024-067', companionModuleIds: ['barco-pds'],
   },
   {
     id: 'dev-barco-imgpro', name: 'Barco ImagePRO-4K', manufacturer: 'barco', model: 'ImagePRO-4K', category: 'video-processor',
     status: 'online', ipAddress: '10.0.1.25', rackUnits: 1,
     ports: createMixedPorts({ sdiIn: 2, sdiOut: 2, hdmiIn: 2, hdmiOut: 2, dpOut: 1, ethPorts: 1 }),
     health: { ...createMockHealth('barco'), temperature: 36 },
-    firmware: '3.2.0', serialNumber: 'BAR-IP4K-2024-034',
+    firmware: '3.2.0', serialNumber: 'BAR-IP4K-2024-034', companionModuleIds: ['barco-eventmaster'],
   },
 
   // ============================================================
@@ -186,35 +188,35 @@ const initialDevices: Device[] = [
     status: 'online', ipAddress: '10.0.1.30', rackId: 'rack-2', rackSlot: 1, rackUnits: 1,
     ports: createMixedPorts({ sdiIn: 1, hdmiIn: 1, ethPorts: 4 }),
     health: { ...createMockHealth('brompton'), temperature: 36, powerDraw: 65 },
-    firmware: '3.4.0', serialNumber: 'BRP-SX40-2024-221',
+    firmware: '3.4.0', serialNumber: 'BRP-SX40-2024-221', companionModuleIds: ['brompton-tessera'],
   },
   {
     id: 'dev-brompton-2', name: 'Brompton Tessera SX40 #2', manufacturer: 'brompton', model: 'Tessera SX40', category: 'led-processor',
     status: 'warning', ipAddress: '10.0.1.31', rackId: 'rack-2', rackSlot: 2, rackUnits: 1,
     ports: createMixedPorts({ sdiIn: 1, ethPorts: 4 }),
     health: { ...createMockHealth('brompton'), temperature: 48, warnings: ['Panel chain 3 - 2 panels reporting high temperature'] },
-    firmware: '3.4.0', serialNumber: 'BRP-SX40-2024-222',
+    firmware: '3.4.0', serialNumber: 'BRP-SX40-2024-222', companionModuleIds: ['brompton-tessera'],
   },
   {
     id: 'dev-brompton-s8', name: 'Brompton Tessera S8', manufacturer: 'brompton', model: 'Tessera S8', category: 'led-processor',
     status: 'online', ipAddress: '10.0.1.32', rackUnits: 1,
     ports: createMixedPorts({ sdiIn: 1, hdmiIn: 1, dpOut: 1, ethPorts: 2 }),
     health: { ...createMockHealth('brompton'), temperature: 33, powerDraw: 45 },
-    firmware: '3.4.0', serialNumber: 'BRP-S8-2024-150',
+    firmware: '3.4.0', serialNumber: 'BRP-S8-2024-150', companionModuleIds: ['brompton-tessera'],
   },
   {
     id: 'dev-brompton-xd', name: 'Brompton Tessera XD', manufacturer: 'brompton', model: 'Tessera XD', category: 'led-processor',
     status: 'online', ipAddress: '10.0.1.33', rackUnits: 1,
     ports: createMixedPorts({ sdiIn: 2, hdmiIn: 2, dpOut: 1, ethPorts: 4 }),
     health: { ...createMockHealth('brompton'), temperature: 37, powerDraw: 80 },
-    firmware: '3.4.0', serialNumber: 'BRP-XD-2024-075',
+    firmware: '3.4.0', serialNumber: 'BRP-XD-2024-075', companionModuleIds: ['brompton-tessera'],
   },
   {
     id: 'dev-brompton-t1', name: 'Brompton Tessera T1', manufacturer: 'brompton', model: 'Tessera T1', category: 'led-processor',
     status: 'online', ipAddress: '10.0.1.34', rackUnits: 0,
     ports: createMixedPorts({ ethPorts: 1 }),
     health: { ...createMockHealth('brompton'), temperature: 30, powerDraw: 12 },
-    firmware: '3.4.0', serialNumber: 'BRP-T1-2024-310',
+    firmware: '3.4.0', serialNumber: 'BRP-T1-2024-310', companionModuleIds: ['brompton-tessera'],
   },
 
   // ============================================================
@@ -228,35 +230,35 @@ const initialDevices: Device[] = [
       ...Array.from({ length: 16 }, (_, i) => ({ id: uuidv4(), label: `HDMI Out ${i + 1}`, type: 'hdmi' as const, direction: 'output' as const, signal: true })),
     ],
     health: { ...createMockHealth('lightware'), temperature: 34 },
-    firmware: '4.6.1', serialNumber: 'LW-MX2-16-2024-88',
+    firmware: '4.6.1', serialNumber: 'LW-MX2-16-2024-88', companionModuleIds: ['lightware-lw3'],
   },
   {
     id: 'dev-lightware-mx8', name: 'Lightware MX2-8x8', manufacturer: 'lightware', model: 'MX2-8x8-HDMI20', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.41', rackUnits: 1,
     ports: createMixedPorts({ hdmiIn: 8, hdmiOut: 8 }),
     health: { ...createMockHealth('lightware'), temperature: 32 },
-    firmware: '4.6.1', serialNumber: 'LW-MX2-8-2024-142',
+    firmware: '4.6.1', serialNumber: 'LW-MX2-8-2024-142', companionModuleIds: ['lightware-lw3'],
   },
   {
     id: 'dev-lightware-mmx6', name: 'Lightware MMX6x2', manufacturer: 'lightware', model: 'MMX6x2-HT200', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.42', rackUnits: 1,
     ports: createMixedPorts({ hdmiIn: 6, hdmiOut: 2 }),
     health: { ...createMockHealth('lightware'), temperature: 30 },
-    firmware: '4.2.0', serialNumber: 'LW-MMX6-2024-201',
+    firmware: '4.2.0', serialNumber: 'LW-MMX6-2024-201', companionModuleIds: ['lightware-lw3'],
   },
   {
     id: 'dev-lightware-ucx', name: 'Lightware UCX-4x2-HC40', manufacturer: 'lightware', model: 'UCX-4x2-HC40', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.43', rackUnits: 1,
     ports: createMixedPorts({ hdmiIn: 2, hdmiOut: 2, dpOut: 1, ethPorts: 2 }),
     health: { ...createMockHealth('lightware'), temperature: 29 },
-    firmware: '1.5.2', serialNumber: 'LW-UCX4-2024-088',
+    firmware: '1.5.2', serialNumber: 'LW-UCX4-2024-088', companionModuleIds: ['lightware-lw3'],
   },
   {
     id: 'dev-lightware-ubex', name: 'Lightware UBEX-Pro20-HDMI-F100', manufacturer: 'lightware', model: 'UBEX-Pro20-HDMI-F100', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.44', rackUnits: 0,
     ports: createMixedPorts({ hdmiIn: 1, hdmiOut: 1, fiberIn: 1, fiberOut: 1, ethPorts: 1 }),
     health: { ...createMockHealth('lightware'), temperature: 28 },
-    firmware: '2.1.0', serialNumber: 'LW-UBEX-2024-330',
+    firmware: '2.1.0', serialNumber: 'LW-UBEX-2024-330', companionModuleIds: ['lightware-lw3'],
   },
   {
     id: 'dev-lightware-mx32', name: 'Lightware MX2-24x24', manufacturer: 'lightware', model: 'MX2-24x24-DH-24DPi-A', category: 'matrix-switcher',
@@ -266,7 +268,7 @@ const initialDevices: Device[] = [
       ...Array.from({ length: 24 }, (_, i) => ({ id: uuidv4(), label: `HDMI Out ${i + 1}`, type: 'hdmi' as const, direction: 'output' as const, signal: true })),
     ],
     health: { ...createMockHealth('lightware'), temperature: 38 },
-    firmware: '4.6.1', serialNumber: 'LW-MX24-2024-012',
+    firmware: '4.6.1', serialNumber: 'LW-MX24-2024-012', companionModuleIds: ['lightware-lw3'],
   },
 
   // ============================================================
@@ -277,21 +279,21 @@ const initialDevices: Device[] = [
     status: 'online', ipAddress: '10.0.1.50', rackId: 'rack-2', rackSlot: 6, rackUnits: 2,
     ports: createSDIPorts(32, 32),
     health: { ...createMockHealth('aja'), temperature: 37 },
-    firmware: '9.0.0', serialNumber: 'AJA-K3232-2024-51',
+    firmware: '9.0.0', serialNumber: 'AJA-K3232-2024-51', companionModuleIds: ['aja-kumo'],
   },
   {
     id: 'dev-aja-kumo1616', name: 'AJA KUMO 1616', manufacturer: 'aja', model: 'KUMO 1616-12G', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.51', rackUnits: 1,
     ports: createSDIPorts(16, 16),
     health: { ...createMockHealth('aja'), temperature: 34 },
-    firmware: '9.0.0', serialNumber: 'AJA-K1616-2024-72',
+    firmware: '9.0.0', serialNumber: 'AJA-K1616-2024-72', companionModuleIds: ['aja-kumo'],
   },
   {
     id: 'dev-aja-kumo1604', name: 'AJA KUMO 1604', manufacturer: 'aja', model: 'KUMO 1604', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.52', rackUnits: 1,
     ports: createSDIPorts(16, 4),
     health: { ...createMockHealth('aja'), temperature: 32 },
-    firmware: '9.0.0', serialNumber: 'AJA-K1604-2024-95',
+    firmware: '9.0.0', serialNumber: 'AJA-K1604-2024-95', companionModuleIds: ['aja-kumo'],
   },
   {
     id: 'dev-aja-fs4', name: 'AJA FS4', manufacturer: 'aja', model: 'FS4', category: 'converter',
@@ -337,35 +339,35 @@ const initialDevices: Device[] = [
     status: 'online', ipAddress: '10.0.1.60', rackId: 'rack-3', rackSlot: 1, rackUnits: 4,
     ports: createSDIPorts(40, 40),
     health: { ...createMockHealth('blackmagic'), temperature: 39 },
-    firmware: '8.6.1', serialNumber: 'BMD-VH40-2024-17',
+    firmware: '8.6.1', serialNumber: 'BMD-VH40-2024-17', companionModuleIds: ['bmd-videohub'],
   },
   {
     id: 'dev-bmd-vh2020', name: 'BMD Smart Videohub 20x20', manufacturer: 'blackmagic', model: 'Smart Videohub 20x20', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.61', rackUnits: 1,
     ports: createSDIPorts(20, 20),
     health: { ...createMockHealth('blackmagic'), temperature: 35 },
-    firmware: '8.6.1', serialNumber: 'BMD-VH20-2024-44',
+    firmware: '8.6.1', serialNumber: 'BMD-VH20-2024-44', companionModuleIds: ['bmd-videohub'],
   },
   {
     id: 'dev-bmd-vh1212', name: 'BMD Smart Videohub CleanSwitch 12x12', manufacturer: 'blackmagic', model: 'Smart Videohub CleanSwitch 12x12', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.62', rackUnits: 1,
     ports: createSDIPorts(12, 12),
     health: { ...createMockHealth('blackmagic'), temperature: 33 },
-    firmware: '8.6.1', serialNumber: 'BMD-VH12-2024-89',
+    firmware: '8.6.1', serialNumber: 'BMD-VH12-2024-89', companionModuleIds: ['bmd-videohub'],
   },
   {
     id: 'dev-bmd-atem8k', name: 'BMD ATEM Constellation 8K', manufacturer: 'blackmagic', model: 'ATEM Constellation 8K', category: 'production-switcher',
     status: 'online', ipAddress: '10.0.1.63', rackUnits: 4,
     ports: createMixedPorts({ sdiIn: 40, sdiOut: 24, ethPorts: 2 }),
     health: { ...createMockHealth('blackmagic'), temperature: 45 },
-    firmware: '9.6.2', serialNumber: 'BMD-ATEM8K-2024-009',
+    firmware: '9.6.2', serialNumber: 'BMD-ATEM8K-2024-009', companionModuleIds: ['bmd-atem'],
   },
   {
     id: 'dev-bmd-atem4me', name: 'BMD ATEM 4 M/E Constellation 4K', manufacturer: 'blackmagic', model: 'ATEM 4 M/E Constellation 4K', category: 'production-switcher',
     status: 'online', ipAddress: '10.0.1.64', rackUnits: 2,
     ports: createMixedPorts({ sdiIn: 20, sdiOut: 12, ethPorts: 1 }),
     health: { ...createMockHealth('blackmagic'), temperature: 40 },
-    firmware: '9.6.2', serialNumber: 'BMD-A4ME-2024-028',
+    firmware: '9.6.2', serialNumber: 'BMD-A4ME-2024-028', companionModuleIds: ['bmd-atem'],
   },
   {
     id: 'dev-bmd-conv-1', name: 'BMD Teranex Mini', manufacturer: 'blackmagic', model: 'Teranex Mini SDI to HDMI 12G', category: 'converter',
@@ -386,7 +388,7 @@ const initialDevices: Device[] = [
     status: 'online', ipAddress: '10.0.1.67', rackUnits: 1,
     ports: createMixedPorts({ sdiIn: 2, sdiOut: 2, hdmiOut: 1, ethPorts: 1 }),
     health: { ...createMockHealth('blackmagic'), temperature: 32 },
-    firmware: '8.6.1', serialNumber: 'BMD-HD4K-2024-076',
+    firmware: '8.6.1', serialNumber: 'BMD-HD4K-2024-076', companionModuleIds: ['bmd-hyperdeck'],
   },
   {
     id: 'dev-bmd-microconv', name: 'BMD Micro Converter BiDirect SDI/HDMI 12G', manufacturer: 'blackmagic', model: 'Micro Converter BiDirectional SDI/HDMI 12G', category: 'converter',
@@ -411,42 +413,42 @@ const initialDevices: Device[] = [
     status: 'online', ipAddress: '10.0.1.70', rackId: 'rack-3', rackSlot: 5, rackUnits: 4,
     ports: createSDIPorts(24, 16),
     health: { ...createMockHealth('ross'), temperature: 41 },
-    firmware: '15.1.0', serialNumber: 'ROSS-CU-2024-33',
+    firmware: '15.1.0', serialNumber: 'ROSS-CU-2024-33', companionModuleIds: ['rossvideo-rosstalk'],
   },
   {
     id: 'dev-ross-cbp', name: 'Ross Carbonite Black Plus', manufacturer: 'ross', model: 'Carbonite Black Plus', category: 'production-switcher',
     status: 'online', ipAddress: '10.0.1.71', rackUnits: 3,
     ports: createMixedPorts({ sdiIn: 22, sdiOut: 14, ethPorts: 2 }),
     health: { ...createMockHealth('ross'), temperature: 39 },
-    firmware: '15.1.0', serialNumber: 'ROSS-CBP-2024-018',
+    firmware: '15.1.0', serialNumber: 'ROSS-CBP-2024-018', companionModuleIds: ['rossvideo-rosstalk'],
   },
   {
     id: 'dev-ross-ultrix', name: 'Ross Ultrix FR5', manufacturer: 'ross', model: 'Ultrix FR5', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.72', rackUnits: 5,
     ports: createMixedPorts({ sdiIn: 32, sdiOut: 32, fiberIn: 8, fiberOut: 8, ethPorts: 2 }),
     health: { ...createMockHealth('ross'), temperature: 43 },
-    firmware: '6.4.0', serialNumber: 'ROSS-UFR5-2024-007',
+    firmware: '6.4.0', serialNumber: 'ROSS-UFR5-2024-007', companionModuleIds: ['generic-swp08', 'rossvideo-rosstalk'],
   },
   {
     id: 'dev-ross-ultrix2', name: 'Ross Ultrix FR2', manufacturer: 'ross', model: 'Ultrix FR2', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.73', rackUnits: 2,
     ports: createMixedPorts({ sdiIn: 16, sdiOut: 16, ethPorts: 2 }),
     health: { ...createMockHealth('ross'), temperature: 38 },
-    firmware: '6.4.0', serialNumber: 'ROSS-UFR2-2024-022',
+    firmware: '6.4.0', serialNumber: 'ROSS-UFR2-2024-022', companionModuleIds: ['generic-swp08', 'rossvideo-rosstalk'],
   },
   {
     id: 'dev-ross-nk', name: 'Ross NK-3G34', manufacturer: 'ross', model: 'NK-3G34', category: 'matrix-switcher',
     status: 'online', ipAddress: '10.0.1.74', rackUnits: 2,
     ports: createSDIPorts(34, 34),
     health: { ...createMockHealth('ross'), temperature: 36 },
-    firmware: '3.2.1', serialNumber: 'ROSS-NK34-2024-051',
+    firmware: '3.2.1', serialNumber: 'ROSS-NK34-2024-051', companionModuleIds: ['generic-swp08', 'rossvideo-nkrouter'],
   },
   {
     id: 'dev-ross-acuity', name: 'Ross Acuity', manufacturer: 'ross', model: 'Acuity', category: 'production-switcher',
     status: 'error', ipAddress: '10.0.1.75', rackUnits: 6,
     ports: createMixedPorts({ sdiIn: 48, sdiOut: 32, fiberIn: 12, fiberOut: 12, ethPorts: 4 }),
     health: { ...createMockHealth('ross'), temperature: 58, errors: ['PSU 2 failure - running on redundant supply'], warnings: ['System temperature elevated'] },
-    firmware: '12.0.2', serialNumber: 'ROSS-ACU-2024-003',
+    firmware: '12.0.2', serialNumber: 'ROSS-ACU-2024-003', companionModuleIds: ['rossvideo-rosstalk'],
   },
 ];
 
@@ -832,6 +834,10 @@ interface AppStore {
   timecodeGenerators: TimecodeGenerator[];
   audioOutputs: AudioOutput[];
 
+  // Companion
+  companionConnection: CompanionConnection | null;
+  companionModuleInstances: CompanionModuleInstance[];
+
   // Selected state
   selectedRouterId: string | null;
 
@@ -854,6 +860,14 @@ interface AppStore {
   recallMatrixPreset: (presetId: string) => void;
   saveMatrixPreset: (preset: Omit<MatrixPreset, 'id' | 'createdAt'>) => void;
   deletePreset: (presetId: string) => void;
+
+  // Companion actions
+  setCompanionConnection: (host: string, port: number) => void;
+  disconnectCompanion: () => void;
+  addModuleInstance: (moduleId: string, deviceId: string | undefined, label: string, config: Record<string, string | number | boolean>) => void;
+  removeModuleInstance: (instanceId: string) => void;
+  toggleModuleInstance: (instanceId: string) => void;
+  executeCompanionAction: (instanceId: string, actionId: string, options: Record<string, unknown>) => void;
 
   // Timecode actions
   addTimecodeGenerator: (name: string) => void;
@@ -884,6 +898,8 @@ export const useStore = create<AppStore>((set, get) => ({
   commandHistory: [],
   timecodeGenerators: initialTimecodeGenerators,
   audioOutputs: initialAudioOutputs,
+  companionConnection: null,
+  companionModuleInstances: [],
   selectedRouterId: initialRouters[0]?.id ?? null,
 
   updateDeviceStatus: (deviceId, status) =>
@@ -1015,6 +1031,76 @@ export const useStore = create<AppStore>((set, get) => ({
     set((state) => ({
       matrixPresets: state.matrixPresets.filter((p) => p.id !== presetId),
     })),
+
+  // Companion actions
+  setCompanionConnection: (host, port) =>
+    set({
+      companionConnection: {
+        id: uuidv4(),
+        name: `Companion @ ${host}`,
+        host,
+        port,
+        protocol: 'http',
+        status: 'connected',
+        version: '3.4.0',
+        lastSeen: new Date().toISOString(),
+      },
+    }),
+
+  disconnectCompanion: () =>
+    set({ companionConnection: null, companionModuleInstances: [] }),
+
+  addModuleInstance: (moduleId, deviceId, label, config) =>
+    set((state) => {
+      const conn = state.companionConnection;
+      if (!conn) return state;
+      const instance: CompanionModuleInstance = {
+        id: uuidv4(),
+        moduleId,
+        connectionId: conn.id,
+        deviceId,
+        label,
+        enabled: true,
+        status: 'ok',
+        config,
+        variableValues: {},
+      };
+      return { companionModuleInstances: [...state.companionModuleInstances, instance] };
+    }),
+
+  removeModuleInstance: (instanceId) =>
+    set((state) => ({
+      companionModuleInstances: state.companionModuleInstances.filter((i) => i.id !== instanceId),
+    })),
+
+  toggleModuleInstance: (instanceId) =>
+    set((state) => ({
+      companionModuleInstances: state.companionModuleInstances.map((i) =>
+        i.id === instanceId ? { ...i, enabled: !i.enabled, status: i.enabled ? 'disabled' : 'ok' } : i
+      ),
+    })),
+
+  executeCompanionAction: (instanceId, actionId) => {
+    const state = get();
+    const instance = state.companionModuleInstances.find((i) => i.id === instanceId);
+    if (!instance || !instance.enabled) return;
+    // Simulate action execution via Companion HTTP API
+    const cmd: DeviceCommand = {
+      id: uuidv4(),
+      deviceId: instance.deviceId || instanceId,
+      command: `companion:${instance.moduleId}/${actionId}`,
+      sentAt: new Date().toISOString(),
+      status: 'sent',
+    };
+    set((s) => ({ commandHistory: [cmd, ...s.commandHistory].slice(0, 100) }));
+    setTimeout(() => {
+      set((s) => ({
+        commandHistory: s.commandHistory.map((c) =>
+          c.id === cmd.id ? { ...c, status: 'success', response: `OK: ${actionId} executed via Companion` } : c
+        ),
+      }));
+    }, 300 + Math.random() * 700);
+  },
 
   // Timecode actions
   addTimecodeGenerator: (name) =>
