@@ -10,6 +10,7 @@ import {
   Pin,
   HardDrive,
   Save,
+  Clock,
 } from 'lucide-react';
 
 const navItems = [
@@ -18,6 +19,7 @@ const navItems = [
   { href: '/health', label: 'Health', icon: Activity },
   { href: '/brompton', label: 'Brompton', icon: Monitor },
   { href: '/pinboard', label: 'Pin Board', icon: Pin },
+  { href: '/timecode', label: 'Timecode', icon: Clock },
   { href: '/devices', label: 'Devices', icon: HardDrive },
   { href: '/presets', label: 'Presets', icon: Save },
 ];

@@ -176,6 +176,52 @@ export interface SystemPreset {
   createdAt: string;
 }
 
+// --- Timecode ---
+
+export type TimecodeFrameRate = 23.976 | 24 | 25 | 29.97 | 30 | 48 | 50 | 59.94 | 60;
+
+export type TimecodeFormat = 'SMPTE' | 'EBU' | 'MIDI';
+
+export type TimecodeOutputType = 'ltc' | 'mtc' | 'artnet' | 'sacn';
+
+export interface TimecodeState {
+  hours: number;
+  minutes: number;
+  seconds: number;
+  frames: number;
+}
+
+export type AudioOutputType = 'soundcard' | 'dante';
+
+export interface AudioOutput {
+  id: string;
+  name: string;
+  type: AudioOutputType;
+  channels: number;
+  sampleRate: number; // 44100, 48000, 96000
+  active: boolean;
+  danteDeviceName?: string; // for Dante outputs
+  danteChannel?: number;
+  latencyMs?: number;
+}
+
+export interface TimecodeGenerator {
+  id: string;
+  name: string;
+  running: boolean;
+  timecode: TimecodeState;
+  frameRate: TimecodeFrameRate;
+  format: TimecodeFormat;
+  dropFrame: boolean;
+  outputType: TimecodeOutputType;
+  audioOutputId: string | null; // which audio output to route LTC to
+  offset: TimecodeState; // offset from master
+  jamSynced: boolean;
+  jamSyncSource?: string;
+  freeRunning: boolean;
+  createdAt: string;
+}
+
 // --- Commands ---
 
 export interface DeviceCommand {

@@ -11,6 +11,12 @@ import {
   DeviceCommand,
   BromptonProcessorStatus,
   DeviceStatus,
+  TimecodeGenerator,
+  TimecodeState,
+  TimecodeFrameRate,
+  TimecodeFormat,
+  TimecodeOutputType,
+  AudioOutput,
 } from '@/types';
 
 // ============================================================
@@ -691,6 +697,123 @@ const initialSystemPresets: SystemPreset[] = [
 ];
 
 // ============================================================
+// Initial audio outputs & timecode generators
+// ============================================================
+
+const initialAudioOutputs: AudioOutput[] = [
+  {
+    id: 'audio-out-1',
+    name: 'System Default',
+    type: 'soundcard',
+    channels: 2,
+    sampleRate: 48000,
+    active: true,
+    latencyMs: 5,
+  },
+  {
+    id: 'audio-out-2',
+    name: 'RME MADIface XT',
+    type: 'soundcard',
+    channels: 196,
+    sampleRate: 48000,
+    active: true,
+    latencyMs: 3,
+  },
+  {
+    id: 'audio-out-3',
+    name: 'Focusrite RedNet PCIeNX',
+    type: 'dante',
+    channels: 128,
+    sampleRate: 48000,
+    active: true,
+    danteDeviceName: 'RedNet-PCIeNX-01',
+    danteChannel: 1,
+    latencyMs: 1,
+  },
+  {
+    id: 'audio-out-4',
+    name: 'Dante Virtual Soundcard',
+    type: 'dante',
+    channels: 64,
+    sampleRate: 48000,
+    active: true,
+    danteDeviceName: 'DVS-AV-CTRL',
+    danteChannel: 1,
+    latencyMs: 4,
+  },
+  {
+    id: 'audio-out-5',
+    name: 'Audinate AVIO Adapter',
+    type: 'dante',
+    channels: 2,
+    sampleRate: 48000,
+    active: true,
+    danteDeviceName: 'AVIO-AES3-01',
+    danteChannel: 1,
+    latencyMs: 1,
+  },
+  {
+    id: 'audio-out-6',
+    name: 'MOTU 16A',
+    type: 'soundcard',
+    channels: 16,
+    sampleRate: 48000,
+    active: false,
+    latencyMs: 4,
+  },
+];
+
+const zeroTC: TimecodeState = { hours: 0, minutes: 0, seconds: 0, frames: 0 };
+
+const initialTimecodeGenerators: TimecodeGenerator[] = [
+  {
+    id: 'tc-gen-1',
+    name: 'Master Show TC',
+    running: false,
+    timecode: { hours: 1, minutes: 0, seconds: 0, frames: 0 },
+    frameRate: 25,
+    format: 'SMPTE',
+    dropFrame: false,
+    outputType: 'ltc',
+    audioOutputId: 'audio-out-2',
+    offset: zeroTC,
+    jamSynced: false,
+    freeRunning: true,
+    createdAt: '2024-12-01T10:00:00Z',
+  },
+  {
+    id: 'tc-gen-2',
+    name: 'Dante TC Feed',
+    running: false,
+    timecode: { hours: 10, minutes: 0, seconds: 0, frames: 0 },
+    frameRate: 25,
+    format: 'SMPTE',
+    dropFrame: false,
+    outputType: 'ltc',
+    audioOutputId: 'audio-out-3',
+    offset: zeroTC,
+    jamSynced: false,
+    freeRunning: true,
+    createdAt: '2024-12-01T10:05:00Z',
+  },
+  {
+    id: 'tc-gen-3',
+    name: 'MTC to disguise',
+    running: false,
+    timecode: { hours: 0, minutes: 0, seconds: 0, frames: 0 },
+    frameRate: 30,
+    format: 'SMPTE',
+    dropFrame: true,
+    outputType: 'mtc',
+    audioOutputId: null,
+    offset: zeroTC,
+    jamSynced: false,
+    freeRunning: true,
+    createdAt: '2024-12-01T10:10:00Z',
+  },
+];
+
+// ============================================================
 // Store interface
 // ============================================================
 
@@ -704,6 +827,10 @@ interface AppStore {
   matrixPresets: MatrixPreset[];
   systemPresets: SystemPreset[];
   commandHistory: DeviceCommand[];
+
+  // Timecode
+  timecodeGenerators: TimecodeGenerator[];
+  audioOutputs: AudioOutput[];
 
   // Selected state
   selectedRouterId: string | null;
@@ -727,6 +854,19 @@ interface AppStore {
   recallMatrixPreset: (presetId: string) => void;
   saveMatrixPreset: (preset: Omit<MatrixPreset, 'id' | 'createdAt'>) => void;
   deletePreset: (presetId: string) => void;
+
+  // Timecode actions
+  addTimecodeGenerator: (name: string) => void;
+  removeTimecodeGenerator: (id: string) => void;
+  updateTimecodeGenerator: (id: string, updates: Partial<TimecodeGenerator>) => void;
+  setTimecodeRunning: (id: string, running: boolean) => void;
+  setTimecodeValue: (id: string, tc: TimecodeState) => void;
+  setTimecodeFrameRate: (id: string, frameRate: TimecodeFrameRate) => void;
+  setTimecodeFormat: (id: string, format: TimecodeFormat) => void;
+  setTimecodeOutputType: (id: string, outputType: TimecodeOutputType) => void;
+  setTimecodeAudioOutput: (id: string, audioOutputId: string | null) => void;
+  jamSyncTimecode: (id: string, source: string) => void;
+  resetTimecode: (id: string) => void;
 }
 
 // ============================================================
@@ -742,6 +882,8 @@ export const useStore = create<AppStore>((set, get) => ({
   matrixPresets: initialMatrixPresets,
   systemPresets: initialSystemPresets,
   commandHistory: [],
+  timecodeGenerators: initialTimecodeGenerators,
+  audioOutputs: initialAudioOutputs,
   selectedRouterId: initialRouters[0]?.id ?? null,
 
   updateDeviceStatus: (deviceId, status) =>
@@ -872,5 +1014,98 @@ export const useStore = create<AppStore>((set, get) => ({
   deletePreset: (presetId) =>
     set((state) => ({
       matrixPresets: state.matrixPresets.filter((p) => p.id !== presetId),
+    })),
+
+  // Timecode actions
+  addTimecodeGenerator: (name) =>
+    set((state) => ({
+      timecodeGenerators: [
+        ...state.timecodeGenerators,
+        {
+          id: uuidv4(),
+          name,
+          running: false,
+          timecode: { hours: 0, minutes: 0, seconds: 0, frames: 0 },
+          frameRate: 25 as TimecodeFrameRate,
+          format: 'SMPTE' as TimecodeFormat,
+          dropFrame: false,
+          outputType: 'ltc' as TimecodeOutputType,
+          audioOutputId: null,
+          offset: { hours: 0, minutes: 0, seconds: 0, frames: 0 },
+          jamSynced: false,
+          freeRunning: true,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    })),
+
+  removeTimecodeGenerator: (id) =>
+    set((state) => ({
+      timecodeGenerators: state.timecodeGenerators.filter((g) => g.id !== id),
+    })),
+
+  updateTimecodeGenerator: (id, updates) =>
+    set((state) => ({
+      timecodeGenerators: state.timecodeGenerators.map((g) =>
+        g.id === id ? { ...g, ...updates } : g
+      ),
+    })),
+
+  setTimecodeRunning: (id, running) =>
+    set((state) => ({
+      timecodeGenerators: state.timecodeGenerators.map((g) =>
+        g.id === id ? { ...g, running } : g
+      ),
+    })),
+
+  setTimecodeValue: (id, tc) =>
+    set((state) => ({
+      timecodeGenerators: state.timecodeGenerators.map((g) =>
+        g.id === id ? { ...g, timecode: tc } : g
+      ),
+    })),
+
+  setTimecodeFrameRate: (id, frameRate) =>
+    set((state) => ({
+      timecodeGenerators: state.timecodeGenerators.map((g) =>
+        g.id === id ? { ...g, frameRate } : g
+      ),
+    })),
+
+  setTimecodeFormat: (id, format) =>
+    set((state) => ({
+      timecodeGenerators: state.timecodeGenerators.map((g) =>
+        g.id === id ? { ...g, format } : g
+      ),
+    })),
+
+  setTimecodeOutputType: (id, outputType) =>
+    set((state) => ({
+      timecodeGenerators: state.timecodeGenerators.map((g) =>
+        g.id === id ? { ...g, outputType } : g
+      ),
+    })),
+
+  setTimecodeAudioOutput: (id, audioOutputId) =>
+    set((state) => ({
+      timecodeGenerators: state.timecodeGenerators.map((g) =>
+        g.id === id ? { ...g, audioOutputId } : g
+      ),
+    })),
+
+  jamSyncTimecode: (id, source) =>
+    set((state) => ({
+      timecodeGenerators: state.timecodeGenerators.map((g) =>
+        g.id === id ? { ...g, jamSynced: true, jamSyncSource: source } : g
+      ),
+    })),
+
+  resetTimecode: (id) =>
+    set((state) => ({
+      timecodeGenerators: state.timecodeGenerators.map((g) =>
+        g.id === id
+          ? { ...g, timecode: { hours: 0, minutes: 0, seconds: 0, frames: 0 }, running: false, jamSynced: false }
+          : g
+      ),
     })),
 }));
