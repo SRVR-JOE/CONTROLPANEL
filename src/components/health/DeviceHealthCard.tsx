@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   AlertCircle,
   MonitorSpeaker,
+  Blocks,
 } from 'lucide-react';
 
 const manufacturerColors: Record<DeviceManufacturer, string> = {
@@ -94,7 +95,14 @@ export default function DeviceHealthCard({ device }: DeviceHealthCardProps) {
       <div className="px-4 pt-3 pb-2 flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-foreground truncate">{name}</h3>
-          <p className="text-[11px] text-muted truncate">{model}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[11px] text-muted truncate">{model}</p>
+            {device.companionModuleIds && device.companionModuleIds.length > 0 && (
+              <span className="inline-flex items-center gap-0.5 rounded bg-accent/10 px-1 py-0.5 text-[9px] text-accent shrink-0">
+                <Blocks size={8} />{device.companionModuleIds.length}
+              </span>
+            )}
+          </div>
         </div>
         <div
           className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0 ml-2 ${statusInfo.bg}`}

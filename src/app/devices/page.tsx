@@ -13,6 +13,7 @@ import {
   List,
   ChevronDown,
   ChevronRight,
+  Blocks,
 } from 'lucide-react';
 
 const MANUFACTURER_COLORS: Record<DeviceManufacturer, string> = {
@@ -245,11 +246,17 @@ export default function DevicesPage() {
                               </span>
                             </div>
 
-                            {/* Category */}
-                            <div className="mb-3">
+                            {/* Category + Companion badge */}
+                            <div className="mb-3 flex items-center gap-1.5">
                               <span className="inline-block rounded bg-surface-2 px-2 py-0.5 text-[10px] text-muted">
                                 {CATEGORY_LABELS[device.category]}
                               </span>
+                              {device.companionModuleIds && device.companionModuleIds.length > 0 && (
+                                <span className="inline-flex items-center gap-0.5 rounded bg-accent/10 px-1.5 py-0.5 text-[9px] text-accent">
+                                  <Blocks size={9} />
+                                  {device.companionModuleIds.length}
+                                </span>
+                              )}
                             </div>
 
                             {/* Stats row */}
@@ -315,6 +322,7 @@ export default function DevicesPage() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted">IP Address</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted">Rack / Slot</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted">RU</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-muted">Companion</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-muted">Temp</th>
                   </tr>
                 </thead>
@@ -370,6 +378,16 @@ export default function DevicesPage() {
                         </td>
                         <td className="px-4 py-2.5 text-xs text-muted text-center">
                           {device.rackUnits > 0 ? `${device.rackUnits}` : '-'}
+                        </td>
+                        <td className="px-4 py-2.5 text-center">
+                          {device.companionModuleIds && device.companionModuleIds.length > 0 ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] text-accent">
+                              <Blocks size={10} />
+                              {device.companionModuleIds.length} module{device.companionModuleIds.length !== 1 ? 's' : ''}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-2.5 text-right">
                           <span

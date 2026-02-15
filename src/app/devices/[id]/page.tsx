@@ -6,6 +6,7 @@ import { useState } from 'react';
 import {
   ArrowLeft, Send, Thermometer, Cpu, HardDrive, Zap, Fan, Clock, Wifi, WifiOff,
 } from 'lucide-react';
+import CompanionDevicePanel from '@/components/companion/CompanionDevicePanel';
 
 const MANUFACTURER_COLORS: Record<string, string> = {
   disguise: '#e91e63', barco: '#00bcd4', brompton: '#4caf50',
@@ -178,6 +179,9 @@ export default function DeviceDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Companion Modules */}
+      <CompanionDevicePanel device={device} />
 
       {/* Command Console */}
       <div className="bg-[#14141f] rounded-lg border border-[#2a2a3d] p-5">
