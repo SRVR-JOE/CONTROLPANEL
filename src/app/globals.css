@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0c0c14;
+  --foreground: #e0e0e8;
+  --surface: #14141f;
+  --surface-2: #1c1c2b;
+  --border: #2a2a3d;
+  --accent: #3b82f6;
+  --accent-dim: #1e3a5f;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --muted: #6b7280;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Rack unit styling */
+.rack-unit {
+  border: 1px solid var(--border);
+  transition: all 0.15s ease;
+}
+.rack-unit:hover {
+  border-color: var(--accent-dim);
+}
+.rack-unit.occupied {
+  border-color: transparent;
+}
+
+/* Status indicators */
+.status-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Matrix cell */
+.matrix-cell {
+  transition: all 0.1s ease;
+  cursor: pointer;
+}
+.matrix-cell:hover {
+  transform: scale(1.15);
+  z-index: 10;
+}
+.matrix-cell.active {
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* Pin board item */
+.pin-item {
+  transition: box-shadow 0.15s ease;
+}
+.pin-item:hover {
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Glassmorphism card */
+.glass-card {
+  background: rgba(20, 20, 31, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Temperature gradient backgrounds */
+.temp-cool { background: linear-gradient(135deg, #1e3a5f, #14141f); }
+.temp-warm { background: linear-gradient(135deg, #5f3a1e, #14141f); }
+.temp-hot { background: linear-gradient(135deg, #5f1e1e, #14141f); }
