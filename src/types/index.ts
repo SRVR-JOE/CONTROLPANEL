@@ -11,7 +11,26 @@ export type DeviceManufacturer =
   | 'lightware'
   | 'aja'
   | 'blackmagic'
-  | 'ross';
+  | 'ross'
+  | 'yamaha'
+  | 'allen-heath'
+  | 'behringer'
+  | 'shure'
+  | 'sennheiser'
+  | 'panasonic'
+  | 'sony'
+  | 'etc'
+  | 'ma-lighting'
+  | 'qsc'
+  | 'clear-com'
+  | 'riedel'
+  | 'magewell'
+  | 'teradek'
+  | 'extron'
+  | 'crestron'
+  | 'ptzoptics'
+  | 'datavideo'
+  | 'roland';
 
 export type DeviceCategory =
   | 'media-server'
@@ -19,7 +38,16 @@ export type DeviceCategory =
   | 'matrix-switcher'
   | 'video-processor'
   | 'converter'
-  | 'production-switcher';
+  | 'production-switcher'
+  | 'audio-console'
+  | 'audio-processor'
+  | 'wireless-mic'
+  | 'camera'
+  | 'lighting-console'
+  | 'show-control'
+  | 'intercom'
+  | 'encoder'
+  | 'recorder';
 
 export type DeviceStatus = 'online' | 'warning' | 'error' | 'offline';
 
@@ -107,7 +135,7 @@ export interface Rack {
 
 // --- Matrix Routing ---
 
-export type MatrixManufacturer = 'aja' | 'lightware' | 'blackmagic';
+export type MatrixManufacturer = 'aja' | 'lightware' | 'blackmagic' | 'ross' | 'extron';
 
 export interface MatrixInput {
   id: string;
