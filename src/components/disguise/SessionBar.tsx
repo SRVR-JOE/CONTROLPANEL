@@ -44,8 +44,8 @@ function createNewMachine(role: D3NetRole, session: DisguiseSession): { machine:
   const actors = session.machines.filter((m) => m.role === 'actor').length;
   let lastOctet: number;
   if (role === 'director') lastOctet = 11;
-  else if (role === 'actor') lastOctet = 11 + directors + actors + 1;
-  else lastOctet = 21 + existingOfRole.length;
+  else if (role === 'actor') lastOctet = 12 + actors; // next after existing actors (.12, .13, ...)
+  else lastOctet = Math.max(21, 12 + directors + actors + 5) + existingOfRole.length;
 
   const machine: SessionMachine = {
     id: machineId,

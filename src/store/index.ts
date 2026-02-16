@@ -790,7 +790,8 @@ export const useStore = create<AppStore>((set, get) => ({
           }
           octet++;
         }
-        let usOctet = baseOctet + 10;
+        // Understudies start 10 past the base, or after actors if that's higher
+        let usOctet = Math.max(baseOctet + 10, octet + 5);
         for (const us of understudies) {
           const updated = assignOctet(us, usOctet);
           if (updated) {
