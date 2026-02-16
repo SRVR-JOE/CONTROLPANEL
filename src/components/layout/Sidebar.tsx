@@ -10,6 +10,7 @@ import {
   Pin,
   HardDrive,
   Save,
+  Sliders,
 } from 'lucide-react';
 
 const navItems = [
@@ -17,6 +18,7 @@ const navItems = [
   { href: '/matrix', label: 'Matrix', icon: Grid3x3 },
   { href: '/health', label: 'Health', icon: Activity },
   { href: '/brompton', label: 'Brompton', icon: Monitor },
+  { href: '/disguise-config', label: 'Disguise', icon: Sliders },
   { href: '/pinboard', label: 'Pin Board', icon: Pin },
   { href: '/devices', label: 'Devices', icon: HardDrive },
   { href: '/presets', label: 'Presets', icon: Save },
