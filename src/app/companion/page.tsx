@@ -16,7 +16,12 @@ const tabs: { id: Tab; label: string; icon: typeof Blocks }[] = [
   { id: 'instances', label: 'Instances', icon: Layers },
 ];
 
-const manufacturers: DeviceManufacturer[] = ['disguise', 'barco', 'brompton', 'lightware', 'aja', 'blackmagic', 'ross'];
+const manufacturers: DeviceManufacturer[] = [
+  'disguise', 'barco', 'brompton', 'lightware', 'aja', 'blackmagic', 'ross',
+  'yamaha', 'allen-heath', 'behringer', 'shure', 'sennheiser', 'panasonic', 'sony',
+  'etc', 'ma-lighting', 'qsc', 'clear-com', 'riedel', 'magewell', 'teradek',
+  'extron', 'crestron', 'ptzoptics', 'datavideo', 'roland',
+];
 
 const manufacturerLabels: Record<DeviceManufacturer, string> = {
   disguise: 'disguise',
@@ -26,6 +31,25 @@ const manufacturerLabels: Record<DeviceManufacturer, string> = {
   aja: 'AJA',
   blackmagic: 'Blackmagic Design',
   ross: 'Ross',
+  yamaha: 'Yamaha',
+  'allen-heath': 'Allen & Heath',
+  behringer: 'Behringer',
+  shure: 'Shure',
+  sennheiser: 'Sennheiser',
+  panasonic: 'Panasonic',
+  sony: 'Sony',
+  etc: 'ETC',
+  'ma-lighting': 'MA Lighting',
+  qsc: 'QSC',
+  'clear-com': 'Clear-Com',
+  riedel: 'Riedel',
+  magewell: 'Magewell',
+  teradek: 'Teradek',
+  extron: 'Extron',
+  crestron: 'Crestron',
+  ptzoptics: 'PTZOptics',
+  datavideo: 'Datavideo',
+  roland: 'Roland',
 };
 
 const manufacturerColors: Record<DeviceManufacturer, string> = {
@@ -36,6 +60,25 @@ const manufacturerColors: Record<DeviceManufacturer, string> = {
   aja: '#f59e0b',
   blackmagic: '#6366f1',
   ross: '#ef4444',
+  yamaha: '#7c3aed',
+  'allen-heath': '#06b6d4',
+  behringer: '#f97316',
+  shure: '#14b8a6',
+  sennheiser: '#64748b',
+  panasonic: '#0ea5e9',
+  sony: '#1d4ed8',
+  etc: '#a855f7',
+  'ma-lighting': '#ec4899',
+  qsc: '#84cc16',
+  'clear-com': '#f43f5e',
+  riedel: '#0d9488',
+  magewell: '#6366f1',
+  teradek: '#e11d48',
+  extron: '#059669',
+  crestron: '#2563eb',
+  ptzoptics: '#d97706',
+  datavideo: '#7c2d12',
+  roland: '#dc2626',
 };
 
 export default function CompanionPage() {

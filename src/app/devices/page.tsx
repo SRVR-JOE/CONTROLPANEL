@@ -24,6 +24,25 @@ const MANUFACTURER_COLORS: Record<DeviceManufacturer, string> = {
   aja: '#ffc107',
   blackmagic: '#607d8b',
   ross: '#9c27b0',
+  yamaha: '#7c3aed',
+  'allen-heath': '#06b6d4',
+  behringer: '#f97316',
+  shure: '#14b8a6',
+  sennheiser: '#64748b',
+  panasonic: '#0ea5e9',
+  sony: '#1d4ed8',
+  etc: '#a855f7',
+  'ma-lighting': '#ec4899',
+  qsc: '#84cc16',
+  'clear-com': '#f43f5e',
+  riedel: '#0d9488',
+  magewell: '#6366f1',
+  teradek: '#e11d48',
+  extron: '#059669',
+  crestron: '#2563eb',
+  ptzoptics: '#d97706',
+  datavideo: '#7c2d12',
+  roland: '#dc2626',
 };
 
 const MANUFACTURER_LABELS: Record<DeviceManufacturer, string> = {
@@ -34,6 +53,25 @@ const MANUFACTURER_LABELS: Record<DeviceManufacturer, string> = {
   aja: 'AJA',
   blackmagic: 'Blackmagic Design',
   ross: 'Ross Video',
+  yamaha: 'Yamaha',
+  'allen-heath': 'Allen & Heath',
+  behringer: 'Behringer',
+  shure: 'Shure',
+  sennheiser: 'Sennheiser',
+  panasonic: 'Panasonic',
+  sony: 'Sony',
+  etc: 'ETC',
+  'ma-lighting': 'MA Lighting',
+  qsc: 'QSC',
+  'clear-com': 'Clear-Com',
+  riedel: 'Riedel',
+  magewell: 'Magewell',
+  teradek: 'Teradek',
+  extron: 'Extron',
+  crestron: 'Crestron',
+  ptzoptics: 'PTZOptics',
+  datavideo: 'Datavideo',
+  roland: 'Roland',
 };
 
 const STATUS_COLORS: Record<DeviceStatus, string> = {
@@ -50,14 +88,28 @@ const CATEGORY_LABELS: Record<DeviceCategory, string> = {
   'video-processor': 'Video Processor',
   converter: 'Converter',
   'production-switcher': 'Production Switcher',
+  'audio-console': 'Audio Console',
+  'audio-processor': 'Audio Processor',
+  'wireless-mic': 'Wireless Microphone',
+  camera: 'Camera',
+  'lighting-console': 'Lighting Console',
+  'show-control': 'Show Control',
+  intercom: 'Intercom',
+  encoder: 'Encoder/Decoder',
+  recorder: 'Recorder',
 };
 
 const ALL_MANUFACTURERS: DeviceManufacturer[] = [
   'disguise', 'barco', 'brompton', 'lightware', 'aja', 'blackmagic', 'ross',
+  'yamaha', 'allen-heath', 'behringer', 'shure', 'sennheiser', 'panasonic', 'sony',
+  'etc', 'ma-lighting', 'qsc', 'clear-com', 'riedel', 'magewell', 'teradek',
+  'extron', 'crestron', 'ptzoptics', 'datavideo', 'roland',
 ];
 
 const ALL_CATEGORIES: DeviceCategory[] = [
   'media-server', 'led-processor', 'matrix-switcher', 'video-processor', 'converter', 'production-switcher',
+  'audio-console', 'audio-processor', 'wireless-mic', 'camera', 'lighting-console', 'show-control',
+  'intercom', 'encoder', 'recorder',
 ];
 
 const ALL_STATUSES: DeviceStatus[] = ['online', 'warning', 'error', 'offline'];

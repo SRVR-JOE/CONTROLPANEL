@@ -450,6 +450,446 @@ const initialDevices: Device[] = [
     health: { ...createMockHealth('ross'), temperature: 58, errors: ['PSU 2 failure - running on redundant supply'], warnings: ['System temperature elevated'] },
     firmware: '12.0.2', serialNumber: 'ROSS-ACU-2024-003', companionModuleIds: ['rossvideo-rosstalk'],
   },
+
+  // ============================================================
+  // YAMAHA - Audio Consoles & Processors
+  // ============================================================
+  {
+    id: 'dev-yamaha-cl5', name: 'Yamaha CL5', manufacturer: 'yamaha', model: 'CL5', category: 'audio-console',
+    status: 'online', ipAddress: '10.0.1.76', rackUnits: 5,
+    ports: createMixedPorts({ danteIn: 64, danteOut: 64, ethPorts: 2 }),
+    health: { ...createMockHealth('yamaha'), temperature: 34 },
+    firmware: '5.1.0', serialNumber: 'YAM-CL5-2024-001', companionModuleIds: ['yamaha-rcp'],
+  },
+  {
+    id: 'dev-yamaha-ql5', name: 'Yamaha QL5', manufacturer: 'yamaha', model: 'QL5', category: 'audio-console',
+    status: 'online', ipAddress: '10.0.1.77', rackUnits: 5,
+    ports: createMixedPorts({ danteIn: 32, danteOut: 32, ethPorts: 2 }),
+    health: { ...createMockHealth('yamaha'), temperature: 33 },
+    firmware: '5.1.0', serialNumber: 'YAM-QL5-2024-015', companionModuleIds: ['yamaha-rcp'],
+  },
+  {
+    id: 'dev-yamaha-tf5', name: 'Yamaha TF5', manufacturer: 'yamaha', model: 'TF5', category: 'audio-console',
+    status: 'online', ipAddress: '10.0.1.78', rackUnits: 4,
+    ports: createMixedPorts({ danteIn: 16, danteOut: 16, ethPorts: 1 }),
+    health: { ...createMockHealth('yamaha'), temperature: 31 },
+    firmware: '4.5.3', serialNumber: 'YAM-TF5-2024-042', companionModuleIds: ['yamaha-rcp'],
+  },
+  {
+    id: 'dev-yamaha-rio3224', name: 'Yamaha Rio3224-D2', manufacturer: 'yamaha', model: 'Rio3224-D2', category: 'audio-processor',
+    status: 'online', ipAddress: '10.0.1.79', rackUnits: 3,
+    ports: createMixedPorts({ danteIn: 32, danteOut: 24, ethPorts: 2 }),
+    health: { ...createMockHealth('yamaha'), temperature: 30 },
+    firmware: '2.2.1', serialNumber: 'YAM-RIO-2024-088', companionModuleIds: ['yamaha-rcp'],
+  },
+
+  // ============================================================
+  // ALLEN & HEATH - Audio Consoles & Processors
+  // ============================================================
+  {
+    id: 'dev-ah-dlive-s7000', name: 'Allen & Heath dLive S7000', manufacturer: 'allen-heath', model: 'dLive S7000', category: 'audio-console',
+    status: 'online', ipAddress: '10.0.1.80', rackUnits: 6,
+    ports: createMixedPorts({ danteIn: 128, danteOut: 128, ethPorts: 4 }),
+    health: { ...createMockHealth('allen-heath'), temperature: 36 },
+    firmware: '1.9.3', serialNumber: 'AH-S7000-2024-005', companionModuleIds: ['allenheath-dlive'],
+  },
+  {
+    id: 'dev-ah-cdm48', name: 'Allen & Heath dLive CDM48', manufacturer: 'allen-heath', model: 'dLive CDM48', category: 'audio-processor',
+    status: 'online', ipAddress: '10.0.1.81', rackUnits: 5,
+    ports: createMixedPorts({ danteIn: 48, danteOut: 48, ethPorts: 2 }),
+    health: { ...createMockHealth('allen-heath'), temperature: 34 },
+    firmware: '1.9.3', serialNumber: 'AH-CDM48-2024-012', companionModuleIds: ['allenheath-dlive'],
+  },
+  {
+    id: 'dev-ah-avantis', name: 'Allen & Heath Avantis', manufacturer: 'allen-heath', model: 'Avantis', category: 'audio-console',
+    status: 'online', ipAddress: '10.0.1.82', rackUnits: 4,
+    ports: createMixedPorts({ danteIn: 64, danteOut: 64, ethPorts: 2 }),
+    health: { ...createMockHealth('allen-heath'), temperature: 33 },
+    firmware: '1.5.0', serialNumber: 'AH-AVN-2024-028', companionModuleIds: ['allenheath-avantis'],
+  },
+  {
+    id: 'dev-ah-sq7', name: 'Allen & Heath SQ-7', manufacturer: 'allen-heath', model: 'SQ-7', category: 'audio-console',
+    status: 'online', ipAddress: '10.0.1.83', rackUnits: 3,
+    ports: createMixedPorts({ danteIn: 32, danteOut: 32, ethPorts: 1 }),
+    health: { ...createMockHealth('allen-heath'), temperature: 30 },
+    firmware: '1.6.1', serialNumber: 'AH-SQ7-2024-051', companionModuleIds: ['allenheath-sq'],
+  },
+
+  // ============================================================
+  // BEHRINGER - Audio Consoles
+  // ============================================================
+  {
+    id: 'dev-behringer-x32', name: 'Behringer X32', manufacturer: 'behringer', model: 'X32', category: 'audio-console',
+    status: 'online', ipAddress: '10.0.1.84', rackUnits: 4,
+    ports: createMixedPorts({ danteIn: 32, danteOut: 32, ethPorts: 1 }),
+    health: { ...createMockHealth('behringer'), temperature: 32 },
+    firmware: '4.06', serialNumber: 'BEH-X32-2024-077', companionModuleIds: ['behringer-x32'],
+  },
+  {
+    id: 'dev-behringer-wing', name: 'Behringer Wing', manufacturer: 'behringer', model: 'Wing', category: 'audio-console',
+    status: 'online', ipAddress: '10.0.1.85', rackUnits: 5,
+    ports: createMixedPorts({ danteIn: 48, danteOut: 48, ethPorts: 2 }),
+    health: { ...createMockHealth('behringer'), temperature: 34 },
+    firmware: '2.0.1', serialNumber: 'BEH-WING-2024-019', companionModuleIds: ['behringer-wing'],
+  },
+
+  // ============================================================
+  // SHURE - Wireless Microphones & Audio Processors
+  // ============================================================
+  {
+    id: 'dev-shure-ad4q', name: 'Shure Axient Digital AD4Q', manufacturer: 'shure', model: 'AD4Q', category: 'wireless-mic',
+    status: 'online', ipAddress: '10.0.1.86', rackUnits: 1,
+    ports: createMixedPorts({ danteOut: 4, ethPorts: 2 }),
+    health: { ...createMockHealth('shure'), temperature: 30 },
+    firmware: '1.7.15', serialNumber: 'SHR-AD4Q-2024-033', companionModuleIds: ['shure-wireless'],
+  },
+  {
+    id: 'dev-shure-ulxd4q', name: 'Shure ULXD4Q', manufacturer: 'shure', model: 'ULXD4Q', category: 'wireless-mic',
+    status: 'online', ipAddress: '10.0.1.87', rackUnits: 1,
+    ports: createMixedPorts({ danteOut: 4, ethPorts: 1 }),
+    health: { ...createMockHealth('shure'), temperature: 29 },
+    firmware: '2.8.0', serialNumber: 'SHR-ULXD4Q-2024-061', companionModuleIds: ['shure-wireless'],
+  },
+  {
+    id: 'dev-shure-psm1000', name: 'Shure PSM1000', manufacturer: 'shure', model: 'PSM1000', category: 'audio-processor',
+    status: 'online', ipAddress: '10.0.1.88', rackUnits: 1,
+    ports: createMixedPorts({ danteIn: 2, ethPorts: 1 }),
+    health: { ...createMockHealth('shure'), temperature: 28 },
+    firmware: '1.4.8', serialNumber: 'SHR-PSM1K-2024-020', companionModuleIds: ['shure-wireless'],
+  },
+
+  // ============================================================
+  // SENNHEISER - Wireless Microphones
+  // ============================================================
+  {
+    id: 'dev-sennheiser-ewdx', name: 'Sennheiser EW-DX EM 4 Dante', manufacturer: 'sennheiser', model: 'EW-DX EM 4 Dante', category: 'wireless-mic',
+    status: 'online', ipAddress: '10.0.1.89', rackUnits: 1,
+    ports: createMixedPorts({ danteOut: 4, ethPorts: 2 }),
+    health: { ...createMockHealth('sennheiser'), temperature: 29 },
+    firmware: '1.2.0', serialNumber: 'SEN-EWDX4-2024-044', companionModuleIds: ['sennheiser-ewdx'],
+  },
+
+  // ============================================================
+  // PANASONIC - PTZ Cameras & Controllers
+  // ============================================================
+  {
+    id: 'dev-panasonic-ue150', name: 'Panasonic AW-UE150', manufacturer: 'panasonic', model: 'AW-UE150', category: 'camera',
+    status: 'online', ipAddress: '10.0.1.90', rackUnits: 0,
+    ports: createMixedPorts({ sdiOut: 1, hdmiOut: 1, ndiOut: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('panasonic'), temperature: 38 },
+    firmware: '3.20', serialNumber: 'PAN-UE150-2024-007', companionModuleIds: ['panasonic-ptz'],
+  },
+  {
+    id: 'dev-panasonic-ue100', name: 'Panasonic AW-UE100', manufacturer: 'panasonic', model: 'AW-UE100', category: 'camera',
+    status: 'online', ipAddress: '10.0.1.91', rackUnits: 0,
+    ports: createMixedPorts({ sdiOut: 1, hdmiOut: 1, ndiOut: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('panasonic'), temperature: 36 },
+    firmware: '2.10', serialNumber: 'PAN-UE100-2024-022', companionModuleIds: ['panasonic-ptz'],
+  },
+  {
+    id: 'dev-panasonic-rp150', name: 'Panasonic AW-RP150', manufacturer: 'panasonic', model: 'AW-RP150', category: 'show-control',
+    status: 'online', ipAddress: '10.0.1.92', rackUnits: 1,
+    ports: createMixedPorts({ ethPorts: 2 }),
+    health: { ...createMockHealth('panasonic'), temperature: 31 },
+    firmware: '4.50', serialNumber: 'PAN-RP150-2024-010', companionModuleIds: ['panasonic-ptz'],
+  },
+
+  // ============================================================
+  // SONY - PTZ Cameras
+  // ============================================================
+  {
+    id: 'dev-sony-x400', name: 'Sony SRG-X400', manufacturer: 'sony', model: 'SRG-X400', category: 'camera',
+    status: 'online', ipAddress: '10.0.1.93', rackUnits: 0,
+    ports: createMixedPorts({ sdiOut: 1, hdmiOut: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('sony'), temperature: 35 },
+    firmware: '2.01', serialNumber: 'SNY-X400-2024-018', companionModuleIds: ['sony-visca'],
+  },
+  {
+    id: 'dev-sony-fr7', name: 'Sony FR7', manufacturer: 'sony', model: 'FR7', category: 'camera',
+    status: 'warning', ipAddress: '10.0.1.94', rackUnits: 0,
+    ports: createMixedPorts({ sdiOut: 1, hdmiOut: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('sony'), temperature: 42, warnings: ['Lens calibration required'] },
+    firmware: '3.00', serialNumber: 'SNY-FR7-2024-006', companionModuleIds: ['sony-visca'],
+  },
+
+  // ============================================================
+  // ETC - Lighting Consoles & Network Devices
+  // ============================================================
+  {
+    id: 'dev-etc-eosti', name: 'ETC Eos Ti', manufacturer: 'etc', model: 'Eos Ti', category: 'lighting-console',
+    status: 'online', ipAddress: '10.0.1.95', rackUnits: 6,
+    ports: createMixedPorts({ ethPorts: 4 }),
+    health: { ...createMockHealth('etc'), temperature: 35 },
+    firmware: '3.2.5', serialNumber: 'ETC-EOSTI-2024-002', companionModuleIds: ['etc-eos'],
+  },
+  {
+    id: 'dev-etc-ionxe', name: 'ETC Ion Xe', manufacturer: 'etc', model: 'Ion Xe', category: 'lighting-console',
+    status: 'online', ipAddress: '10.0.1.96', rackUnits: 3,
+    ports: createMixedPorts({ ethPorts: 2 }),
+    health: { ...createMockHealth('etc'), temperature: 32 },
+    firmware: '3.2.5', serialNumber: 'ETC-IONXE-2024-014', companionModuleIds: ['etc-eos'],
+  },
+  {
+    id: 'dev-etc-element2', name: 'ETC Element 2', manufacturer: 'etc', model: 'Element 2', category: 'lighting-console',
+    status: 'online', ipAddress: '10.0.1.97', rackUnits: 2,
+    ports: createMixedPorts({ ethPorts: 2 }),
+    health: { ...createMockHealth('etc'), temperature: 30 },
+    firmware: '3.2.5', serialNumber: 'ETC-EL2-2024-031', companionModuleIds: ['etc-eos'],
+  },
+  {
+    id: 'dev-etc-net3gw', name: 'ETC Net3 Gateway', manufacturer: 'etc', model: 'Net3 Gateway', category: 'converter',
+    status: 'online', ipAddress: '10.0.1.98', rackUnits: 1,
+    ports: createMixedPorts({ ethPorts: 2 }),
+    health: { ...createMockHealth('etc'), temperature: 28 },
+    firmware: '6.7.1', serialNumber: 'ETC-N3GW-2024-055', companionModuleIds: ['etc-eos'],
+  },
+
+  // ============================================================
+  // MA LIGHTING - Lighting Consoles & Processing Units
+  // ============================================================
+  {
+    id: 'dev-ma-gma3-full', name: 'MA grandMA3 full-size', manufacturer: 'ma-lighting', model: 'grandMA3 full-size', category: 'lighting-console',
+    status: 'online', ipAddress: '10.0.1.99', rackUnits: 0,
+    ports: createMixedPorts({ ethPorts: 6 }),
+    health: { ...createMockHealth('ma-lighting'), temperature: 37 },
+    firmware: '2.1.1', serialNumber: 'MA-GMA3F-2024-003', companionModuleIds: ['malighting-grandma3'],
+  },
+  {
+    id: 'dev-ma-gma3-puxl', name: 'MA grandMA3 processing unit XL', manufacturer: 'ma-lighting', model: 'grandMA3 processing unit XL', category: 'lighting-console',
+    status: 'online', ipAddress: '10.0.1.100', rackUnits: 4,
+    ports: createMixedPorts({ ethPorts: 6 }),
+    health: { ...createMockHealth('ma-lighting'), temperature: 39 },
+    firmware: '2.1.1', serialNumber: 'MA-PUXL-2024-008', companionModuleIds: ['malighting-grandma3'],
+  },
+  {
+    id: 'dev-ma-gma3-pul', name: 'MA grandMA3 processing unit L', manufacturer: 'ma-lighting', model: 'grandMA3 processing unit L', category: 'lighting-console',
+    status: 'online', ipAddress: '10.0.1.101', rackUnits: 2,
+    ports: createMixedPorts({ ethPorts: 4 }),
+    health: { ...createMockHealth('ma-lighting'), temperature: 35 },
+    firmware: '2.1.1', serialNumber: 'MA-PUL-2024-015', companionModuleIds: ['malighting-grandma3'],
+  },
+  {
+    id: 'dev-ma-gma3-cmdwing', name: 'MA grandMA3 onPC command wing', manufacturer: 'ma-lighting', model: 'grandMA3 onPC command wing', category: 'lighting-console',
+    status: 'online', ipAddress: '10.0.1.102', rackUnits: 0,
+    ports: createMixedPorts({ ethPorts: 2 }),
+    health: { ...createMockHealth('ma-lighting'), temperature: 29 },
+    firmware: '2.1.1', serialNumber: 'MA-CW-2024-044', companionModuleIds: ['malighting-grandma3'],
+  },
+
+  // ============================================================
+  // QSC - Audio Processors
+  // ============================================================
+  {
+    id: 'dev-qsc-510i', name: 'QSC Core 510i', manufacturer: 'qsc', model: 'Core 510i', category: 'audio-processor',
+    status: 'online', ipAddress: '10.0.1.103', rackUnits: 1,
+    ports: createMixedPorts({ danteIn: 64, danteOut: 64, ethPorts: 4 }),
+    health: { ...createMockHealth('qsc'), temperature: 34 },
+    firmware: '9.10.0', serialNumber: 'QSC-510I-2024-011', companionModuleIds: ['qsc-qsys'],
+  },
+  {
+    id: 'dev-qsc-110f', name: 'QSC Core 110f', manufacturer: 'qsc', model: 'Core 110f', category: 'audio-processor',
+    status: 'online', ipAddress: '10.0.1.104', rackUnits: 1,
+    ports: createMixedPorts({ danteIn: 32, danteOut: 32, ethPorts: 2 }),
+    health: { ...createMockHealth('qsc'), temperature: 31 },
+    firmware: '9.10.0', serialNumber: 'QSC-110F-2024-027', companionModuleIds: ['qsc-qsys'],
+  },
+
+  // ============================================================
+  // CLEAR-COM - Intercom Systems
+  // ============================================================
+  {
+    id: 'dev-clearcom-omega', name: 'Clear-Com Eclipse HX Omega', manufacturer: 'clear-com', model: 'Eclipse HX Omega', category: 'intercom',
+    status: 'online', ipAddress: '10.0.1.105', rackUnits: 4,
+    ports: createMixedPorts({ ethPorts: 4 }),
+    health: { ...createMockHealth('clear-com'), temperature: 36 },
+    firmware: '12.1.3', serialNumber: 'CC-OMEGA-2024-004', companionModuleIds: ['clearcom-eclipse'],
+  },
+  {
+    id: 'dev-clearcom-delta', name: 'Clear-Com Eclipse HX Delta', manufacturer: 'clear-com', model: 'Eclipse HX Delta', category: 'intercom',
+    status: 'online', ipAddress: '10.0.1.106', rackUnits: 2,
+    ports: createMixedPorts({ ethPorts: 2 }),
+    health: { ...createMockHealth('clear-com'), temperature: 33 },
+    firmware: '12.1.3', serialNumber: 'CC-DELTA-2024-019', companionModuleIds: ['clearcom-eclipse'],
+  },
+  {
+    id: 'dev-clearcom-fs2', name: 'Clear-Com FreeSpeak II Base', manufacturer: 'clear-com', model: 'FreeSpeak II Base', category: 'wireless-mic',
+    status: 'online', ipAddress: '10.0.1.107', rackUnits: 1,
+    ports: createMixedPorts({ ethPorts: 2 }),
+    health: { ...createMockHealth('clear-com'), temperature: 30 },
+    firmware: '7.2.0', serialNumber: 'CC-FS2B-2024-038', companionModuleIds: ['clearcom-freespeak'],
+  },
+
+  // ============================================================
+  // RIEDEL - Intercom & Communication Systems
+  // ============================================================
+  {
+    id: 'dev-riedel-bolero', name: 'Riedel Bolero Antenna', manufacturer: 'riedel', model: 'Bolero Antenna', category: 'intercom',
+    status: 'online', ipAddress: '10.0.1.108', rackUnits: 1,
+    ports: createMixedPorts({ danteIn: 8, danteOut: 8, ethPorts: 2 }),
+    health: { ...createMockHealth('riedel'), temperature: 29 },
+    firmware: '3.5.0', serialNumber: 'RDL-BOL-2024-022', companionModuleIds: ['riedel-bolero'],
+  },
+  {
+    id: 'dev-riedel-artist128', name: 'Riedel Artist 128', manufacturer: 'riedel', model: 'Artist 128', category: 'intercom',
+    status: 'online', ipAddress: '10.0.1.109', rackUnits: 3,
+    ports: createMixedPorts({ danteIn: 128, danteOut: 128, ethPorts: 4 }),
+    health: { ...createMockHealth('riedel'), temperature: 37 },
+    firmware: '8.4.2', serialNumber: 'RDL-ART128-2024-006', companionModuleIds: ['riedel-artist'],
+  },
+
+  // ============================================================
+  // MAGEWELL - Encoders & Converters
+  // ============================================================
+  {
+    id: 'dev-magewell-encode', name: 'Magewell Ultra Encode HDMI Plus', manufacturer: 'magewell', model: 'Ultra Encode HDMI Plus', category: 'encoder',
+    status: 'online', ipAddress: '10.0.1.110', rackUnits: 0,
+    ports: createMixedPorts({ hdmiIn: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('magewell'), temperature: 35 },
+    firmware: '1.3.128', serialNumber: 'MGW-UEHP-2024-045', companionModuleIds: ['magewell-ultrastream'],
+  },
+  {
+    id: 'dev-magewell-stream', name: 'Magewell Ultra Stream HDMI', manufacturer: 'magewell', model: 'Ultra Stream HDMI', category: 'encoder',
+    status: 'online', ipAddress: '10.0.1.111', rackUnits: 0,
+    ports: createMixedPorts({ hdmiIn: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('magewell'), temperature: 33 },
+    firmware: '1.2.98', serialNumber: 'MGW-USH-2024-067', companionModuleIds: ['magewell-ultrastream'],
+  },
+  {
+    id: 'dev-magewell-proconvert', name: 'Magewell Pro Convert HDMI 4K Plus', manufacturer: 'magewell', model: 'Pro Convert HDMI 4K Plus', category: 'encoder',
+    status: 'online', ipAddress: '10.0.1.112', rackUnits: 0,
+    ports: createMixedPorts({ hdmiIn: 1, ndiOut: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('magewell'), temperature: 36 },
+    firmware: '2.3.44', serialNumber: 'MGW-PC4KP-2024-030', companionModuleIds: ['magewell-ultrastream'],
+  },
+
+  // ============================================================
+  // TERADEK - Encoders & Streaming
+  // ============================================================
+  {
+    id: 'dev-teradek-prism', name: 'Teradek Prism Flex', manufacturer: 'teradek', model: 'Prism Flex', category: 'encoder',
+    status: 'online', ipAddress: '10.0.1.113', rackUnits: 1,
+    ports: createMixedPorts({ sdiIn: 2, hdmiIn: 1, ethPorts: 2 }),
+    health: { ...createMockHealth('teradek'), temperature: 38 },
+    firmware: '8.1.0', serialNumber: 'TDK-PRSMF-2024-012', companionModuleIds: ['teradek-vidiu'],
+  },
+  {
+    id: 'dev-teradek-cube', name: 'Teradek Cube 655', manufacturer: 'teradek', model: 'Cube 655', category: 'encoder',
+    status: 'offline', ipAddress: '10.0.1.114', rackUnits: 0,
+    ports: createMixedPorts({ sdiIn: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('teradek'), temperature: 25, cpuUsage: 0 },
+    firmware: '7.3.4', serialNumber: 'TDK-C655-2024-058', companionModuleIds: ['teradek-vidiu'],
+  },
+
+  // ============================================================
+  // EXTRON - Matrix Switchers & Recorders
+  // ============================================================
+  {
+    id: 'dev-extron-dtp108', name: 'Extron DTP CrossPoint 108 4K', manufacturer: 'extron', model: 'DTP CrossPoint 108 4K', category: 'matrix-switcher',
+    status: 'online', ipAddress: '10.0.1.115', rackUnits: 2,
+    ports: createMixedPorts({ hdmiIn: 10, hdmiOut: 8, ethPorts: 1 }),
+    health: { ...createMockHealth('extron'), temperature: 34 },
+    firmware: '1.04.0003', serialNumber: 'EXT-DTP108-2024-009', companionModuleIds: ['extron-sis'],
+  },
+  {
+    id: 'dev-extron-in1808', name: 'Extron IN1808', manufacturer: 'extron', model: 'IN1808', category: 'matrix-switcher',
+    status: 'online', ipAddress: '10.0.1.116', rackUnits: 1,
+    ports: createMixedPorts({ hdmiIn: 8, hdmiOut: 2, ethPorts: 1 }),
+    health: { ...createMockHealth('extron'), temperature: 31 },
+    firmware: '1.02.0001', serialNumber: 'EXT-IN1808-2024-035', companionModuleIds: ['extron-sis'],
+  },
+  {
+    id: 'dev-extron-smp351', name: 'Extron SMP 351', manufacturer: 'extron', model: 'SMP 351', category: 'recorder',
+    status: 'online', ipAddress: '10.0.1.117', rackUnits: 1,
+    ports: createMixedPorts({ sdiIn: 1, hdmiIn: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('extron'), temperature: 32 },
+    firmware: '2.01.0002', serialNumber: 'EXT-SMP351-2024-041', companionModuleIds: ['extron-sis'],
+  },
+
+  // ============================================================
+  // CRESTRON - Show Control & AV Distribution
+  // ============================================================
+  {
+    id: 'dev-crestron-cp4n', name: 'Crestron CP4N', manufacturer: 'crestron', model: 'CP4N', category: 'show-control',
+    status: 'online', ipAddress: '10.0.1.118', rackUnits: 1,
+    ports: createMixedPorts({ ethPorts: 2 }),
+    health: { ...createMockHealth('crestron'), temperature: 33 },
+    firmware: '2.8001.00054', serialNumber: 'CRS-CP4N-2024-016', companionModuleIds: ['crestron-cp4'],
+  },
+  {
+    id: 'dev-crestron-nvx360', name: 'Crestron DM-NVX-360', manufacturer: 'crestron', model: 'DM-NVX-360', category: 'encoder',
+    status: 'online', ipAddress: '10.0.1.119', rackUnits: 0,
+    ports: createMixedPorts({ hdmiIn: 1, hdmiOut: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('crestron'), temperature: 37 },
+    firmware: '7.0.3538.00024', serialNumber: 'CRS-NVX360-2024-042', companionModuleIds: ['crestron-nvx'],
+  },
+  {
+    id: 'dev-crestron-hdmd4x2', name: 'Crestron HD-MD4X2-4KZ-E', manufacturer: 'crestron', model: 'HD-MD4X2-4KZ-E', category: 'matrix-switcher',
+    status: 'online', ipAddress: '10.0.1.120', rackUnits: 1,
+    ports: createMixedPorts({ hdmiIn: 4, hdmiOut: 2, ethPorts: 1 }),
+    health: { ...createMockHealth('crestron'), temperature: 30 },
+    firmware: '1.0100.0050', serialNumber: 'CRS-HDMD4X2-2024-028', companionModuleIds: ['crestron-cp4'],
+  },
+
+  // ============================================================
+  // PTZOPTICS - PTZ Cameras
+  // ============================================================
+  {
+    id: 'dev-ptzoptics-move4k', name: 'PTZOptics Move 4K', manufacturer: 'ptzoptics', model: 'Move 4K', category: 'camera',
+    status: 'online', ipAddress: '10.0.1.121', rackUnits: 0,
+    ports: createMixedPorts({ sdiOut: 1, hdmiOut: 1, ndiOut: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('ptzoptics'), temperature: 34 },
+    firmware: '6.3.40', serialNumber: 'PTO-MV4K-2024-015', companionModuleIds: ['ptzoptics-visca'],
+  },
+  {
+    id: 'dev-ptzoptics-link4k', name: 'PTZOptics Link 4K', manufacturer: 'ptzoptics', model: 'Link 4K', category: 'camera',
+    status: 'online', ipAddress: '10.0.1.122', rackUnits: 0,
+    ports: createMixedPorts({ sdiOut: 1, hdmiOut: 1, ndiOut: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('ptzoptics'), temperature: 33 },
+    firmware: '6.3.40', serialNumber: 'PTO-LK4K-2024-029', companionModuleIds: ['ptzoptics-visca'],
+  },
+
+  // ============================================================
+  // DATAVIDEO - Production Switchers & PTZ Cameras
+  // ============================================================
+  {
+    id: 'dev-datavideo-se4000', name: 'Datavideo SE-4000', manufacturer: 'datavideo', model: 'SE-4000', category: 'production-switcher',
+    status: 'online', ipAddress: '10.0.1.123', rackUnits: 4,
+    ports: createMixedPorts({ sdiIn: 12, sdiOut: 6, hdmiIn: 4, hdmiOut: 2, ethPorts: 1 }),
+    health: { ...createMockHealth('datavideo'), temperature: 40 },
+    firmware: '3.1.0', serialNumber: 'DTV-SE4K-2024-007', companionModuleIds: ['datavideo-dvip'],
+  },
+  {
+    id: 'dev-datavideo-ptc280', name: 'Datavideo PTC-280', manufacturer: 'datavideo', model: 'PTC-280', category: 'camera',
+    status: 'warning', ipAddress: '10.0.1.124', rackUnits: 0,
+    ports: createMixedPorts({ sdiOut: 1, hdmiOut: 1, ethPorts: 1 }),
+    health: { ...createMockHealth('datavideo'), temperature: 41, warnings: ['Firmware update available'] },
+    firmware: '1.0.5', serialNumber: 'DTV-PTC280-2024-034', companionModuleIds: ['datavideo-ptz'],
+  },
+
+  // ============================================================
+  // ROLAND - Production Switchers
+  // ============================================================
+  {
+    id: 'dev-roland-v160hd', name: 'Roland V-160HD', manufacturer: 'roland', model: 'V-160HD', category: 'production-switcher',
+    status: 'online', ipAddress: '10.0.1.125', rackUnits: 4,
+    ports: createMixedPorts({ sdiIn: 8, sdiOut: 4, hdmiIn: 8, hdmiOut: 3, ethPorts: 1 }),
+    health: { ...createMockHealth('roland'), temperature: 38 },
+    firmware: '1.50', serialNumber: 'RLD-V160HD-2024-004', companionModuleIds: ['roland-v60hd'],
+  },
+  {
+    id: 'dev-roland-v60hd', name: 'Roland V-60HD', manufacturer: 'roland', model: 'V-60HD', category: 'production-switcher',
+    status: 'online', ipAddress: '10.0.1.126', rackUnits: 2,
+    ports: createMixedPorts({ sdiIn: 4, sdiOut: 3, hdmiIn: 4, hdmiOut: 2, ethPorts: 1 }),
+    health: { ...createMockHealth('roland'), temperature: 35 },
+    firmware: '1.30', serialNumber: 'RLD-V60HD-2024-018', companionModuleIds: ['roland-v60hd'],
+  },
+  {
+    id: 'dev-roland-vr6hd', name: 'Roland VR-6HD', manufacturer: 'roland', model: 'VR-6HD', category: 'production-switcher',
+    status: 'online', ipAddress: '10.0.1.127', rackUnits: 1,
+    ports: createMixedPorts({ hdmiIn: 6, hdmiOut: 3, ethPorts: 1 }),
+    health: { ...createMockHealth('roland'), temperature: 32 },
+    firmware: '1.10', serialNumber: 'RLD-VR6HD-2024-025', companionModuleIds: ['roland-v60hd'],
+  },
 ];
 
 // ============================================================

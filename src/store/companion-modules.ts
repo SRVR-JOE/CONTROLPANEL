@@ -2996,4 +2996,4352 @@ export const companionModules: CompanionModule[] = [
     ],
     supportedModels: ['Ultrix FR5', 'Ultrix FR2', 'NK-3G34'],
   },
+
+  // ============================================================
+  // AUDIO / MIXER MODULES
+  // ============================================================
+
+  // --- yamaha-rcp ---
+  {
+    id: 'companion-mod-yamaha-rcp',
+    moduleId: 'yamaha-rcp',
+    name: 'Yamaha Remote Control Protocol',
+    manufacturer: 'yamaha',
+    protocol: 'TCP',
+    defaultPort: 49280,
+    description:
+      'Control Yamaha digital mixing consoles via the Remote Control Protocol (RCP). Supports fader control, muting, scene recall, send levels, EQ, DCA, and matrix routing across CL, QL, TF, DM, and PM series consoles.',
+    actions: [
+      {
+        id: 'set_fader_level',
+        name: 'Set Fader Level',
+        description: 'Set the fader level of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 1023)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_mute',
+        name: 'Set Mute',
+        description: 'Set the mute state of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'Mute On' },
+              { id: 'off', label: 'Mute Off' },
+              { id: 'toggle', label: 'Toggle' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recall_scene',
+        name: 'Recall Scene',
+        description: 'Recall a scene by its number',
+        options: [
+          {
+            id: 'scene',
+            type: 'number',
+            label: 'Scene Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_send_level',
+        name: 'Set Send Level',
+        description: 'Set the send level from a channel to a bus',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'bus',
+            type: 'number',
+            label: 'Bus',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 1023)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_eq_band',
+        name: 'Set EQ Band',
+        description: 'Set a specific EQ band on a channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'band',
+            type: 'number',
+            label: 'Band',
+            default: 1,
+          },
+          {
+            id: 'freq',
+            type: 'number',
+            label: 'Frequency (Hz)',
+            default: 1000,
+          },
+          {
+            id: 'gain',
+            type: 'number',
+            label: 'Gain (dB)',
+            default: 0,
+          },
+          {
+            id: 'q',
+            type: 'number',
+            label: 'Q Factor',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_dca_level',
+        name: 'Set DCA Level',
+        description: 'Set the level of a DCA group',
+        options: [
+          {
+            id: 'dca',
+            type: 'number',
+            label: 'DCA',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 1023)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_matrix_level',
+        name: 'Set Matrix Level',
+        description: 'Set the level of a matrix crosspoint',
+        options: [
+          {
+            id: 'in',
+            type: 'number',
+            label: 'Input',
+            default: 1,
+          },
+          {
+            id: 'out',
+            type: 'number',
+            label: 'Output',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 1023)',
+            default: 0,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'fader_level',
+        name: 'Fader Level',
+        description: 'Current fader level of a channel',
+        type: 'advanced',
+      },
+      {
+        id: 'mute_state',
+        name: 'Mute State',
+        description: 'Current mute state of a channel',
+        type: 'boolean',
+      },
+      {
+        id: 'current_scene',
+        name: 'Current Scene',
+        description: 'Currently active scene name or number',
+        type: 'advanced',
+      },
+      {
+        id: 'signal_present',
+        name: 'Signal Present',
+        description: 'Indicates whether signal is present on a channel',
+        type: 'boolean',
+      },
+    ],
+    variables: [
+      { id: 'current_scene', name: 'Current Scene Number' },
+      { id: 'fader_ch_N', name: 'Fader Level (N = channel number)' },
+      { id: 'mute_ch_N', name: 'Mute State (N = channel number)' },
+      { id: 'scene_name', name: 'Current Scene Name' },
+      { id: 'output_level_N', name: 'Output Level (N = output number)' },
+    ],
+    supportedModels: ['CL5', 'CL3', 'CL1', 'QL5', 'QL1', 'TF5', 'TF3', 'TF1', 'DM7', 'PM5'],
+  },
+
+  // --- allenheath-dlive ---
+  {
+    id: 'companion-mod-allenheath-dlive',
+    moduleId: 'allenheath-dlive',
+    name: 'Allen & Heath dLive MixRack',
+    manufacturer: 'allen-heath',
+    protocol: 'TCP',
+    defaultPort: 51325,
+    description:
+      'Control Allen & Heath dLive mixing systems via TCP. Supports fader control, muting, scene recall, DCA assignment, and aux send levels across all dLive surface and MixRack configurations.',
+    actions: [
+      {
+        id: 'set_fader',
+        name: 'Set Fader',
+        description: 'Set the fader level of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 1023)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_mute',
+        name: 'Set Mute',
+        description: 'Set the mute state of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'Mute On' },
+              { id: 'off', label: 'Mute Off' },
+              { id: 'toggle', label: 'Toggle' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recall_scene',
+        name: 'Recall Scene',
+        description: 'Recall a scene by its number',
+        options: [
+          {
+            id: 'scene',
+            type: 'number',
+            label: 'Scene Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'next_scene',
+        name: 'Next Scene',
+        description: 'Recall the next scene in the scene list',
+        options: [],
+      },
+      {
+        id: 'prev_scene',
+        name: 'Previous Scene',
+        description: 'Recall the previous scene in the scene list',
+        options: [],
+      },
+      {
+        id: 'set_dca_assign',
+        name: 'Set DCA Assignment',
+        description: 'Assign a channel to a DCA group',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'dca',
+            type: 'number',
+            label: 'DCA Group',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_aux_send',
+        name: 'Set Aux Send',
+        description: 'Set the aux send level from a channel to an aux bus',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'aux',
+            type: 'number',
+            label: 'Aux Bus',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 1023)',
+            default: 0,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'fader_position',
+        name: 'Fader Position',
+        description: 'Current fader position of a channel',
+        type: 'advanced',
+      },
+      {
+        id: 'mute_state',
+        name: 'Mute State',
+        description: 'Current mute state of a channel',
+        type: 'boolean',
+      },
+      {
+        id: 'current_scene',
+        name: 'Current Scene',
+        description: 'Currently active scene name or number',
+        type: 'advanced',
+      },
+      {
+        id: 'dca_level',
+        name: 'DCA Level',
+        description: 'Current level of a DCA group',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'current_scene', name: 'Current Scene Number' },
+      { id: 'scene_name', name: 'Current Scene Name' },
+      { id: 'fader_ch_N', name: 'Fader Level (N = channel number)' },
+      { id: 'mute_ch_N', name: 'Mute State (N = channel number)' },
+      { id: 'ip_address', name: 'Device IP Address' },
+    ],
+    supportedModels: [
+      'dLive S7000',
+      'dLive S5000',
+      'dLive S3000',
+      'dLive CDM64',
+      'dLive CDM48',
+      'dLive CDM32',
+    ],
+  },
+
+  // --- allenheath-avantis ---
+  {
+    id: 'companion-mod-allenheath-avantis',
+    moduleId: 'allenheath-avantis',
+    name: 'Allen & Heath Avantis',
+    manufacturer: 'allen-heath',
+    protocol: 'TCP',
+    defaultPort: 51325,
+    description:
+      'Control Allen & Heath Avantis mixing consoles via TCP. Supports fader control, muting, scene and cue recall, and softkey triggering.',
+    actions: [
+      {
+        id: 'set_fader',
+        name: 'Set Fader',
+        description: 'Set the fader level of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 1023)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_mute',
+        name: 'Set Mute',
+        description: 'Set the mute state of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'Mute On' },
+              { id: 'off', label: 'Mute Off' },
+              { id: 'toggle', label: 'Toggle' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recall_scene',
+        name: 'Recall Scene',
+        description: 'Recall a scene by its number',
+        options: [
+          {
+            id: 'scene',
+            type: 'number',
+            label: 'Scene Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'recall_cue',
+        name: 'Recall Cue',
+        description: 'Recall a cue by its number',
+        options: [
+          {
+            id: 'cue',
+            type: 'number',
+            label: 'Cue Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_softkey',
+        name: 'Set Softkey',
+        description: 'Set the state of a softkey',
+        options: [
+          {
+            id: 'key',
+            type: 'number',
+            label: 'Softkey Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'On' },
+              { id: 'off', label: 'Off' },
+              { id: 'toggle', label: 'Toggle' },
+            ],
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'fader_position',
+        name: 'Fader Position',
+        description: 'Current fader position of a channel',
+        type: 'advanced',
+      },
+      {
+        id: 'mute_state',
+        name: 'Mute State',
+        description: 'Current mute state of a channel',
+        type: 'boolean',
+      },
+      {
+        id: 'current_scene',
+        name: 'Current Scene',
+        description: 'Currently active scene name or number',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'current_scene', name: 'Current Scene Number' },
+      { id: 'fader_ch_N', name: 'Fader Level (N = channel number)' },
+      { id: 'mute_ch_N', name: 'Mute State (N = channel number)' },
+    ],
+    supportedModels: ['Avantis', 'Avantis Solo'],
+  },
+
+  // --- allenheath-sq ---
+  {
+    id: 'companion-mod-allenheath-sq',
+    moduleId: 'allenheath-sq',
+    name: 'Allen & Heath SQ',
+    manufacturer: 'allen-heath',
+    protocol: 'MIDI/TCP',
+    defaultPort: 51326,
+    description:
+      'Control Allen & Heath SQ series mixing consoles via MIDI over TCP. Supports fader control, muting, scene recall, FX parameter adjustment, and preamp gain control.',
+    actions: [
+      {
+        id: 'set_fader',
+        name: 'Set Fader',
+        description: 'Set the fader level of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 1023)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_mute',
+        name: 'Set Mute',
+        description: 'Set the mute state of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'Mute On' },
+              { id: 'off', label: 'Mute Off' },
+              { id: 'toggle', label: 'Toggle' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recall_scene',
+        name: 'Recall Scene',
+        description: 'Recall a scene by its number',
+        options: [
+          {
+            id: 'scene',
+            type: 'number',
+            label: 'Scene Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_fx_param',
+        name: 'Set FX Parameter',
+        description: 'Set a parameter on an FX unit',
+        options: [
+          {
+            id: 'fx',
+            type: 'number',
+            label: 'FX Unit',
+            default: 1,
+          },
+          {
+            id: 'param',
+            type: 'number',
+            label: 'Parameter',
+            default: 1,
+          },
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Value',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_gan_preamp',
+        name: 'Set Gain/Preamp',
+        description: 'Set the preamp gain level of a channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'gain',
+            type: 'number',
+            label: 'Gain (dB)',
+            default: 0,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'fader_position',
+        name: 'Fader Position',
+        description: 'Current fader position of a channel',
+        type: 'advanced',
+      },
+      {
+        id: 'mute_state',
+        name: 'Mute State',
+        description: 'Current mute state of a channel',
+        type: 'boolean',
+      },
+      {
+        id: 'current_scene',
+        name: 'Current Scene',
+        description: 'Currently active scene name or number',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'current_scene', name: 'Current Scene Number' },
+      { id: 'fader_ch_N', name: 'Fader Level (N = channel number)' },
+      { id: 'mute_ch_N', name: 'Mute State (N = channel number)' },
+    ],
+    supportedModels: ['SQ-7', 'SQ-6', 'SQ-5'],
+  },
+
+  // --- behringer-x32 ---
+  {
+    id: 'companion-mod-behringer-x32',
+    moduleId: 'behringer-x32',
+    name: 'Behringer X32/M32',
+    manufacturer: 'behringer',
+    protocol: 'OSC/UDP',
+    defaultPort: 10023,
+    description:
+      'Control Behringer X32 and Midas M32 digital mixing consoles via OSC over UDP. Supports fader control, muting, scene recall, bus sends, solo, DCA levels, and cue triggering.',
+    actions: [
+      {
+        id: 'set_fader',
+        name: 'Set Fader',
+        description: 'Set the fader level of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0.0 - 1.0)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_mute',
+        name: 'Set Mute',
+        description: 'Set the mute state of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'Mute On' },
+              { id: 'off', label: 'Mute Off' },
+              { id: 'toggle', label: 'Toggle' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recall_scene',
+        name: 'Recall Scene',
+        description: 'Recall a scene by its number',
+        options: [
+          {
+            id: 'scene',
+            type: 'number',
+            label: 'Scene Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_bus_send',
+        name: 'Set Bus Send',
+        description: 'Set the send level from a channel to a mix bus',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'bus',
+            type: 'number',
+            label: 'Mix Bus',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0.0 - 1.0)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'go_cue',
+        name: 'Go Cue',
+        description: 'Execute the next cue in the cue list',
+        options: [],
+      },
+      {
+        id: 'solo_ch',
+        name: 'Solo Channel',
+        description: 'Set the solo state of a channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'Solo On' },
+              { id: 'off', label: 'Solo Off' },
+              { id: 'toggle', label: 'Toggle' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'set_dca',
+        name: 'Set DCA Level',
+        description: 'Set the level of a DCA group',
+        options: [
+          {
+            id: 'dca',
+            type: 'number',
+            label: 'DCA Group',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0.0 - 1.0)',
+            default: 0,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'fader_level',
+        name: 'Fader Level',
+        description: 'Current fader level of a channel',
+        type: 'advanced',
+      },
+      {
+        id: 'mute_state',
+        name: 'Mute State',
+        description: 'Current mute state of a channel',
+        type: 'boolean',
+      },
+      {
+        id: 'solo_active',
+        name: 'Solo Active',
+        description: 'Indicates whether solo is active on a channel',
+        type: 'boolean',
+      },
+      {
+        id: 'current_scene',
+        name: 'Current Scene',
+        description: 'Currently active scene name or number',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'current_scene', name: 'Current Scene Number' },
+      { id: 'fader_ch_N', name: 'Fader Level (N = channel number)' },
+      { id: 'mute_ch_N', name: 'Mute State (N = channel number)' },
+      { id: 'bus_level_N', name: 'Bus Level (N = bus number)' },
+      { id: 'dca_level_N', name: 'DCA Level (N = DCA number)' },
+    ],
+    supportedModels: [
+      'X32',
+      'X32 Rack',
+      'X32 Core',
+      'X32 Compact',
+      'X32 Producer',
+      'M32',
+      'M32R',
+      'M32C',
+    ],
+  },
+
+  // --- behringer-wing ---
+  {
+    id: 'companion-mod-behringer-wing',
+    moduleId: 'behringer-wing',
+    name: 'Behringer WING',
+    manufacturer: 'behringer',
+    protocol: 'OSC/UDP',
+    defaultPort: 2223,
+    description:
+      'Control Behringer WING digital mixing consoles via OSC over UDP. Supports fader control, muting, snapshot recall, aux sends, and FX parameter adjustment.',
+    actions: [
+      {
+        id: 'set_fader',
+        name: 'Set Fader',
+        description: 'Set the fader level of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0.0 - 1.0)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_mute',
+        name: 'Set Mute',
+        description: 'Set the mute state of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'Mute On' },
+              { id: 'off', label: 'Mute Off' },
+              { id: 'toggle', label: 'Toggle' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recall_snapshot',
+        name: 'Recall Snapshot',
+        description: 'Recall a snapshot by its number',
+        options: [
+          {
+            id: 'snapshot',
+            type: 'number',
+            label: 'Snapshot Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_aux_send',
+        name: 'Set Aux Send',
+        description: 'Set the aux send level from a channel to an aux bus',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'aux',
+            type: 'number',
+            label: 'Aux Bus',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0.0 - 1.0)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_fx_param',
+        name: 'Set FX Parameter',
+        description: 'Set a parameter on an FX unit',
+        options: [
+          {
+            id: 'fx',
+            type: 'number',
+            label: 'FX Unit',
+            default: 1,
+          },
+          {
+            id: 'param',
+            type: 'number',
+            label: 'Parameter',
+            default: 1,
+          },
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Value',
+            default: 0,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'fader_level',
+        name: 'Fader Level',
+        description: 'Current fader level of a channel',
+        type: 'advanced',
+      },
+      {
+        id: 'mute_state',
+        name: 'Mute State',
+        description: 'Current mute state of a channel',
+        type: 'boolean',
+      },
+      {
+        id: 'current_snapshot',
+        name: 'Current Snapshot',
+        description: 'Currently active snapshot name or number',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'current_snapshot', name: 'Current Snapshot Number' },
+      { id: 'fader_ch_N', name: 'Fader Level (N = channel number)' },
+      { id: 'mute_ch_N', name: 'Mute State (N = channel number)' },
+    ],
+    supportedModels: ['WING', 'WING Rack'],
+  },
+
+  // --- shure-wireless ---
+  {
+    id: 'companion-mod-shure-wireless',
+    moduleId: 'shure-wireless',
+    name: 'Shure Wireless Systems',
+    manufacturer: 'shure',
+    protocol: 'TCP',
+    defaultPort: 2202,
+    description:
+      'Monitor and control Shure wireless microphone systems via TCP. Supports channel naming, RF power control, audio gain, frequency management, and real-time monitoring of RF quality, battery, and audio levels.',
+    actions: [
+      {
+        id: 'set_channel_name',
+        name: 'Set Channel Name',
+        description: 'Set the display name of a wireless channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'name',
+            type: 'textinput',
+            label: 'Channel Name',
+            default: '',
+          },
+        ],
+      },
+      {
+        id: 'set_rf_power',
+        name: 'Set RF Power',
+        description: 'Set the RF transmission power level',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'dropdown',
+            label: 'Power Level',
+            default: 'normal',
+            choices: [
+              { id: 'low', label: 'Low' },
+              { id: 'normal', label: 'Normal' },
+              { id: 'high', label: 'High' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'flash_channel',
+        name: 'Flash Channel',
+        description: 'Flash the LED on a receiver channel for identification',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_audio_gain',
+        name: 'Set Audio Gain',
+        description: 'Set the audio output gain of a channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'gain',
+            type: 'number',
+            label: 'Gain (dB)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_frequency',
+        name: 'Set Frequency',
+        description: 'Set the operating frequency of a channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'freq',
+            type: 'textinput',
+            label: 'Frequency (MHz)',
+            default: '',
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'rf_quality',
+        name: 'RF Quality',
+        description: 'Current RF signal quality level',
+        type: 'advanced',
+      },
+      {
+        id: 'battery_level',
+        name: 'Battery Level',
+        description: 'Current battery level of the transmitter',
+        type: 'advanced',
+      },
+      {
+        id: 'audio_level',
+        name: 'Audio Level',
+        description: 'Current audio input level',
+        type: 'advanced',
+      },
+      {
+        id: 'rf_interference',
+        name: 'RF Interference',
+        description: 'Indicates whether RF interference is detected',
+        type: 'boolean',
+      },
+      {
+        id: 'encryption_status',
+        name: 'Encryption Status',
+        description: 'Indicates whether encryption is active on the channel',
+        type: 'boolean',
+      },
+    ],
+    variables: [
+      { id: 'rf_level_N', name: 'RF Level (N = channel number)' },
+      { id: 'battery_bars_N', name: 'Battery Bars (N = channel number)' },
+      { id: 'battery_runtime_N', name: 'Battery Runtime (N = channel number)' },
+      { id: 'audio_level_N', name: 'Audio Level (N = channel number)' },
+      { id: 'channel_name_N', name: 'Channel Name (N = channel number)' },
+      { id: 'frequency_N', name: 'Frequency (N = channel number)' },
+      { id: 'encryption_N', name: 'Encryption Status (N = channel number)' },
+    ],
+    supportedModels: ['AD4Q', 'AD4D', 'ULXD4Q', 'ULXD4D', 'SLX4D', 'PSM1000'],
+  },
+
+  // --- sennheiser-ewdx ---
+  {
+    id: 'companion-mod-sennheiser-ewdx',
+    moduleId: 'sennheiser-ewdx',
+    name: 'Sennheiser EW-DX',
+    manufacturer: 'sennheiser',
+    protocol: 'TCP/JSON',
+    defaultPort: 45,
+    description:
+      'Monitor and control Sennheiser EW-DX wireless microphone systems via TCP with JSON messaging. Supports channel naming, identification, sensitivity control, muting, low-cut filtering, and real-time monitoring of RF quality, battery, and audio levels.',
+    actions: [
+      {
+        id: 'set_channel_name',
+        name: 'Set Channel Name',
+        description: 'Set the display name of a wireless channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'name',
+            type: 'textinput',
+            label: 'Channel Name',
+            default: '',
+          },
+        ],
+      },
+      {
+        id: 'identify_channel',
+        name: 'Identify Channel',
+        description: 'Flash the LED on a receiver channel for identification',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_sensitivity',
+        name: 'Set Sensitivity',
+        description: 'Set the input sensitivity level of a channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Sensitivity Level (dB)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_mute',
+        name: 'Set Mute',
+        description: 'Set the mute state of a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'Mute On' },
+              { id: 'off', label: 'Mute Off' },
+              { id: 'toggle', label: 'Toggle' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'set_low_cut',
+        name: 'Set Low Cut',
+        description: 'Set the low-cut filter frequency on a channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel',
+            default: 1,
+          },
+          {
+            id: 'freq',
+            type: 'number',
+            label: 'Frequency (Hz)',
+            default: 80,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'rf_quality',
+        name: 'RF Quality',
+        description: 'Current RF signal quality level',
+        type: 'advanced',
+      },
+      {
+        id: 'battery_level',
+        name: 'Battery Level',
+        description: 'Current battery level of the transmitter',
+        type: 'advanced',
+      },
+      {
+        id: 'audio_level',
+        name: 'Audio Level',
+        description: 'Current audio input level',
+        type: 'advanced',
+      },
+      {
+        id: 'link_quality',
+        name: 'Link Quality',
+        description: 'Indicates whether the wireless link quality is good',
+        type: 'boolean',
+      },
+    ],
+    variables: [
+      { id: 'rf_level_N', name: 'RF Level (N = channel number)' },
+      { id: 'battery_percent_N', name: 'Battery Percentage (N = channel number)' },
+      { id: 'audio_level_N', name: 'Audio Level (N = channel number)' },
+      { id: 'channel_name_N', name: 'Channel Name (N = channel number)' },
+      { id: 'frequency_N', name: 'Frequency (N = channel number)' },
+      { id: 'diversity_N', name: 'Diversity Status (N = channel number)' },
+    ],
+    supportedModels: ['EW-DX EM 4', 'EW-DX EM 2'],
+  },
+  // ============================================================
+  // CAMERA / VIDEO / STREAMING - 8 modules
+  // ============================================================
+
+  // --- panasonic-ptz ---
+  {
+    id: 'companion-mod-panasonic-ptz',
+    moduleId: 'panasonic-ptz',
+    name: 'Panasonic PTZ Camera Control',
+    manufacturer: 'panasonic',
+    protocol: 'HTTP/CGI',
+    defaultPort: 80,
+    description:
+      'Control Panasonic PTZ cameras via the HTTP/CGI interface. Supports pan/tilt/zoom, preset recall, iris, gain, white balance, tally, and OSD menu access.',
+    actions: [
+      {
+        id: 'pan_tilt',
+        name: 'Pan/Tilt',
+        description: 'Move the camera pan and tilt axes',
+        options: [
+          {
+            id: 'speed',
+            type: 'number',
+            label: 'Speed (1-49)',
+            default: 25,
+          },
+          {
+            id: 'direction',
+            type: 'dropdown',
+            label: 'Direction',
+            default: 'up',
+            choices: [
+              { id: 'up', label: 'Up' },
+              { id: 'down', label: 'Down' },
+              { id: 'left', label: 'Left' },
+              { id: 'right', label: 'Right' },
+              { id: 'up_left', label: 'Up Left' },
+              { id: 'up_right', label: 'Up Right' },
+              { id: 'down_left', label: 'Down Left' },
+              { id: 'down_right', label: 'Down Right' },
+              { id: 'stop', label: 'Stop' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'zoom',
+        name: 'Zoom',
+        description: 'Zoom the camera lens in or out',
+        options: [
+          {
+            id: 'speed',
+            type: 'number',
+            label: 'Speed (1-49)',
+            default: 25,
+          },
+          {
+            id: 'direction',
+            type: 'dropdown',
+            label: 'Direction',
+            default: 'in',
+            choices: [
+              { id: 'in', label: 'Zoom In' },
+              { id: 'out', label: 'Zoom Out' },
+              { id: 'stop', label: 'Stop' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'set_preset',
+        name: 'Set Preset',
+        description: 'Store the current camera position to a preset slot',
+        options: [
+          {
+            id: 'preset',
+            type: 'number',
+            label: 'Preset Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'recall_preset',
+        name: 'Recall Preset',
+        description: 'Move the camera to a stored preset position',
+        options: [
+          {
+            id: 'preset',
+            type: 'number',
+            label: 'Preset Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'power_on',
+        name: 'Power On',
+        description: 'Power on the camera',
+        options: [],
+      },
+      {
+        id: 'power_off',
+        name: 'Power Off',
+        description: 'Power off the camera',
+        options: [],
+      },
+      {
+        id: 'auto_focus',
+        name: 'Auto Focus',
+        description: 'Trigger one-shot auto focus',
+        options: [],
+      },
+      {
+        id: 'set_iris',
+        name: 'Set Iris',
+        description: 'Set the iris aperture value',
+        options: [
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Iris Value (0-255)',
+            default: 128,
+          },
+        ],
+      },
+      {
+        id: 'set_gain',
+        name: 'Set Gain',
+        description: 'Set the camera gain value',
+        options: [
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Gain Value (0-255)',
+            default: 128,
+          },
+        ],
+      },
+      {
+        id: 'set_white_balance',
+        name: 'Set White Balance',
+        description: 'Set the white balance mode',
+        options: [
+          {
+            id: 'mode',
+            type: 'dropdown',
+            label: 'White Balance Mode',
+            default: 'auto',
+            choices: [
+              { id: 'auto', label: 'Auto' },
+              { id: 'manual', label: 'Manual' },
+              { id: '3200k', label: '3200K' },
+              { id: '5600k', label: '5600K' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'tally_on',
+        name: 'Tally On',
+        description: 'Turn on the tally light',
+        options: [],
+      },
+      {
+        id: 'tally_off',
+        name: 'Tally Off',
+        description: 'Turn off the tally light',
+        options: [],
+      },
+      {
+        id: 'osd_menu_toggle',
+        name: 'OSD Menu Toggle',
+        description: 'Toggle the on-screen display menu',
+        options: [],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'power_state',
+        name: 'Power State',
+        description: 'Indicates whether the camera is powered on',
+        type: 'boolean',
+      },
+      {
+        id: 'tally_state',
+        name: 'Tally State',
+        description: 'Indicates whether the tally light is active',
+        type: 'boolean',
+      },
+      {
+        id: 'recording_state',
+        name: 'Recording State',
+        description: 'Indicates whether the camera is currently recording',
+        type: 'boolean',
+      },
+      {
+        id: 'preset_active',
+        name: 'Preset Active',
+        description: 'Indicates the currently active preset number',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'power_state', name: 'Power State' },
+      { id: 'tally_state', name: 'Tally State' },
+      { id: 'zoom_position', name: 'Zoom Position' },
+      { id: 'pan_position', name: 'Pan Position' },
+      { id: 'tilt_position', name: 'Tilt Position' },
+      { id: 'preset_name_1', name: 'Preset 1 Name' },
+      { id: 'preset_name_2', name: 'Preset 2 Name' },
+      { id: 'preset_name_3', name: 'Preset 3 Name' },
+      { id: 'preset_name_4', name: 'Preset 4 Name' },
+      { id: 'preset_name_5', name: 'Preset 5 Name' },
+      { id: 'model_name', name: 'Model Name' },
+    ],
+    supportedModels: ['AW-UE150', 'AW-UE100', 'AW-HE130', 'AW-RP150', 'AW-RP60'],
+  },
+
+  // --- sony-visca ---
+  {
+    id: 'companion-mod-sony-visca',
+    moduleId: 'sony-visca',
+    name: 'Sony VISCA Camera Control',
+    manufacturer: 'sony',
+    protocol: 'VISCA/IP',
+    defaultPort: 52381,
+    description:
+      'Control Sony cameras via the VISCA over IP protocol. Supports pan/tilt/zoom, preset memory, power, focus, exposure mode, and tally control.',
+    actions: [
+      {
+        id: 'pan_tilt',
+        name: 'Pan/Tilt',
+        description: 'Move the camera pan and tilt axes',
+        options: [
+          {
+            id: 'speed',
+            type: 'number',
+            label: 'Speed (1-24)',
+            default: 12,
+          },
+          {
+            id: 'direction',
+            type: 'dropdown',
+            label: 'Direction',
+            default: 'up',
+            choices: [
+              { id: 'up', label: 'Up' },
+              { id: 'down', label: 'Down' },
+              { id: 'left', label: 'Left' },
+              { id: 'right', label: 'Right' },
+              { id: 'up_left', label: 'Up Left' },
+              { id: 'up_right', label: 'Up Right' },
+              { id: 'down_left', label: 'Down Left' },
+              { id: 'down_right', label: 'Down Right' },
+              { id: 'stop', label: 'Stop' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'zoom',
+        name: 'Zoom',
+        description: 'Zoom the camera lens in or out',
+        options: [
+          {
+            id: 'speed',
+            type: 'number',
+            label: 'Speed (0-7)',
+            default: 4,
+          },
+          {
+            id: 'direction',
+            type: 'dropdown',
+            label: 'Direction',
+            default: 'in',
+            choices: [
+              { id: 'in', label: 'Zoom In' },
+              { id: 'out', label: 'Zoom Out' },
+              { id: 'stop', label: 'Stop' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recall_preset',
+        name: 'Recall Preset',
+        description: 'Move the camera to a stored preset position',
+        options: [
+          {
+            id: 'preset',
+            type: 'number',
+            label: 'Preset Number (0-255)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'store_preset',
+        name: 'Store Preset',
+        description: 'Store the current camera position to a preset slot',
+        options: [
+          {
+            id: 'preset',
+            type: 'number',
+            label: 'Preset Number (0-255)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'power_on',
+        name: 'Power On',
+        description: 'Power on the camera',
+        options: [],
+      },
+      {
+        id: 'power_off',
+        name: 'Power Off',
+        description: 'Power off the camera',
+        options: [],
+      },
+      {
+        id: 'set_focus_mode',
+        name: 'Set Focus Mode',
+        description: 'Set the camera focus mode',
+        options: [
+          {
+            id: 'mode',
+            type: 'dropdown',
+            label: 'Focus Mode',
+            default: 'auto',
+            choices: [
+              { id: 'auto', label: 'Auto' },
+              { id: 'manual', label: 'Manual' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'auto_focus_trigger',
+        name: 'Auto Focus Trigger',
+        description: 'Trigger one-push auto focus',
+        options: [],
+      },
+      {
+        id: 'set_exposure_mode',
+        name: 'Set Exposure Mode',
+        description: 'Set the camera exposure mode',
+        options: [
+          {
+            id: 'mode',
+            type: 'dropdown',
+            label: 'Exposure Mode',
+            default: 'auto',
+            choices: [
+              { id: 'auto', label: 'Auto' },
+              { id: 'manual', label: 'Manual' },
+              { id: 'shutter-priority', label: 'Shutter Priority' },
+              { id: 'iris-priority', label: 'Iris Priority' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'tally_on',
+        name: 'Tally On',
+        description: 'Turn on the tally light',
+        options: [],
+      },
+      {
+        id: 'tally_off',
+        name: 'Tally Off',
+        description: 'Turn off the tally light',
+        options: [],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'power_state',
+        name: 'Power State',
+        description: 'Indicates whether the camera is powered on',
+        type: 'boolean',
+      },
+      {
+        id: 'tally_state',
+        name: 'Tally State',
+        description: 'Indicates whether the tally light is active',
+        type: 'boolean',
+      },
+      {
+        id: 'zoom_position',
+        name: 'Zoom Position',
+        description: 'Current zoom position value',
+        type: 'advanced',
+      },
+      {
+        id: 'focus_mode',
+        name: 'Focus Mode',
+        description: 'Current focus mode of the camera',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'power_state', name: 'Power State' },
+      { id: 'zoom_position', name: 'Zoom Position' },
+      { id: 'pan_position', name: 'Pan Position' },
+      { id: 'tilt_position', name: 'Tilt Position' },
+      { id: 'focus_mode', name: 'Focus Mode' },
+      { id: 'exposure_mode', name: 'Exposure Mode' },
+    ],
+    supportedModels: ['BRC-X400', 'BRC-X1000', 'SRG-X400', 'SRG-X120', 'FR7'],
+  },
+
+  // --- magewell-ultrastream ---
+  {
+    id: 'companion-mod-magewell-ultrastream',
+    moduleId: 'magewell-ultrastream',
+    name: 'Magewell Encoding/Streaming',
+    manufacturer: 'magewell',
+    protocol: 'HTTP/REST',
+    defaultPort: 80,
+    description:
+      'Control Magewell encoding and streaming devices via the HTTP REST API. Manage streaming, recording, input selection, bitrate, resolution, and snapshot capture.',
+    actions: [
+      {
+        id: 'start_stream',
+        name: 'Start Stream',
+        description: 'Start the live stream',
+        options: [],
+      },
+      {
+        id: 'stop_stream',
+        name: 'Stop Stream',
+        description: 'Stop the live stream',
+        options: [],
+      },
+      {
+        id: 'start_record',
+        name: 'Start Record',
+        description: 'Start recording to local storage',
+        options: [],
+      },
+      {
+        id: 'stop_record',
+        name: 'Stop Record',
+        description: 'Stop recording',
+        options: [],
+      },
+      {
+        id: 'set_bitrate',
+        name: 'Set Bitrate',
+        description: 'Set the encoding bitrate in kbps',
+        options: [
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Bitrate (kbps)',
+            default: 5000,
+          },
+        ],
+      },
+      {
+        id: 'set_resolution',
+        name: 'Set Resolution',
+        description: 'Set the encoding output resolution',
+        options: [
+          {
+            id: 'resolution',
+            type: 'dropdown',
+            label: 'Resolution',
+            default: '1080p',
+            choices: [
+              { id: '4k', label: '4K (3840x2160)' },
+              { id: '1080p', label: '1080p (1920x1080)' },
+              { id: '720p', label: '720p (1280x720)' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'take_snapshot',
+        name: 'Take Snapshot',
+        description: 'Capture a still image from the current input',
+        options: [],
+      },
+      {
+        id: 'set_stream_url',
+        name: 'Set Stream URL',
+        description: 'Set the streaming destination URL',
+        options: [
+          {
+            id: 'url',
+            type: 'textinput',
+            label: 'Stream URL',
+            default: '',
+          },
+        ],
+      },
+      {
+        id: 'switch_input',
+        name: 'Switch Input',
+        description: 'Switch the active input source',
+        options: [
+          {
+            id: 'input',
+            type: 'dropdown',
+            label: 'Input Source',
+            default: 'hdmi',
+            choices: [
+              { id: 'hdmi', label: 'HDMI' },
+              { id: 'sdi', label: 'SDI' },
+              { id: 'usb', label: 'USB' },
+            ],
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'streaming_state',
+        name: 'Streaming State',
+        description: 'Indicates whether the device is currently streaming',
+        type: 'boolean',
+      },
+      {
+        id: 'recording_state',
+        name: 'Recording State',
+        description: 'Indicates whether the device is currently recording',
+        type: 'boolean',
+      },
+      {
+        id: 'input_signal',
+        name: 'Input Signal',
+        description: 'Indicates whether a valid input signal is detected',
+        type: 'boolean',
+      },
+      {
+        id: 'encoding_status',
+        name: 'Encoding Status',
+        description: 'Current encoding status of the device',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'stream_status', name: 'Stream Status' },
+      { id: 'record_status', name: 'Record Status' },
+      { id: 'input_resolution', name: 'Input Resolution' },
+      { id: 'input_framerate', name: 'Input Frame Rate' },
+      { id: 'bitrate', name: 'Current Bitrate' },
+      { id: 'uptime', name: 'Device Uptime' },
+      { id: 'cpu_temp', name: 'CPU Temperature' },
+      { id: 'stream_duration', name: 'Stream Duration' },
+    ],
+    supportedModels: [
+      'Ultra Encode HDMI Plus',
+      'Ultra Encode AIO',
+      'Ultra Stream HDMI',
+      'Pro Convert 4K Plus',
+    ],
+  },
+
+  // --- teradek-vidiu ---
+  {
+    id: 'companion-mod-teradek-vidiu',
+    moduleId: 'teradek-vidiu',
+    name: 'Teradek Streaming/Encoding',
+    manufacturer: 'teradek',
+    protocol: 'HTTP/REST',
+    defaultPort: 80,
+    description:
+      'Control Teradek streaming and encoding devices via the HTTP REST API. Manage streaming, recording, input selection, bitrate, streaming modes, and device reboot.',
+    actions: [
+      {
+        id: 'start_stream',
+        name: 'Start Stream',
+        description: 'Start the live stream',
+        options: [],
+      },
+      {
+        id: 'stop_stream',
+        name: 'Stop Stream',
+        description: 'Stop the live stream',
+        options: [],
+      },
+      {
+        id: 'start_record',
+        name: 'Start Record',
+        description: 'Start recording to local storage',
+        options: [],
+      },
+      {
+        id: 'stop_record',
+        name: 'Stop Record',
+        description: 'Stop recording',
+        options: [],
+      },
+      {
+        id: 'set_bitrate',
+        name: 'Set Bitrate',
+        description: 'Set the encoding bitrate in kbps',
+        options: [
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Bitrate (kbps)',
+            default: 5000,
+          },
+        ],
+      },
+      {
+        id: 'switch_input',
+        name: 'Switch Input',
+        description: 'Switch the active input source',
+        options: [
+          {
+            id: 'input',
+            type: 'dropdown',
+            label: 'Input Source',
+            default: 'sdi',
+            choices: [
+              { id: 'sdi', label: 'SDI' },
+              { id: 'hdmi', label: 'HDMI' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'set_streaming_mode',
+        name: 'Set Streaming Mode',
+        description: 'Set the streaming protocol mode',
+        options: [
+          {
+            id: 'mode',
+            type: 'dropdown',
+            label: 'Streaming Mode',
+            default: 'rtmp',
+            choices: [
+              { id: 'rtmp', label: 'RTMP' },
+              { id: 'srt', label: 'SRT' },
+              { id: 'hls', label: 'HLS' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'reboot',
+        name: 'Reboot',
+        description: 'Reboot the device',
+        options: [],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'streaming_state',
+        name: 'Streaming State',
+        description: 'Indicates whether the device is currently streaming',
+        type: 'boolean',
+      },
+      {
+        id: 'recording_state',
+        name: 'Recording State',
+        description: 'Indicates whether the device is currently recording',
+        type: 'boolean',
+      },
+      {
+        id: 'signal_detected',
+        name: 'Signal Detected',
+        description: 'Indicates whether a valid input signal is detected',
+        type: 'boolean',
+      },
+      {
+        id: 'connection_quality',
+        name: 'Connection Quality',
+        description: 'Current connection quality percentage',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'stream_status', name: 'Stream Status' },
+      { id: 'record_status', name: 'Record Status' },
+      { id: 'stream_duration', name: 'Stream Duration' },
+      { id: 'bitrate_current', name: 'Current Bitrate' },
+      { id: 'connection_quality', name: 'Connection Quality' },
+      { id: 'input_format', name: 'Input Format' },
+      { id: 'battery_level', name: 'Battery Level' },
+    ],
+    supportedModels: ['Prism Flex', 'Prism Mobile', 'Cube 655', 'Cube 755', 'VidiU Go'],
+  },
+
+  // --- ptzoptics-visca ---
+  {
+    id: 'companion-mod-ptzoptics-visca',
+    moduleId: 'ptzoptics-visca',
+    name: 'PTZOptics Camera Control',
+    manufacturer: 'ptzoptics',
+    protocol: 'VISCA/TCP',
+    defaultPort: 5678,
+    description:
+      'Control PTZOptics cameras via VISCA over TCP. Supports pan/tilt/zoom, preset memory, focus mode, white balance, power control, and OSD toggle.',
+    actions: [
+      {
+        id: 'pan_tilt',
+        name: 'Pan/Tilt',
+        description: 'Move the camera pan and tilt axes',
+        options: [
+          {
+            id: 'speed',
+            type: 'number',
+            label: 'Speed (1-24)',
+            default: 12,
+          },
+          {
+            id: 'direction',
+            type: 'dropdown',
+            label: 'Direction',
+            default: 'up',
+            choices: [
+              { id: 'up', label: 'Up' },
+              { id: 'down', label: 'Down' },
+              { id: 'left', label: 'Left' },
+              { id: 'right', label: 'Right' },
+              { id: 'up_left', label: 'Up Left' },
+              { id: 'up_right', label: 'Up Right' },
+              { id: 'down_left', label: 'Down Left' },
+              { id: 'down_right', label: 'Down Right' },
+              { id: 'stop', label: 'Stop' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'zoom',
+        name: 'Zoom',
+        description: 'Zoom the camera lens in or out',
+        options: [
+          {
+            id: 'speed',
+            type: 'number',
+            label: 'Speed (0-7)',
+            default: 4,
+          },
+          {
+            id: 'direction',
+            type: 'dropdown',
+            label: 'Direction',
+            default: 'in',
+            choices: [
+              { id: 'in', label: 'Zoom In' },
+              { id: 'out', label: 'Zoom Out' },
+              { id: 'stop', label: 'Stop' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recall_preset',
+        name: 'Recall Preset',
+        description: 'Move the camera to a stored preset position',
+        options: [
+          {
+            id: 'preset',
+            type: 'number',
+            label: 'Preset Number (0-255)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'store_preset',
+        name: 'Store Preset',
+        description: 'Store the current camera position to a preset slot',
+        options: [
+          {
+            id: 'preset',
+            type: 'number',
+            label: 'Preset Number (0-255)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_focus_mode',
+        name: 'Set Focus Mode',
+        description: 'Set the camera focus mode',
+        options: [
+          {
+            id: 'mode',
+            type: 'dropdown',
+            label: 'Focus Mode',
+            default: 'auto',
+            choices: [
+              { id: 'auto', label: 'Auto' },
+              { id: 'manual', label: 'Manual' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'power_on',
+        name: 'Power On',
+        description: 'Power on the camera',
+        options: [],
+      },
+      {
+        id: 'power_off',
+        name: 'Power Off',
+        description: 'Power off the camera',
+        options: [],
+      },
+      {
+        id: 'set_wb_mode',
+        name: 'Set White Balance Mode',
+        description: 'Set the white balance mode',
+        options: [
+          {
+            id: 'mode',
+            type: 'dropdown',
+            label: 'White Balance Mode',
+            default: 'auto',
+            choices: [
+              { id: 'auto', label: 'Auto' },
+              { id: '3200k', label: '3200K' },
+              { id: '5600k', label: '5600K' },
+              { id: 'one-push', label: 'One Push' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'osd_toggle',
+        name: 'OSD Toggle',
+        description: 'Toggle the on-screen display menu',
+        options: [],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'power_state',
+        name: 'Power State',
+        description: 'Indicates whether the camera is powered on',
+        type: 'boolean',
+      },
+      {
+        id: 'tally_state',
+        name: 'Tally State',
+        description: 'Indicates whether the tally light is active',
+        type: 'boolean',
+      },
+      {
+        id: 'preset_active',
+        name: 'Preset Active',
+        description: 'Indicates the currently active preset number',
+        type: 'advanced',
+      },
+      {
+        id: 'autofocus_state',
+        name: 'Autofocus State',
+        description: 'Indicates whether autofocus is enabled',
+        type: 'boolean',
+      },
+    ],
+    variables: [
+      { id: 'power_state', name: 'Power State' },
+      { id: 'zoom_position', name: 'Zoom Position' },
+      { id: 'pan_position', name: 'Pan Position' },
+      { id: 'tilt_position', name: 'Tilt Position' },
+      { id: 'preset_last_recalled', name: 'Last Recalled Preset' },
+    ],
+    supportedModels: ['Move 4K', 'Link 4K', 'Move SE'],
+  },
+
+  // --- datavideo-dvip ---
+  {
+    id: 'companion-mod-datavideo-dvip',
+    moduleId: 'datavideo-dvip',
+    name: 'Datavideo DVIP Control',
+    manufacturer: 'datavideo',
+    protocol: 'DVIP/TCP',
+    defaultPort: 5728,
+    description:
+      'Control Datavideo video switchers via the DVIP protocol over TCP. Supports program/preview selection, transitions, fade to black, PiP, keying, DSK, and macro recall.',
+    actions: [
+      {
+        id: 'cut',
+        name: 'Cut',
+        description: 'Execute a hard cut transition',
+        options: [],
+      },
+      {
+        id: 'auto_transition',
+        name: 'Auto Transition',
+        description: 'Execute an automatic transition with the configured speed',
+        options: [
+          {
+            id: 'speed',
+            type: 'number',
+            label: 'Transition Speed (frames)',
+            default: 30,
+          },
+        ],
+      },
+      {
+        id: 'set_pgm',
+        name: 'Set Program',
+        description: 'Set the program bus source',
+        options: [
+          {
+            id: 'source',
+            type: 'number',
+            label: 'Source Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_pvw',
+        name: 'Set Preview',
+        description: 'Set the preview bus source',
+        options: [
+          {
+            id: 'source',
+            type: 'number',
+            label: 'Source Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'fade_to_black',
+        name: 'Fade to Black',
+        description: 'Toggle fade to black on or off',
+        options: [],
+      },
+      {
+        id: 'set_pip_source',
+        name: 'Set PiP Source',
+        description: 'Set the picture-in-picture source',
+        options: [
+          {
+            id: 'source',
+            type: 'number',
+            label: 'Source Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_key_source',
+        name: 'Set Key Source',
+        description: 'Set the upstream key source',
+        options: [
+          {
+            id: 'source',
+            type: 'number',
+            label: 'Source Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_dsk_state',
+        name: 'Set DSK State',
+        description: 'Set the downstream keyer on or off',
+        options: [
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'DSK State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'On' },
+              { id: 'off', label: 'Off' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recall_macro',
+        name: 'Recall Macro',
+        description: 'Recall and execute a stored macro',
+        options: [
+          {
+            id: 'macro',
+            type: 'number',
+            label: 'Macro Number',
+            default: 1,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'pgm_source',
+        name: 'Program Source',
+        description: 'Indicates the current program bus source',
+        type: 'advanced',
+      },
+      {
+        id: 'pvw_source',
+        name: 'Preview Source',
+        description: 'Indicates the current preview bus source',
+        type: 'advanced',
+      },
+      {
+        id: 'ftb_state',
+        name: 'Fade to Black State',
+        description: 'Indicates whether fade to black is active',
+        type: 'boolean',
+      },
+      {
+        id: 'transition_active',
+        name: 'Transition Active',
+        description: 'Indicates whether a transition is currently in progress',
+        type: 'boolean',
+      },
+    ],
+    variables: [
+      { id: 'pgm_source', name: 'Program Source' },
+      { id: 'pvw_source', name: 'Preview Source' },
+      { id: 'transition_position', name: 'Transition Position' },
+      { id: 'ftb_state', name: 'Fade to Black State' },
+      { id: 'dsk_state', name: 'DSK State' },
+    ],
+    supportedModels: ['SE-4000', 'SE-3200', 'SE-2200'],
+  },
+
+  // --- datavideo-ptz ---
+  {
+    id: 'companion-mod-datavideo-ptz',
+    moduleId: 'datavideo-ptz',
+    name: 'Datavideo PTZ Camera',
+    manufacturer: 'datavideo',
+    protocol: 'VISCA/IP',
+    defaultPort: 5500,
+    description:
+      'Control Datavideo PTZ cameras via VISCA over IP. Supports pan/tilt/zoom, preset memory, power control, and tally light management.',
+    actions: [
+      {
+        id: 'pan_tilt',
+        name: 'Pan/Tilt',
+        description: 'Move the camera pan and tilt axes',
+        options: [
+          {
+            id: 'speed',
+            type: 'number',
+            label: 'Speed (1-24)',
+            default: 12,
+          },
+          {
+            id: 'direction',
+            type: 'dropdown',
+            label: 'Direction',
+            default: 'up',
+            choices: [
+              { id: 'up', label: 'Up' },
+              { id: 'down', label: 'Down' },
+              { id: 'left', label: 'Left' },
+              { id: 'right', label: 'Right' },
+              { id: 'up_left', label: 'Up Left' },
+              { id: 'up_right', label: 'Up Right' },
+              { id: 'down_left', label: 'Down Left' },
+              { id: 'down_right', label: 'Down Right' },
+              { id: 'stop', label: 'Stop' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'zoom',
+        name: 'Zoom',
+        description: 'Zoom the camera lens in or out',
+        options: [
+          {
+            id: 'speed',
+            type: 'number',
+            label: 'Speed (0-7)',
+            default: 4,
+          },
+          {
+            id: 'direction',
+            type: 'dropdown',
+            label: 'Direction',
+            default: 'in',
+            choices: [
+              { id: 'in', label: 'Zoom In' },
+              { id: 'out', label: 'Zoom Out' },
+              { id: 'stop', label: 'Stop' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'recall_preset',
+        name: 'Recall Preset',
+        description: 'Move the camera to a stored preset position',
+        options: [
+          {
+            id: 'preset',
+            type: 'number',
+            label: 'Preset Number (0-255)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'store_preset',
+        name: 'Store Preset',
+        description: 'Store the current camera position to a preset slot',
+        options: [
+          {
+            id: 'preset',
+            type: 'number',
+            label: 'Preset Number (0-255)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'power_on',
+        name: 'Power On',
+        description: 'Power on the camera',
+        options: [],
+      },
+      {
+        id: 'power_off',
+        name: 'Power Off',
+        description: 'Power off the camera',
+        options: [],
+      },
+      {
+        id: 'tally_on',
+        name: 'Tally On',
+        description: 'Turn on the tally light',
+        options: [],
+      },
+      {
+        id: 'tally_off',
+        name: 'Tally Off',
+        description: 'Turn off the tally light',
+        options: [],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'power_state',
+        name: 'Power State',
+        description: 'Indicates whether the camera is powered on',
+        type: 'boolean',
+      },
+      {
+        id: 'tally_state',
+        name: 'Tally State',
+        description: 'Indicates whether the tally light is active',
+        type: 'boolean',
+      },
+      {
+        id: 'preset_active',
+        name: 'Preset Active',
+        description: 'Indicates the currently active preset number',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'power_state', name: 'Power State' },
+      { id: 'zoom_position', name: 'Zoom Position' },
+      { id: 'preset_last', name: 'Last Recalled Preset' },
+    ],
+    supportedModels: ['PTC-280', 'PTC-150TL', 'PTC-140T'],
+  },
+
+  // --- roland-v60hd ---
+  {
+    id: 'companion-mod-roland-v60hd',
+    moduleId: 'roland-v60hd',
+    name: 'Roland Video Switcher',
+    manufacturer: 'roland',
+    protocol: 'TCP/SMART',
+    defaultPort: 8023,
+    description:
+      'Control Roland video switchers via the TCP SMART protocol. Supports program/preview selection, transitions, fade to black, still images, memory recall, audio mixing, and output assignment.',
+    actions: [
+      {
+        id: 'cut',
+        name: 'Cut',
+        description: 'Execute a hard cut transition',
+        options: [],
+      },
+      {
+        id: 'auto_transition',
+        name: 'Auto Transition',
+        description: 'Execute an automatic transition',
+        options: [],
+      },
+      {
+        id: 'set_pgm',
+        name: 'Set Program',
+        description: 'Set the program bus source',
+        options: [
+          {
+            id: 'source',
+            type: 'number',
+            label: 'Source Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_pvw',
+        name: 'Set Preview',
+        description: 'Set the preview bus source',
+        options: [
+          {
+            id: 'source',
+            type: 'number',
+            label: 'Source Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'fade_to_black',
+        name: 'Fade to Black',
+        description: 'Toggle fade to black on or off',
+        options: [],
+      },
+      {
+        id: 'set_transition_type',
+        name: 'Set Transition Type',
+        description: 'Set the transition effect type',
+        options: [
+          {
+            id: 'type',
+            type: 'dropdown',
+            label: 'Transition Type',
+            default: 'mix',
+            choices: [
+              { id: 'mix', label: 'Mix' },
+              { id: 'wipe', label: 'Wipe' },
+              { id: 'cut', label: 'Cut' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'set_still_image',
+        name: 'Set Still Image',
+        description: 'Load a still image from a memory slot',
+        options: [
+          {
+            id: 'slot',
+            type: 'number',
+            label: 'Still Image Slot',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'recall_memory',
+        name: 'Recall Memory',
+        description: 'Recall a stored memory preset',
+        options: [
+          {
+            id: 'memory',
+            type: 'number',
+            label: 'Memory Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_audio_level',
+        name: 'Set Audio Level',
+        description: 'Set the audio level for a specific channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel Number',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0-100)',
+            default: 75,
+          },
+        ],
+      },
+      {
+        id: 'set_audio_mute',
+        name: 'Set Audio Mute',
+        description: 'Mute or unmute an audio channel',
+        options: [
+          {
+            id: 'ch',
+            type: 'number',
+            label: 'Channel Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'dropdown',
+            label: 'Mute State',
+            default: 'on',
+            choices: [
+              { id: 'on', label: 'Mute On' },
+              { id: 'off', label: 'Mute Off' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'set_output_assign',
+        name: 'Set Output Assign',
+        description: 'Assign a source to a specific output',
+        options: [
+          {
+            id: 'output',
+            type: 'number',
+            label: 'Output Number',
+            default: 1,
+          },
+          {
+            id: 'source',
+            type: 'number',
+            label: 'Source Number',
+            default: 1,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'pgm_source',
+        name: 'Program Source',
+        description: 'Indicates the current program bus source',
+        type: 'advanced',
+      },
+      {
+        id: 'pvw_source',
+        name: 'Preview Source',
+        description: 'Indicates the current preview bus source',
+        type: 'advanced',
+      },
+      {
+        id: 'ftb_state',
+        name: 'Fade to Black State',
+        description: 'Indicates whether fade to black is active',
+        type: 'boolean',
+      },
+      {
+        id: 'transition_active',
+        name: 'Transition Active',
+        description: 'Indicates whether a transition is currently in progress',
+        type: 'boolean',
+      },
+      {
+        id: 'audio_level',
+        name: 'Audio Level',
+        description: 'Current audio level for a channel',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'pgm_source', name: 'Program Source' },
+      { id: 'pvw_source', name: 'Preview Source' },
+      { id: 'transition_type', name: 'Transition Type' },
+      { id: 'ftb_state', name: 'Fade to Black State' },
+      { id: 'audio_level_1', name: 'Audio Level Channel 1' },
+      { id: 'audio_level_2', name: 'Audio Level Channel 2' },
+      { id: 'audio_level_3', name: 'Audio Level Channel 3' },
+      { id: 'audio_level_4', name: 'Audio Level Channel 4' },
+      { id: 'output_resolution', name: 'Output Resolution' },
+    ],
+    supportedModels: ['V-160HD', 'V-60HD', 'VR-6HD', 'V-02HD MK II'],
+  },
+  // ============================================================
+  // ETC - 1 module
+  // ============================================================
+
+  // --- etc-eos ---
+  {
+    id: 'companion-mod-etc-eos',
+    moduleId: 'etc-eos',
+    name: 'ETC Eos Family Lighting Console',
+    manufacturer: 'etc',
+    protocol: 'OSC/UDP',
+    defaultPort: 3032,
+    description:
+      'Control ETC Eos-family lighting consoles via OSC. Supports cue playback, channel and submaster control, macro execution, grandmaster management, and command-line interaction.',
+    actions: [
+      {
+        id: 'go_cue',
+        name: 'Go Cue',
+        description: 'Fire a specific cue number on the active cue list',
+        options: [
+          {
+            id: 'cue_number',
+            type: 'textinput',
+            label: 'Cue Number',
+            default: '1',
+          },
+        ],
+      },
+      {
+        id: 'stop_cue',
+        name: 'Stop Cue',
+        description: 'Stop the currently running cue or effect',
+        options: [],
+      },
+      {
+        id: 'go_back',
+        name: 'Go Back',
+        description: 'Go back to the previous cue in the cue list',
+        options: [],
+      },
+      {
+        id: 'fire_macro',
+        name: 'Fire Macro',
+        description: 'Execute a macro by its number',
+        options: [
+          {
+            id: 'macro_number',
+            type: 'number',
+            label: 'Macro Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_channel_level',
+        name: 'Set Channel Level',
+        description: 'Set a lighting channel to a specific intensity level',
+        options: [
+          {
+            id: 'channel',
+            type: 'number',
+            label: 'Channel Number',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 100)',
+            default: 100,
+          },
+        ],
+      },
+      {
+        id: 'set_sub_master',
+        name: 'Set Submaster',
+        description: 'Set a submaster fader to a specific level',
+        options: [
+          {
+            id: 'sub',
+            type: 'number',
+            label: 'Submaster Number',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 100)',
+            default: 100,
+          },
+        ],
+      },
+      {
+        id: 'select_channel',
+        name: 'Select Channel',
+        description: 'Select a channel on the command line for further manipulation',
+        options: [
+          {
+            id: 'channel',
+            type: 'number',
+            label: 'Channel Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_grandmaster',
+        name: 'Set Grandmaster',
+        description: 'Set the grandmaster fader level',
+        options: [
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 100)',
+            default: 100,
+          },
+        ],
+      },
+      {
+        id: 'blackout',
+        name: 'Blackout',
+        description: 'Toggle or activate the grandmaster blackout',
+        options: [],
+      },
+      {
+        id: 'record_cue',
+        name: 'Record Cue',
+        description: 'Record the current state as a new cue',
+        options: [
+          {
+            id: 'cue',
+            type: 'textinput',
+            label: 'Cue Number',
+            default: '1',
+          },
+        ],
+      },
+      {
+        id: 'clear_command_line',
+        name: 'Clear Command Line',
+        description: 'Clear the current command line entry on the console',
+        options: [],
+      },
+      {
+        id: 'set_sneak_time',
+        name: 'Set Sneak Time',
+        description: 'Set the sneak transition time for manual fader moves',
+        options: [
+          {
+            id: 'time',
+            type: 'number',
+            label: 'Time (seconds)',
+            default: 0,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'cue_active',
+        name: 'Cue Active',
+        description: 'Indicates which cue is currently active',
+        type: 'advanced',
+      },
+      {
+        id: 'cue_pending',
+        name: 'Cue Pending',
+        description: 'Indicates which cue is pending (next to fire)',
+        type: 'advanced',
+      },
+      {
+        id: 'grandmaster_level',
+        name: 'Grandmaster Level',
+        description: 'Current grandmaster fader level',
+        type: 'advanced',
+      },
+      {
+        id: 'blackout_state',
+        name: 'Blackout State',
+        description: 'Indicates whether blackout is currently engaged',
+        type: 'boolean',
+      },
+      {
+        id: 'command_line',
+        name: 'Command Line',
+        description: 'Current contents of the command line',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'current_cue', name: 'Current Cue' },
+      { id: 'pending_cue', name: 'Pending Cue' },
+      { id: 'cue_list', name: 'Active Cue List' },
+      { id: 'last_cue', name: 'Last Fired Cue' },
+      { id: 'grandmaster', name: 'Grandmaster Level' },
+      { id: 'show_name', name: 'Show Name' },
+      { id: 'active_channels', name: 'Active Channels Count' },
+      { id: 'command_line', name: 'Command Line Contents' },
+    ],
+    supportedModels: [
+      'Eos Ti',
+      'Eos Apex',
+      'Ion Xe',
+      'Ion Xe 20',
+      'Element 2',
+      'Gio',
+      'Gio @5',
+    ],
+  },
+
+  // ============================================================
+  // MA LIGHTING - 1 module
+  // ============================================================
+
+  // --- malighting-grandma3 ---
+  {
+    id: 'companion-mod-malighting-grandma3',
+    moduleId: 'malighting-grandma3',
+    name: 'MA Lighting grandMA3',
+    manufacturer: 'ma-lighting',
+    protocol: 'TCP/Telnet',
+    defaultPort: 30000,
+    description:
+      'Control MA Lighting grandMA3 consoles via Telnet. Supports executor and cue control, macro firing, fader management, page navigation, and key press emulation.',
+    actions: [
+      {
+        id: 'go_cue',
+        name: 'Go Cue',
+        description: 'Fire a Go on a specific executor and cue',
+        options: [
+          {
+            id: 'executor',
+            type: 'number',
+            label: 'Executor Number',
+            default: 1,
+          },
+          {
+            id: 'cue',
+            type: 'textinput',
+            label: 'Cue Number',
+            default: '1',
+          },
+        ],
+      },
+      {
+        id: 'goto_cue',
+        name: 'Goto Cue',
+        description: 'Jump directly to a specific cue on an executor without transition',
+        options: [
+          {
+            id: 'executor',
+            type: 'number',
+            label: 'Executor Number',
+            default: 1,
+          },
+          {
+            id: 'cue',
+            type: 'textinput',
+            label: 'Cue Number',
+            default: '1',
+          },
+        ],
+      },
+      {
+        id: 'stop',
+        name: 'Stop',
+        description: 'Stop a running executor',
+        options: [
+          {
+            id: 'executor',
+            type: 'number',
+            label: 'Executor Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'fire_macro',
+        name: 'Fire Macro',
+        description: 'Execute a macro by its number',
+        options: [
+          {
+            id: 'macro',
+            type: 'number',
+            label: 'Macro Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_exec_fader',
+        name: 'Set Executor Fader',
+        description: 'Set the fader level of a specific executor',
+        options: [
+          {
+            id: 'executor',
+            type: 'number',
+            label: 'Executor Number',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 100)',
+            default: 100,
+          },
+        ],
+      },
+      {
+        id: 'select_exec',
+        name: 'Select Executor',
+        description: 'Select an executor for further operations',
+        options: [
+          {
+            id: 'executor',
+            type: 'number',
+            label: 'Executor Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'off',
+        name: 'Off',
+        description: 'Turn off an executor',
+        options: [
+          {
+            id: 'executor',
+            type: 'number',
+            label: 'Executor Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'page_up',
+        name: 'Page Up',
+        description: 'Navigate to the next executor page',
+        options: [],
+      },
+      {
+        id: 'page_down',
+        name: 'Page Down',
+        description: 'Navigate to the previous executor page',
+        options: [],
+      },
+      {
+        id: 'set_master_intensity',
+        name: 'Set Master Intensity',
+        description: 'Set the master intensity value for the console',
+        options: [
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Intensity (0 - 100)',
+            default: 100,
+          },
+        ],
+      },
+      {
+        id: 'press_key',
+        name: 'Press Key',
+        description: 'Simulate a key press on the console',
+        options: [
+          {
+            id: 'key',
+            type: 'dropdown',
+            label: 'Key',
+            default: 'go',
+            choices: [
+              { id: 'go', label: 'Go' },
+              { id: 'pause', label: 'Pause' },
+              { id: 'goback', label: 'Go Back' },
+              { id: 'oops', label: 'Oops' },
+              { id: 'clear', label: 'Clear' },
+              { id: 'esc', label: 'Esc' },
+              { id: 'select', label: 'Select' },
+              { id: 'store', label: 'Store' },
+            ],
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'executor_state',
+        name: 'Executor State',
+        description: 'Indicates the current state of an executor',
+        type: 'advanced',
+      },
+      {
+        id: 'cue_active',
+        name: 'Cue Active',
+        description: 'Indicates which cue is currently active on an executor',
+        type: 'advanced',
+      },
+      {
+        id: 'grandmaster_level',
+        name: 'Grandmaster Level',
+        description: 'Current grandmaster intensity level',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'current_cue', name: 'Current Cue' },
+      { id: 'current_page', name: 'Current Page' },
+      { id: 'executor_N_value', name: 'Executor N Value' },
+      { id: 'show_name', name: 'Show Name' },
+      { id: 'session_name', name: 'Session Name' },
+      { id: 'command_line', name: 'Command Line Contents' },
+    ],
+    supportedModels: [
+      'grandMA3 full-size',
+      'grandMA3 light',
+      'grandMA3 compact',
+      'grandMA3 onPC',
+      'grandMA3 processing unit XL',
+      'grandMA3 processing unit L',
+    ],
+  },
+
+  // ============================================================
+  // QSC - 1 module
+  // ============================================================
+
+  // --- qsc-qsys ---
+  {
+    id: 'companion-mod-qsc-qsys',
+    moduleId: 'qsc-qsys',
+    name: 'QSC Q-SYS Core',
+    manufacturer: 'qsc',
+    protocol: 'TCP/QRC',
+    defaultPort: 1710,
+    description:
+      'Control QSC Q-SYS audio and control processors via the QRC protocol. Supports named control manipulation, component property access, fader/mute management, and router selection.',
+    actions: [
+      {
+        id: 'set_named_control',
+        name: 'Set Named Control',
+        description: 'Set the value of a named control in the Q-SYS design',
+        options: [
+          {
+            id: 'name',
+            type: 'textinput',
+            label: 'Control Name',
+            default: '',
+          },
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Value',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_named_control_position',
+        name: 'Set Named Control Position',
+        description: 'Set the position (0.0 - 1.0) of a named control',
+        options: [
+          {
+            id: 'name',
+            type: 'textinput',
+            label: 'Control Name',
+            default: '',
+          },
+          {
+            id: 'position',
+            type: 'number',
+            label: 'Position (0.0 - 1.0)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'trigger_control',
+        name: 'Trigger Control',
+        description: 'Trigger a named control (momentary action)',
+        options: [
+          {
+            id: 'name',
+            type: 'textinput',
+            label: 'Control Name',
+            default: '',
+          },
+        ],
+      },
+      {
+        id: 'set_component_property',
+        name: 'Set Component Property',
+        description: 'Set a property value on a named component within the design',
+        options: [
+          {
+            id: 'component',
+            type: 'textinput',
+            label: 'Component Name',
+            default: '',
+          },
+          {
+            id: 'property',
+            type: 'textinput',
+            label: 'Property Name',
+            default: '',
+          },
+          {
+            id: 'value',
+            type: 'textinput',
+            label: 'Value',
+            default: '',
+          },
+        ],
+      },
+      {
+        id: 'set_fader',
+        name: 'Set Fader',
+        description: 'Set the level of a fader control',
+        options: [
+          {
+            id: 'name',
+            type: 'textinput',
+            label: 'Fader Control Name',
+            default: '',
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (dB)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_mute',
+        name: 'Set Mute',
+        description: 'Set the mute state of a control',
+        options: [
+          {
+            id: 'name',
+            type: 'textinput',
+            label: 'Mute Control Name',
+            default: '',
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Muted',
+            default: false,
+          },
+        ],
+      },
+      {
+        id: 'set_router_select',
+        name: 'Set Router Select',
+        description: 'Set a crosspoint on a router component',
+        options: [
+          {
+            id: 'router',
+            type: 'textinput',
+            label: 'Router Component Name',
+            default: '',
+          },
+          {
+            id: 'input',
+            type: 'number',
+            label: 'Input Number',
+            default: 1,
+          },
+          {
+            id: 'output',
+            type: 'number',
+            label: 'Output Number',
+            default: 1,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'named_control_value',
+        name: 'Named Control Value',
+        description: 'Feedback when a named control value changes',
+        type: 'advanced',
+      },
+      {
+        id: 'named_control_string',
+        name: 'Named Control String',
+        description: 'Feedback for the string representation of a named control',
+        type: 'advanced',
+      },
+      {
+        id: 'component_status',
+        name: 'Component Status',
+        description: 'Indicates the operational status of a design component',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'control_N_value', name: 'Control N Value' },
+      { id: 'control_N_string', name: 'Control N String' },
+      { id: 'control_N_position', name: 'Control N Position' },
+      { id: 'design_name', name: 'Design Name' },
+      { id: 'is_redundant', name: 'Is Redundant' },
+      { id: 'is_emulator', name: 'Is Emulator' },
+    ],
+    supportedModels: ['Core 510i', 'Core 110f', 'Core Nano', 'Core 8 Flex'],
+  },
+
+  // ============================================================
+  // CLEAR-COM - 2 modules
+  // ============================================================
+
+  // --- clearcom-eclipse ---
+  {
+    id: 'companion-mod-clearcom-eclipse',
+    moduleId: 'clearcom-eclipse',
+    name: 'Clear-Com Eclipse HX Digital Matrix',
+    manufacturer: 'clear-com',
+    protocol: 'TCP',
+    defaultPort: 4001,
+    description:
+      'Control Clear-Com Eclipse HX digital matrix intercom systems. Supports crosspoint routing, group volume management, key activation, label assignment, and listen level control.',
+    actions: [
+      {
+        id: 'set_crosspoint',
+        name: 'Set Crosspoint',
+        description: 'Enable or disable a crosspoint between source and destination ports',
+        options: [
+          {
+            id: 'source',
+            type: 'number',
+            label: 'Source Port',
+            default: 1,
+          },
+          {
+            id: 'dest',
+            type: 'number',
+            label: 'Destination Port',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Enable',
+            default: true,
+          },
+        ],
+      },
+      {
+        id: 'set_group_volume',
+        name: 'Set Group Volume',
+        description: 'Set the volume level for a port group',
+        options: [
+          {
+            id: 'group',
+            type: 'number',
+            label: 'Group Number',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 100)',
+            default: 100,
+          },
+        ],
+      },
+      {
+        id: 'key_on',
+        name: 'Key On',
+        description: 'Activate a key on a specific port',
+        options: [
+          {
+            id: 'port',
+            type: 'number',
+            label: 'Port Number',
+            default: 1,
+          },
+          {
+            id: 'key',
+            type: 'number',
+            label: 'Key Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'key_off',
+        name: 'Key Off',
+        description: 'Deactivate a key on a specific port',
+        options: [
+          {
+            id: 'port',
+            type: 'number',
+            label: 'Port Number',
+            default: 1,
+          },
+          {
+            id: 'key',
+            type: 'number',
+            label: 'Key Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'all_call',
+        name: 'All Call',
+        description: 'Trigger an all-call announcement to all ports',
+        options: [],
+      },
+      {
+        id: 'set_label',
+        name: 'Set Label',
+        description: 'Set the display label for a port',
+        options: [
+          {
+            id: 'port',
+            type: 'number',
+            label: 'Port Number',
+            default: 1,
+          },
+          {
+            id: 'text',
+            type: 'textinput',
+            label: 'Label Text',
+            default: '',
+          },
+        ],
+      },
+      {
+        id: 'set_listen_level',
+        name: 'Set Listen Level',
+        description: 'Set the listen level for a specific port',
+        options: [
+          {
+            id: 'port',
+            type: 'number',
+            label: 'Port Number',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 100)',
+            default: 100,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'crosspoint_state',
+        name: 'Crosspoint State',
+        description: 'Indicates whether a specific crosspoint is active',
+        type: 'boolean',
+      },
+      {
+        id: 'port_status',
+        name: 'Port Status',
+        description: 'Indicates the operational status of a matrix port',
+        type: 'advanced',
+      },
+      {
+        id: 'key_state',
+        name: 'Key State',
+        description: 'Indicates whether a specific key is active on a port',
+        type: 'boolean',
+      },
+    ],
+    variables: [
+      { id: 'port_N_label', name: 'Port N Label' },
+      { id: 'port_N_status', name: 'Port N Status' },
+      { id: 'crosspoint_N_N', name: 'Crosspoint N-N State' },
+      { id: 'system_name', name: 'System Name' },
+      { id: 'total_ports', name: 'Total Ports' },
+    ],
+    supportedModels: ['Eclipse HX Omega', 'Eclipse HX Delta', 'Eclipse HX Median'],
+  },
+
+  // --- clearcom-freespeak ---
+  {
+    id: 'companion-mod-clearcom-freespeak',
+    moduleId: 'clearcom-freespeak',
+    name: 'Clear-Com FreeSpeak II/Edge',
+    manufacturer: 'clear-com',
+    protocol: 'TCP',
+    defaultPort: 80,
+    description:
+      'Monitor and control Clear-Com FreeSpeak II and FreeSpeak Edge wireless intercom systems. Supports beltpack channel assignment, volume control, talk/listen state management, and beltpack identification.',
+    actions: [
+      {
+        id: 'assign_channel',
+        name: 'Assign Channel',
+        description: 'Assign a channel to a beltpack',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+          {
+            id: 'channel',
+            type: 'number',
+            label: 'Channel Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_volume',
+        name: 'Set Volume',
+        description: 'Set the volume level on a beltpack',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 100)',
+            default: 100,
+          },
+        ],
+      },
+      {
+        id: 'set_talk',
+        name: 'Set Talk',
+        description: 'Enable or disable talk on a beltpack channel',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+          {
+            id: 'channel',
+            type: 'number',
+            label: 'Channel Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Talk Enabled',
+            default: true,
+          },
+        ],
+      },
+      {
+        id: 'set_listen',
+        name: 'Set Listen',
+        description: 'Enable or disable listen on a beltpack channel',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+          {
+            id: 'channel',
+            type: 'number',
+            label: 'Channel Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Listen Enabled',
+            default: true,
+          },
+        ],
+      },
+      {
+        id: 'identify_beltpack',
+        name: 'Identify Beltpack',
+        description: 'Flash the LED on a beltpack to physically identify it',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'beltpack_online',
+        name: 'Beltpack Online',
+        description: 'Indicates whether a beltpack is currently connected and online',
+        type: 'boolean',
+      },
+      {
+        id: 'battery_level',
+        name: 'Battery Level',
+        description: 'Current battery level of a beltpack',
+        type: 'advanced',
+      },
+      {
+        id: 'rf_quality',
+        name: 'RF Quality',
+        description: 'Current RF signal quality for a beltpack',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'bp_N_battery', name: 'Beltpack N Battery Level' },
+      { id: 'bp_N_name', name: 'Beltpack N Name' },
+      { id: 'bp_N_channel_A', name: 'Beltpack N Channel A' },
+      { id: 'bp_N_channel_B', name: 'Beltpack N Channel B' },
+      { id: 'bp_N_rf_quality', name: 'Beltpack N RF Quality' },
+      { id: 'total_beltpacks_online', name: 'Total Beltpacks Online' },
+    ],
+    supportedModels: ['FreeSpeak II Base', 'FreeSpeak Edge Base'],
+  },
+
+  // ============================================================
+  // RIEDEL - 2 modules
+  // ============================================================
+
+  // --- riedel-bolero ---
+  {
+    id: 'companion-mod-riedel-bolero',
+    moduleId: 'riedel-bolero',
+    name: 'Riedel Bolero Wireless Intercom',
+    manufacturer: 'riedel',
+    protocol: 'HTTP/REST',
+    defaultPort: 80,
+    description:
+      'Monitor and control Riedel Bolero wireless intercom systems via REST API. Supports beltpack channel assignment, volume control, talk/call state management, identification, and label configuration.',
+    actions: [
+      {
+        id: 'assign_channel',
+        name: 'Assign Channel',
+        description: 'Assign a channel to a Bolero beltpack',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+          {
+            id: 'channel',
+            type: 'number',
+            label: 'Channel Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_volume',
+        name: 'Set Volume',
+        description: 'Set the volume level on a Bolero beltpack',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 100)',
+            default: 100,
+          },
+        ],
+      },
+      {
+        id: 'set_talk',
+        name: 'Set Talk',
+        description: 'Enable or disable talk on a beltpack channel',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+          {
+            id: 'channel',
+            type: 'number',
+            label: 'Channel Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Talk Enabled',
+            default: true,
+          },
+        ],
+      },
+      {
+        id: 'set_call',
+        name: 'Set Call',
+        description: 'Enable or disable call signaling on a beltpack channel',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+          {
+            id: 'channel',
+            type: 'number',
+            label: 'Channel Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Call Enabled',
+            default: true,
+          },
+        ],
+      },
+      {
+        id: 'identify_beltpack',
+        name: 'Identify Beltpack',
+        description: 'Flash the LED on a Bolero beltpack to physically identify it',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_beltpack_label',
+        name: 'Set Beltpack Label',
+        description: 'Set the display label on a Bolero beltpack',
+        options: [
+          {
+            id: 'beltpack',
+            type: 'number',
+            label: 'Beltpack Number',
+            default: 1,
+          },
+          {
+            id: 'label',
+            type: 'textinput',
+            label: 'Label Text',
+            default: '',
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'beltpack_online',
+        name: 'Beltpack Online',
+        description: 'Indicates whether a Bolero beltpack is currently connected',
+        type: 'boolean',
+      },
+      {
+        id: 'battery_level',
+        name: 'Battery Level',
+        description: 'Current battery level of a Bolero beltpack',
+        type: 'advanced',
+      },
+      {
+        id: 'rf_quality',
+        name: 'RF Quality',
+        description: 'Current RF signal quality for a Bolero beltpack',
+        type: 'advanced',
+      },
+      {
+        id: 'talk_state',
+        name: 'Talk State',
+        description: 'Indicates whether talk is active on a beltpack channel',
+        type: 'boolean',
+      },
+    ],
+    variables: [
+      { id: 'bp_N_battery', name: 'Beltpack N Battery Level' },
+      { id: 'bp_N_name', name: 'Beltpack N Name' },
+      { id: 'bp_N_channel_A', name: 'Beltpack N Channel A' },
+      { id: 'bp_N_channel_B', name: 'Beltpack N Channel B' },
+      { id: 'bp_N_rf_quality', name: 'Beltpack N RF Quality' },
+      { id: 'antennas_online', name: 'Antennas Online' },
+    ],
+    supportedModels: ['Bolero Antenna', 'Bolero Beltpack'],
+  },
+
+  // --- riedel-artist ---
+  {
+    id: 'companion-mod-riedel-artist',
+    moduleId: 'riedel-artist',
+    name: 'Riedel Artist Digital Matrix',
+    manufacturer: 'riedel',
+    protocol: 'TCP/Ember+',
+    defaultPort: 9000,
+    description:
+      'Control Riedel Artist digital matrix intercom systems via the Ember+ protocol. Supports crosspoint routing, conference management, label assignment, gain control, and GPIO pin management.',
+    actions: [
+      {
+        id: 'set_crosspoint',
+        name: 'Set Crosspoint',
+        description: 'Enable or disable a crosspoint between source and destination ports',
+        options: [
+          {
+            id: 'src',
+            type: 'number',
+            label: 'Source Port',
+            default: 1,
+          },
+          {
+            id: 'dst',
+            type: 'number',
+            label: 'Destination Port',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Enable',
+            default: true,
+          },
+        ],
+      },
+      {
+        id: 'set_conference',
+        name: 'Set Conference',
+        description: 'Enable or disable a conference group',
+        options: [
+          {
+            id: 'conf',
+            type: 'number',
+            label: 'Conference Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Enable',
+            default: true,
+          },
+        ],
+      },
+      {
+        id: 'set_label',
+        name: 'Set Label',
+        description: 'Set the display label for a port',
+        options: [
+          {
+            id: 'port',
+            type: 'number',
+            label: 'Port Number',
+            default: 1,
+          },
+          {
+            id: 'text',
+            type: 'textinput',
+            label: 'Label Text',
+            default: '',
+          },
+        ],
+      },
+      {
+        id: 'set_gain',
+        name: 'Set Gain',
+        description: 'Set the audio gain level for a port',
+        options: [
+          {
+            id: 'port',
+            type: 'number',
+            label: 'Port Number',
+            default: 1,
+          },
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Gain (dB)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'gpio_set',
+        name: 'GPIO Set',
+        description: 'Set the state of a GPIO pin on a port',
+        options: [
+          {
+            id: 'port',
+            type: 'number',
+            label: 'Port Number',
+            default: 1,
+          },
+          {
+            id: 'pin',
+            type: 'number',
+            label: 'Pin Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Pin High',
+            default: true,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'crosspoint_state',
+        name: 'Crosspoint State',
+        description: 'Indicates whether a specific crosspoint is active',
+        type: 'boolean',
+      },
+      {
+        id: 'port_online',
+        name: 'Port Online',
+        description: 'Indicates whether a specific port is online',
+        type: 'boolean',
+      },
+      {
+        id: 'conference_state',
+        name: 'Conference State',
+        description: 'Indicates whether a conference is currently active',
+        type: 'boolean',
+      },
+    ],
+    variables: [
+      { id: 'port_N_label', name: 'Port N Label' },
+      { id: 'port_N_status', name: 'Port N Status' },
+      { id: 'crosspoint_N_N', name: 'Crosspoint N-N State' },
+      { id: 'total_ports', name: 'Total Ports' },
+      { id: 'frame_name', name: 'Frame Name' },
+    ],
+    supportedModels: ['Artist-128', 'Artist-64', 'Artist-32'],
+  },
+
+  // ============================================================
+  // EXTRON - 1 module
+  // ============================================================
+
+  // --- extron-sis ---
+  {
+    id: 'companion-mod-extron-sis',
+    moduleId: 'extron-sis',
+    name: 'Extron SIS Control',
+    manufacturer: 'extron',
+    protocol: 'TCP/SIS',
+    defaultPort: 23,
+    description:
+      'Control Extron devices via the SIS (Simple Instruction Set) protocol. Supports input/output routing, preset recall, volume and gain management, and mute control across Extron switchers and processors.',
+    actions: [
+      {
+        id: 'set_route',
+        name: 'Set Route',
+        description: 'Route a specific input to an output',
+        options: [
+          {
+            id: 'input',
+            type: 'number',
+            label: 'Input Number',
+            default: 1,
+          },
+          {
+            id: 'output',
+            type: 'number',
+            label: 'Output Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_global_preset',
+        name: 'Set Global Preset',
+        description: 'Recall a global routing preset',
+        options: [
+          {
+            id: 'preset',
+            type: 'number',
+            label: 'Preset Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_volume',
+        name: 'Set Volume',
+        description: 'Set the volume level for a specific output',
+        options: [
+          {
+            id: 'output',
+            type: 'number',
+            label: 'Output Number',
+            default: 1,
+          },
+          {
+            id: 'level',
+            type: 'number',
+            label: 'Level (0 - 100)',
+            default: 100,
+          },
+        ],
+      },
+      {
+        id: 'set_mute',
+        name: 'Set Mute',
+        description: 'Set the audio mute state for a specific output',
+        options: [
+          {
+            id: 'output',
+            type: 'number',
+            label: 'Output Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Muted',
+            default: false,
+          },
+        ],
+      },
+      {
+        id: 'set_input_gain',
+        name: 'Set Input Gain',
+        description: 'Set the audio input gain for a specific input',
+        options: [
+          {
+            id: 'input',
+            type: 'number',
+            label: 'Input Number',
+            default: 1,
+          },
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Gain (dB)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'set_video_mute',
+        name: 'Set Video Mute',
+        description: 'Set the video mute (blank) state for a specific output',
+        options: [
+          {
+            id: 'output',
+            type: 'number',
+            label: 'Output Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'Video Muted',
+            default: false,
+          },
+        ],
+      },
+      {
+        id: 'recall_preset',
+        name: 'Recall Preset',
+        description: 'Recall a stored routing preset by number',
+        options: [
+          {
+            id: 'preset',
+            type: 'number',
+            label: 'Preset Number',
+            default: 1,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'route_state',
+        name: 'Route State',
+        description: 'Indicates which input is currently routed to an output',
+        type: 'advanced',
+      },
+      {
+        id: 'mute_state',
+        name: 'Mute State',
+        description: 'Indicates whether an output is currently muted',
+        type: 'boolean',
+      },
+      {
+        id: 'signal_present',
+        name: 'Signal Present',
+        description: 'Indicates whether a valid signal is detected on an input',
+        type: 'boolean',
+      },
+    ],
+    variables: [
+      { id: 'route_out_N', name: 'Output N Routed Input' },
+      { id: 'input_N_signal', name: 'Input N Signal Present' },
+      { id: 'output_N_volume', name: 'Output N Volume' },
+      { id: 'output_N_mute', name: 'Output N Mute State' },
+      { id: 'model_name', name: 'Model Name' },
+      { id: 'firmware_version', name: 'Firmware Version' },
+    ],
+    supportedModels: [
+      'DTP CrossPoint 108',
+      'IN1808',
+      'DXP HD 4K',
+      'SMP 351',
+      'DTP2 T 202',
+    ],
+  },
+
+  // ============================================================
+  // CRESTRON - 2 modules
+  // ============================================================
+
+  // --- crestron-cp4 ---
+  {
+    id: 'companion-mod-crestron-cp4',
+    moduleId: 'crestron-cp4',
+    name: 'Crestron Control Processor',
+    manufacturer: 'crestron',
+    protocol: 'CIP/TCP',
+    defaultPort: 41794,
+    description:
+      'Interface with Crestron control processors via CIP (Crestron Internet Protocol). Supports digital, analog, and serial join communication for full integration with Crestron control programs.',
+    actions: [
+      {
+        id: 'digital_join',
+        name: 'Digital Join',
+        description: 'Set a digital join to a specific state (high or low)',
+        options: [
+          {
+            id: 'join',
+            type: 'number',
+            label: 'Join Number',
+            default: 1,
+          },
+          {
+            id: 'state',
+            type: 'checkbox',
+            label: 'State (High)',
+            default: true,
+          },
+        ],
+      },
+      {
+        id: 'analog_join',
+        name: 'Analog Join',
+        description: 'Set an analog join to a specific value (0 - 65535)',
+        options: [
+          {
+            id: 'join',
+            type: 'number',
+            label: 'Join Number',
+            default: 1,
+          },
+          {
+            id: 'value',
+            type: 'number',
+            label: 'Value (0 - 65535)',
+            default: 0,
+          },
+        ],
+      },
+      {
+        id: 'serial_join',
+        name: 'Serial Join',
+        description: 'Send a string value to a serial join',
+        options: [
+          {
+            id: 'join',
+            type: 'number',
+            label: 'Join Number',
+            default: 1,
+          },
+          {
+            id: 'string',
+            type: 'textinput',
+            label: 'String Value',
+            default: '',
+          },
+        ],
+      },
+      {
+        id: 'pulse_digital',
+        name: 'Pulse Digital',
+        description: 'Pulse a digital join high then low (momentary trigger)',
+        options: [
+          {
+            id: 'join',
+            type: 'number',
+            label: 'Join Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'press_button',
+        name: 'Press Button',
+        description: 'Press and hold a digital join (set high)',
+        options: [
+          {
+            id: 'join',
+            type: 'number',
+            label: 'Join Number',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'release_button',
+        name: 'Release Button',
+        description: 'Release a held digital join (set low)',
+        options: [
+          {
+            id: 'join',
+            type: 'number',
+            label: 'Join Number',
+            default: 1,
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'digital_join_state',
+        name: 'Digital Join State',
+        description: 'Indicates the current state of a digital join',
+        type: 'boolean',
+      },
+      {
+        id: 'analog_join_value',
+        name: 'Analog Join Value',
+        description: 'Current value of an analog join',
+        type: 'advanced',
+      },
+      {
+        id: 'serial_join_string',
+        name: 'Serial Join String',
+        description: 'Current string value of a serial join',
+        type: 'advanced',
+      },
+    ],
+    variables: [
+      { id: 'd_join_N', name: 'Digital Join N State' },
+      { id: 'a_join_N', name: 'Analog Join N Value' },
+      { id: 's_join_N', name: 'Serial Join N String' },
+      { id: 'ip_address', name: 'IP Address' },
+      { id: 'hostname', name: 'Hostname' },
+      { id: 'firmware', name: 'Firmware Version' },
+    ],
+    supportedModels: ['CP4-R', 'CP4N', 'PRO4', 'AV4', 'MC4-R'],
+  },
+
+  // --- crestron-nvx ---
+  {
+    id: 'companion-mod-crestron-nvx',
+    moduleId: 'crestron-nvx',
+    name: 'Crestron DM NVX AV-over-IP',
+    manufacturer: 'crestron',
+    protocol: 'CIP/TCP',
+    defaultPort: 41794,
+    description:
+      'Control Crestron DM NVX AV-over-IP endpoints. Supports stream routing, video and audio source selection, stream enable/disable, and multiview configuration for NVX encoder and decoder units.',
+    actions: [
+      {
+        id: 'set_route',
+        name: 'Set Route',
+        description: 'Route a source stream to a destination endpoint',
+        options: [
+          {
+            id: 'source',
+            type: 'number',
+            label: 'Source ID',
+            default: 1,
+          },
+          {
+            id: 'dest',
+            type: 'number',
+            label: 'Destination ID',
+            default: 1,
+          },
+        ],
+      },
+      {
+        id: 'set_video_source',
+        name: 'Set Video Source',
+        description: 'Select the video input source for the NVX endpoint',
+        options: [
+          {
+            id: 'input',
+            type: 'dropdown',
+            label: 'Video Source',
+            default: 'hdmi1',
+            choices: [
+              { id: 'hdmi1', label: 'HDMI 1' },
+              { id: 'hdmi2', label: 'HDMI 2' },
+              { id: 'dm', label: 'DM' },
+              { id: 'stream', label: 'Stream' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'set_audio_source',
+        name: 'Set Audio Source',
+        description: 'Select the audio input source for the NVX endpoint',
+        options: [
+          {
+            id: 'input',
+            type: 'dropdown',
+            label: 'Audio Source',
+            default: 'hdmi',
+            choices: [
+              { id: 'hdmi', label: 'HDMI' },
+              { id: 'analog', label: 'Analog' },
+              { id: 'dante', label: 'Dante' },
+              { id: 'stream', label: 'Stream' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'enable_stream',
+        name: 'Enable Stream',
+        description: 'Enable the AV-over-IP stream on the endpoint',
+        options: [],
+      },
+      {
+        id: 'disable_stream',
+        name: 'Disable Stream',
+        description: 'Disable the AV-over-IP stream on the endpoint',
+        options: [],
+      },
+      {
+        id: 'set_multiview_mode',
+        name: 'Set Multiview Mode',
+        description: 'Set the multiview display layout mode',
+        options: [
+          {
+            id: 'mode',
+            type: 'textinput',
+            label: 'Multiview Mode',
+            default: '',
+          },
+        ],
+      },
+    ],
+    feedbacks: [
+      {
+        id: 'stream_active',
+        name: 'Stream Active',
+        description: 'Indicates whether the AV-over-IP stream is currently active',
+        type: 'boolean',
+      },
+      {
+        id: 'video_sync',
+        name: 'Video Sync',
+        description: 'Indicates whether a valid video sync signal is detected',
+        type: 'boolean',
+      },
+      {
+        id: 'hdcp_state',
+        name: 'HDCP State',
+        description: 'Indicates whether HDCP is currently active on the connection',
+        type: 'boolean',
+      },
+      {
+        id: 'device_online',
+        name: 'Device Online',
+        description: 'Indicates whether the NVX endpoint is online and reachable',
+        type: 'boolean',
+      },
+    ],
+    variables: [
+      { id: 'input_resolution', name: 'Input Resolution' },
+      { id: 'stream_status', name: 'Stream Status' },
+      { id: 'device_name', name: 'Device Name' },
+      { id: 'ip_address', name: 'IP Address' },
+      { id: 'mac_address', name: 'MAC Address' },
+      { id: 'firmware', name: 'Firmware Version' },
+    ],
+    supportedModels: ['DM-NVX-360', 'DM-NVX-D30', 'DM-NVX-E30'],
+  },
 ];

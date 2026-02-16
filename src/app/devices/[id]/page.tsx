@@ -11,6 +11,13 @@ import CompanionDevicePanel from '@/components/companion/CompanionDevicePanel';
 const MANUFACTURER_COLORS: Record<string, string> = {
   disguise: '#e91e63', barco: '#00bcd4', brompton: '#4caf50',
   lightware: '#ff9800', aja: '#ffc107', blackmagic: '#607d8b', ross: '#9c27b0',
+  yamaha: '#7c3aed', 'allen-heath': '#06b6d4', behringer: '#f97316',
+  shure: '#14b8a6', sennheiser: '#64748b', panasonic: '#0ea5e9',
+  sony: '#1d4ed8', etc: '#a855f7', 'ma-lighting': '#ec4899',
+  qsc: '#84cc16', 'clear-com': '#f43f5e', riedel: '#0d9488',
+  magewell: '#6366f1', teradek: '#e11d48', extron: '#059669',
+  crestron: '#2563eb', ptzoptics: '#d97706', datavideo: '#7c2d12',
+  roland: '#dc2626',
 };
 
 const STATUS_COLORS: Record<string, string> = {
