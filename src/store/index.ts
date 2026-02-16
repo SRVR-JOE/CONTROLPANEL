@@ -556,7 +556,7 @@ const directorProfile = createDefaultProfile('Show Config', 'GX3-DIR', 'director
 const actor1Profile = createDefaultProfile('Show Config', 'GX3-A1', 'actor', 1, 12);
 const actor2Profile = createDefaultProfile('Show Config', 'GX3-A2', 'actor', 2, 13);
 const actor3Profile = createDefaultProfile('Show Config', 'VX4-A3', 'actor', 3, 14);
-const us1Profile = createDefaultProfile('Show Config', 'GX3-US1', 'understudy', 1, 21);
+const us1Profile = createDefaultProfile('Show Config', 'GX3-US1', 'understudy', 1, 15);
 us1Profile.machineIdentity.understudyFor = 'machine-actor-1';
 
 const initialDisguiseSessions: DisguiseSession[] = [
@@ -749,10 +749,11 @@ export const useStore = create<AppStore>((set, get) => ({
     set((state) => ({
       disguiseSessions: state.disguiseSessions.map((s) => {
         if (s.id !== sessionId) return s;
-        // Sort: director first (.baseOctet), then actors by index (.baseOctet+1, +2...), then understudies (.baseOctet+10, +11...)
+        // Sequential: director first, then actors by index, then understudies — all .11, .12, .13, ...
         const directors = s.machines.filter((m) => m.role === 'director');
         const actors = s.machines.filter((m) => m.role === 'actor').sort((a, b) => a.index - b.index);
         const understudies = s.machines.filter((m) => m.role === 'understudy').sort((a, b) => a.index - b.index);
+        const ordered = [...directors, ...actors, ...understudies];
 
         const assignOctet = (machine: SessionMachine, octet: number) => {
           const profile = s.profiles.find((p) => p.id === machine.activeProfileId);
@@ -774,31 +775,13 @@ export const useStore = create<AppStore>((set, get) => ({
         const updatedProfiles = [...s.profiles];
         let octet = baseOctet;
 
-        for (const dir of directors) {
-          const updated = assignOctet(dir, octet);
+        for (const machine of ordered) {
+          const updated = assignOctet(machine, octet);
           if (updated) {
-            const idx = updatedProfiles.findIndex((p) => p.id === dir.activeProfileId);
+            const idx = updatedProfiles.findIndex((p) => p.id === machine.activeProfileId);
             if (idx >= 0) updatedProfiles[idx] = updated;
           }
           octet++;
-        }
-        for (const actor of actors) {
-          const updated = assignOctet(actor, octet);
-          if (updated) {
-            const idx = updatedProfiles.findIndex((p) => p.id === actor.activeProfileId);
-            if (idx >= 0) updatedProfiles[idx] = updated;
-          }
-          octet++;
-        }
-        // Understudies start 10 past the base, or after actors if that's higher
-        let usOctet = Math.max(baseOctet + 10, octet + 5);
-        for (const us of understudies) {
-          const updated = assignOctet(us, usOctet);
-          if (updated) {
-            const idx = updatedProfiles.findIndex((p) => p.id === us.activeProfileId);
-            if (idx >= 0) updatedProfiles[idx] = updated;
-          }
-          usOctet++;
         }
 
         return { ...s, profiles: updatedProfiles, updatedAt: new Date().toISOString() };

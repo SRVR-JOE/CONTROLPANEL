@@ -39,13 +39,8 @@ function createNewMachine(role: D3NetRole, session: DisguiseSession): { machine:
   const machineId = uuidv4();
   const profileId = uuidv4();
 
-  // Director=.11, Actors increment from .12, Understudies from .21
-  const directors = session.machines.filter((m) => m.role === 'director').length;
-  const actors = session.machines.filter((m) => m.role === 'actor').length;
-  let lastOctet: number;
-  if (role === 'director') lastOctet = 11;
-  else if (role === 'actor') lastOctet = 12 + actors; // next after existing actors (.12, .13, ...)
-  else lastOctet = Math.max(21, 12 + directors + actors + 5) + existingOfRole.length;
+  // Sequential: .11, .12, .13, ... — next available after all existing machines
+  const lastOctet = 11 + session.machines.length;
 
   const machine: SessionMachine = {
     id: machineId,
