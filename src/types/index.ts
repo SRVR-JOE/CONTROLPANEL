@@ -332,6 +332,41 @@ export type DeploymentSection =
   | 'd3ServiceSettings'
   | 'performanceTweaks';
 
+// --- Network Discovery ---
+
+export interface DiscoveredMachine {
+  ip: string;
+  hostname: string;
+  model: DisguiseModel;
+  role: D3NetRole;
+  designerVersion: string;
+  apiPort: number;
+  workgroup: string;
+  uptime: number; // seconds
+  d3ServiceRunning: boolean;
+  gpuName?: string;
+  currentProject?: string;
+  discoveredAt: string;
+}
+
+export type DiscoveryStatus = 'idle' | 'scanning' | 'done' | 'error';
+
+export interface DiscoveryScan {
+  id: string;
+  subnet: string;
+  rangeStart: number;
+  rangeEnd: number;
+  port: number;
+  status: DiscoveryStatus;
+  progress: number; // 0-100
+  found: DiscoveredMachine[];
+  scannedCount: number;
+  totalCount: number;
+  startedAt: string;
+  completedAt?: string;
+  error?: string;
+}
+
 // --- Commands ---
 
 export interface DeviceCommand {

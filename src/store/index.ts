@@ -19,6 +19,8 @@ import {
   DeploymentJob,
   DeploymentSection,
   MachineDeploymentState,
+  DiscoveredMachine,
+  DiscoveryScan,
 } from '@/types';
 
 // ============================================================
@@ -626,6 +628,13 @@ interface AppStore {
   updateMachineDeploymentState: (jobId: string, machineId: string, state: Partial<MachineDeploymentState>) => void;
   completeDeployment: (jobId: string) => void;
 
+  // Discovery
+  discoveryScans: DiscoveryScan[];
+  activeDiscoveryId: string | null;
+  startDiscovery: (subnet: string, rangeStart: number, rangeEnd: number, port: number) => string;
+  updateDiscoveryScan: (scanId: string, update: Partial<DiscoveryScan>) => void;
+  addDiscoveredToSession: (sessionId: string, discovered: DiscoveredMachine, profileId?: string) => void;
+
   // Selected state
   selectedRouterId: string | null;
 
@@ -1030,6 +1039,183 @@ export const useStore = create<AppStore>((set, get) => ({
       }),
       activeDeploymentId: null,
     })),
+
+  // Discovery
+  discoveryScans: [],
+  activeDiscoveryId: null,
+
+  startDiscovery: (subnet, rangeStart, rangeEnd, port) => {
+    const scanId = uuidv4();
+    const totalCount = rangeEnd - rangeStart + 1;
+    const scan: DiscoveryScan = {
+      id: scanId,
+      subnet,
+      rangeStart,
+      rangeEnd,
+      port,
+      status: 'scanning',
+      progress: 0,
+      found: [],
+      scannedCount: 0,
+      totalCount,
+      startedAt: new Date().toISOString(),
+    };
+    set((state) => ({
+      discoveryScans: [scan, ...state.discoveryScans].slice(0, 20),
+      activeDiscoveryId: scanId,
+    }));
+
+    // Fire the API call to scan
+    fetch('/api/discover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subnet, rangeStart, rangeEnd, port }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.machines) {
+          get().updateDiscoveryScan(scanId, {
+            status: 'done',
+            progress: 100,
+            found: data.machines,
+            scannedCount: totalCount,
+            completedAt: new Date().toISOString(),
+          });
+        }
+      })
+      .catch((err) => {
+        get().updateDiscoveryScan(scanId, {
+          status: 'error',
+          error: String(err),
+          completedAt: new Date().toISOString(),
+        });
+      })
+      .finally(() => {
+        set({ activeDiscoveryId: null });
+      });
+
+    // Simulate progress updates while waiting
+    let scanned = 0;
+    const interval = setInterval(() => {
+      scanned += Math.floor(Math.random() * 8) + 3;
+      if (scanned >= totalCount) {
+        clearInterval(interval);
+        return;
+      }
+      get().updateDiscoveryScan(scanId, {
+        progress: Math.round((scanned / totalCount) * 90),
+        scannedCount: scanned,
+      });
+    }, 300);
+
+    // Safety: clear interval after scan should be done
+    setTimeout(() => clearInterval(interval), totalCount * 100 + 5000);
+
+    return scanId;
+  },
+
+  updateDiscoveryScan: (scanId, update) =>
+    set((state) => ({
+      discoveryScans: state.discoveryScans.map((s) =>
+        s.id === scanId ? { ...s, ...update } : s
+      ),
+    })),
+
+  addDiscoveredToSession: (sessionId, discovered, profileId) => {
+    const state = get();
+    const session = state.disguiseSessions.find((s) => s.id === sessionId);
+    if (!session) return;
+
+    const machineId = uuidv4();
+    const newProfileId = profileId ?? uuidv4();
+
+    // If a profileId was given, duplicate that profile for this machine
+    let profile: DisguiseProfile;
+    const sourceProfile = profileId ? session.profiles.find((p) => p.id === profileId) : null;
+
+    if (sourceProfile) {
+      // Clone the selected profile, update identity to match discovered machine
+      profile = {
+        ...JSON.parse(JSON.stringify(sourceProfile)),
+        id: newProfileId,
+        name: `${sourceProfile.name} (${discovered.hostname})`,
+        machineIdentity: {
+          ...sourceProfile.machineIdentity,
+          hostname: discovered.hostname,
+          role: discovered.role,
+          actorIndex: discovered.role === 'director' ? 0 :
+            session.machines.filter((m) => m.role === discovered.role).length + 1,
+          workgroup: discovered.workgroup || sourceProfile.machineIdentity.workgroup,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      // Update d3Net adapter IP to match discovered IP
+      profile.networkAdapters = profile.networkAdapters.map((a) =>
+        a.role === 'd3net' ? { ...a, ipAddress: discovered.ip } : a
+      );
+      profile.d3ServiceSettings = {
+        ...profile.d3ServiceSettings,
+        apiPort: discovered.apiPort,
+        designerVersion: discovered.designerVersion || profile.d3ServiceSettings.designerVersion,
+      };
+    } else {
+      // Create a bare-bones profile from discovered info
+      const actorIndex = discovered.role === 'director' ? 0 :
+        session.machines.filter((m) => m.role === discovered.role).length + 1;
+      profile = {
+        id: newProfileId,
+        name: `Discovered - ${discovered.hostname}`,
+        machineIdentity: {
+          hostname: discovered.hostname,
+          role: discovered.role,
+          actorIndex,
+          understudyFor: '',
+          workgroup: discovered.workgroup || session.workgroup,
+          description: `Auto-discovered at ${discovered.ip}`,
+        },
+        networkAdapters: [
+          { id: uuidv4(), role: 'd3net', adapterName: 'NIC A - d3Net', enabled: true, dhcp: false, ipAddress: discovered.ip, subnetMask: '255.255.255.0', gateway: discovered.ip.replace(/\.\d+$/, '.1'), dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '10GbE', mtu: 1500 },
+          { id: uuidv4(), role: 'media', adapterName: 'NIC B - Media', enabled: true, dhcp: false, ipAddress: '0.0.0.0', subnetMask: '255.255.255.0', gateway: '', dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '10GbE', mtu: 1500 },
+          { id: uuidv4(), role: 'artnet-sacn', adapterName: 'NIC C - Art-Net/sACN', enabled: true, dhcp: false, ipAddress: '2.0.0.1', subnetMask: '255.0.0.0', gateway: '', dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '1GbE', mtu: 1500 },
+          { id: uuidv4(), role: 'kvm', adapterName: 'NIC D - KVM', enabled: true, dhcp: false, ipAddress: '0.0.0.0', subnetMask: '255.255.255.0', gateway: '', dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '1GbE', mtu: 1500 },
+          { id: uuidv4(), role: 'control', adapterName: 'NIC E - Control', enabled: true, dhcp: false, ipAddress: '0.0.0.0', subnetMask: '255.255.255.0', gateway: '', dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '1GbE', mtu: 1500 },
+          { id: uuidv4(), role: 'mgmt', adapterName: 'NIC F - MGMT', enabled: true, dhcp: false, ipAddress: '0.0.0.0', subnetMask: '255.255.255.0', gateway: '', dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '1GbE', mtu: 1500 },
+        ],
+        smbSettings: { enabled: true, sharePath: 'C:\\d3 Projects', shareName: 'd3Projects', networkDiscovery: true, passwordProtected: false, guestAccess: true, smbVersion: 'SMBv3', allowInsecureGuest: true },
+        windowsSettings: { powerPlan: 'ultimate-performance', sleepWhenPlugged: false, hibernate: false, windowsFirewall: false, remoteDesktop: true, windowsUpdate: 'paused', antivirus: false, visualEffectsPerformance: true, usbSelectiveSuspend: false },
+        d3ServiceSettings: { startup: 'auto', apiPort: discovered.apiPort, designerVersion: discovered.designerVersion || session.designerVersion, d3netAdapter: 'NIC A - d3Net', genlock: false, syncPort: 7542, vsyncPort: 7968 },
+        performanceTweaks: { gpuDriverLock: true, gpuDriverVersion: '546.33', codecPreference: 'hap-hapq', guiOnActor: discovered.role === 'actor' ? 'disabled' : 'full', ndiTools5Installed: false },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    const machine: SessionMachine = {
+      id: machineId,
+      name: discovered.hostname,
+      model: discovered.model,
+      role: discovered.role,
+      index: discovered.role === 'director' ? 0 :
+        session.machines.filter((m) => m.role === discovered.role).length + 1,
+      understudyFor: '',
+      activeProfileId: newProfileId,
+      status: discovered.d3ServiceRunning ? 'online' : 'offline',
+    };
+
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) => {
+        if (s.id !== sessionId) return s;
+        return {
+          ...s,
+          machines: [...s.machines, machine],
+          profiles: [...s.profiles, profile],
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+      selectedMachineId: machineId,
+    }));
+  },
 
   selectedRouterId: initialRouters[0]?.id ?? null,
 
