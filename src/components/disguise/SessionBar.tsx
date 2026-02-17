@@ -8,8 +8,11 @@ import {
   Crown,
   Play,
   Shield,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { DisguiseSession, SessionMachine, DisguiseProfile, D3NetRole } from '@/types';
 
@@ -40,7 +43,7 @@ function createNewMachine(role: D3NetRole, session: DisguiseSession): { machine:
   const profileId = uuidv4();
 
   // Sequential: .11, .12, .13, ... — next available after all existing machines
-  const lastOctet = 11 + session.machines.length;
+  const lastOctet = Math.min(254, 11 + session.machines.length);
 
   const machine: SessionMachine = {
     id: machineId,
@@ -93,11 +96,35 @@ export default function SessionBar() {
     addSession,
     addMachineToSession,
     removeMachineFromSession,
+    renameSession,
+    updateSessionSettings,
   } = useStore();
 
   const [showSessionDropdown, setShowSessionDropdown] = useState(false);
   const [showNewSessionInput, setShowNewSessionInput] = useState(false);
   const [newSessionName, setNewSessionName] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editingSessionName, setEditingSessionName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [editingWorkgroup, setEditingWorkgroup] = useState(false);
+  const [editedWorkgroup, setEditedWorkgroup] = useState('');
+  const [editingDesigner, setEditingDesigner] = useState(false);
+  const [editedDesigner, setEditedDesigner] = useState('');
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click-outside handler for session dropdown
+  useEffect(() => {
+    if (!showSessionDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowSessionDropdown(false);
+        setShowNewSessionInput(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showSessionDropdown]);
 
   const session = disguiseSessions.find((s) => s.id === selectedSessionId);
 
@@ -154,6 +181,41 @@ export default function SessionBar() {
     addMachineToSession(session.id, machine, profile);
   };
 
+  const handleRemoveMachine = (machineId: string) => {
+    if (!session) return;
+    if (confirmDeleteId === machineId) {
+      removeMachineFromSession(session.id, machineId);
+      setConfirmDeleteId(null);
+      // If the deleted machine was selected, select the first available
+      if (selectedMachineId === machineId) {
+        const remaining = session.machines.filter((m) => m.id !== machineId);
+        if (remaining.length > 0) setSelectedMachine(remaining[0].id);
+      }
+    } else {
+      setConfirmDeleteId(machineId);
+      // Auto-clear confirmation after 3 seconds
+      setTimeout(() => setConfirmDeleteId(null), 3000);
+    }
+  };
+
+  const handleSaveSessionName = () => {
+    if (!session || !editedName.trim()) return;
+    renameSession(session.id, editedName.trim());
+    setEditingSessionName(false);
+  };
+
+  const handleSaveWorkgroup = () => {
+    if (!session) return;
+    updateSessionSettings(session.id, { workgroup: editedWorkgroup.trim() || session.workgroup });
+    setEditingWorkgroup(false);
+  };
+
+  const handleSaveDesigner = () => {
+    if (!session) return;
+    updateSessionSettings(session.id, { designerVersion: editedDesigner.trim() || session.designerVersion });
+    setEditingDesigner(false);
+  };
+
   if (!session) {
     return (
       <div className="rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-sm">
@@ -178,7 +240,7 @@ export default function SessionBar() {
       {/* Session selector row */}
       <div className="flex items-center gap-3">
         <Monitor className="h-5 w-5 text-accent" />
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setShowSessionDropdown(!showSessionDropdown)}
             className="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-4 py-2 text-sm font-medium text-foreground hover:border-accent/50"
@@ -222,8 +284,79 @@ export default function SessionBar() {
             </div>
           )}
         </div>
-        <span className="text-xs text-muted">Workgroup: {session.workgroup}</span>
-        <span className="text-xs text-muted">Designer: {session.designerVersion}</span>
+
+        {/* Editable session name */}
+        {editingSessionName ? (
+          <div className="flex items-center gap-1">
+            <input
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveSessionName(); if (e.key === 'Escape') setEditingSessionName(false); }}
+              className="rounded border border-accent bg-surface-2 px-2 py-1 text-sm text-foreground outline-none"
+              autoFocus
+            />
+            <button onClick={handleSaveSessionName} className="rounded p-1 text-success hover:bg-surface-2"><Check className="h-3 w-3" /></button>
+            <button onClick={() => setEditingSessionName(false)} className="rounded p-1 text-error hover:bg-surface-2"><X className="h-3 w-3" /></button>
+          </div>
+        ) : (
+          <button
+            onClick={() => { setEditedName(session.name); setEditingSessionName(true); }}
+            className="rounded p-1 text-muted hover:bg-surface-2 hover:text-foreground"
+            title="Rename session"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        )}
+
+        <div className="h-4 w-px bg-border" />
+
+        {/* Editable workgroup */}
+        {editingWorkgroup ? (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted">WG:</span>
+            <input
+              value={editedWorkgroup}
+              onChange={(e) => setEditedWorkgroup(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveWorkgroup(); if (e.key === 'Escape') setEditingWorkgroup(false); }}
+              className="w-24 rounded border border-accent bg-surface-2 px-2 py-0.5 text-xs text-foreground outline-none"
+              autoFocus
+            />
+            <button onClick={handleSaveWorkgroup} className="rounded p-0.5 text-success hover:bg-surface-2"><Check className="h-3 w-3" /></button>
+            <button onClick={() => setEditingWorkgroup(false)} className="rounded p-0.5 text-error hover:bg-surface-2"><X className="h-3 w-3" /></button>
+          </div>
+        ) : (
+          <button
+            onClick={() => { setEditedWorkgroup(session.workgroup); setEditingWorkgroup(true); }}
+            className="flex items-center gap-1 rounded px-1 py-0.5 text-xs text-muted hover:bg-surface-2 hover:text-foreground"
+            title="Edit workgroup"
+          >
+            Workgroup: {session.workgroup} <Pencil className="h-2.5 w-2.5" />
+          </button>
+        )}
+
+        {/* Editable designer version */}
+        {editingDesigner ? (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted">d3:</span>
+            <input
+              value={editedDesigner}
+              onChange={(e) => setEditedDesigner(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveDesigner(); if (e.key === 'Escape') setEditingDesigner(false); }}
+              className="w-20 rounded border border-accent bg-surface-2 px-2 py-0.5 text-xs text-foreground outline-none"
+              autoFocus
+            />
+            <button onClick={handleSaveDesigner} className="rounded p-0.5 text-success hover:bg-surface-2"><Check className="h-3 w-3" /></button>
+            <button onClick={() => setEditingDesigner(false)} className="rounded p-0.5 text-error hover:bg-surface-2"><X className="h-3 w-3" /></button>
+          </div>
+        ) : (
+          <button
+            onClick={() => { setEditedDesigner(session.designerVersion); setEditingDesigner(true); }}
+            className="flex items-center gap-1 rounded px-1 py-0.5 text-xs text-muted hover:bg-surface-2 hover:text-foreground"
+            title="Edit designer version"
+          >
+            Designer: {session.designerVersion} <Pencil className="h-2.5 w-2.5" />
+          </button>
+        )}
       </div>
 
       {/* Machine cards */}
@@ -231,6 +364,7 @@ export default function SessionBar() {
         {orderedMachines.map((machine) => {
           const RoleIcon = roleIcons[machine.role];
           const isSelected = machine.id === selectedMachineId;
+          const isConfirmingDelete = confirmDeleteId === machine.id;
           return (
             <button
               key={machine.id}
@@ -259,14 +393,18 @@ export default function SessionBar() {
                   US for {session.machines.find((m) => m.id === machine.understudyFor)?.name ?? '?'}
                 </span>
               )}
-              {/* Remove button on hover */}
+              {/* Remove button with confirmation */}
               {machine.role !== 'director' && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); removeMachineFromSession(session.id, machine.id); }}
-                  className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-error text-[10px] text-white group-hover:flex"
-                  title="Remove"
+                  onClick={(e) => { e.stopPropagation(); handleRemoveMachine(machine.id); }}
+                  className={`absolute -right-1 -top-1 items-center justify-center rounded-full text-[10px] text-white ${
+                    isConfirmingDelete
+                      ? 'flex h-auto w-auto bg-error px-1.5 py-0.5'
+                      : 'hidden h-4 w-4 bg-error group-hover:flex'
+                  }`}
+                  title={isConfirmingDelete ? 'Click again to confirm' : 'Remove'}
                 >
-                  x
+                  {isConfirmingDelete ? 'confirm?' : 'x'}
                 </button>
               )}
             </button>

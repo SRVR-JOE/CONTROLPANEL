@@ -300,6 +300,38 @@ export interface DisguiseSession {
   updatedAt: string;
 }
 
+// --- Network Deployment ---
+
+export type DeploymentStatus = 'idle' | 'deploying' | 'success' | 'failed' | 'partial';
+
+export interface MachineDeploymentState {
+  machineId: string;
+  status: DeploymentStatus;
+  progress: number; // 0-100
+  message: string;
+  lastDeployedAt?: string;
+  error?: string;
+}
+
+export interface DeploymentJob {
+  id: string;
+  sessionId: string;
+  machineIds: string[];
+  status: DeploymentStatus;
+  machineStates: MachineDeploymentState[];
+  startedAt: string;
+  completedAt?: string;
+  sections: DeploymentSection[];
+}
+
+export type DeploymentSection =
+  | 'machineIdentity'
+  | 'networkAdapters'
+  | 'smbSettings'
+  | 'windowsSettings'
+  | 'd3ServiceSettings'
+  | 'performanceTweaks';
+
 // --- Commands ---
 
 export interface DeviceCommand {

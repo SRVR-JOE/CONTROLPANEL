@@ -47,7 +47,7 @@ function IPInput({ value, onChange, disabled }: { value: string; onChange: (v: s
 }
 
 export default function NetworkAdaptersSection() {
-  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore();
+  const { disguiseSessions, selectedSessionId, selectedMachineId, setSelectedMachine, updateProfile } = useStore();
   const [activeTab, setActiveTab] = useState<NetworkAdapterRole>('d3net');
 
   const session = disguiseSessions.find((s) => s.id === selectedSessionId);
@@ -239,7 +239,11 @@ export default function NetworkAdaptersSection() {
               {session.machines.map((m) => {
                 const mProfile = session.profiles.find((p) => p.id === m.activeProfileId);
                 return (
-                  <tr key={m.id} className={`border-b border-border/20 ${m.id === selectedMachineId ? 'bg-accent/5' : ''}`}>
+                  <tr
+                    key={m.id}
+                    onClick={() => setSelectedMachine(m.id)}
+                    className={`cursor-pointer border-b border-border/20 transition-colors hover:bg-accent/5 ${m.id === selectedMachineId ? 'bg-accent/5' : ''}`}
+                  >
                     <td className="py-1.5 pr-4 font-medium text-foreground">{m.name}</td>
                     {(['d3net', 'media', 'artnet-sacn', 'kvm', 'control', 'mgmt'] as NetworkAdapterRole[]).map((role) => {
                       const adapter = mProfile?.networkAdapters.find((a) => a.role === role);
