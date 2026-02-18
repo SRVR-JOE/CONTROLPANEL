@@ -141,7 +141,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength) > 100_000) {
+    const contentLengthNum = contentLength ? Number(contentLength) : 0;
+    if (!Number.isNaN(contentLengthNum) && contentLengthNum > 100_000) {
       return NextResponse.json({ error: 'Request too large' }, { status: 413, headers });
     }
 

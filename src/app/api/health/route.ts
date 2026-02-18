@@ -164,10 +164,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate each device entry
+    const validManufacturers = ['disguise', 'barco', 'brompton', 'lightware', 'aja', 'blackmagic', 'ross'];
     for (const device of body.devices) {
       if (!device.id || !device.ip || !device.manufacturer) {
         return NextResponse.json(
           { error: `Each device must include id, ip, and manufacturer. Invalid entry: ${JSON.stringify(device)}` },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      if (!validManufacturers.includes(device.manufacturer)) {
+        return NextResponse.json(
+          { error: `Invalid manufacturer "${device.manufacturer}" for device ${device.id}` },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      if (device.port !== undefined && !validatePort(device.port)) {
+        return NextResponse.json(
+          { error: `Invalid port for device ${device.id}` },
           { status: 400, headers: corsHeaders }
         );
       }

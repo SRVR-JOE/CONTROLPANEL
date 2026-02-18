@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateIp } from '@/lib/validation';
+import { validateIp, validatePort } from '@/lib/validation';
 
 /**
  * POST /api/deploy
@@ -54,6 +54,13 @@ export async function POST(request: NextRequest) {
     if (!validateIp(targetIp)) {
       return NextResponse.json(
         { error: 'Invalid target IP address' },
+        { status: 400 }
+      );
+    }
+
+    if (apiPort !== undefined && !validatePort(apiPort)) {
+      return NextResponse.json(
+        { error: 'Invalid API port' },
         { status: 400 }
       );
     }
@@ -141,6 +148,28 @@ export async function PUT(request: NextRequest) {
         { error: 'Too many machines. Maximum 50 machines per batch deploy.' },
         { status: 400 }
       );
+    }
+
+    // Validate each machine entry
+    for (const machine of body.machines) {
+      if (!machine.machineId || !machine.targetIp || !machine.sections?.length) {
+        return NextResponse.json(
+          { error: `Invalid machine entry: missing machineId, targetIp, or sections` },
+          { status: 400 }
+        );
+      }
+      if (!validateIp(machine.targetIp)) {
+        return NextResponse.json(
+          { error: `Invalid target IP for machine ${machine.machineId}` },
+          { status: 400 }
+        );
+      }
+      if (machine.apiPort !== undefined && !validatePort(machine.apiPort)) {
+        return NextResponse.json(
+          { error: `Invalid API port for machine ${machine.machineId}` },
+          { status: 400 }
+        );
+      }
     }
 
     // Process all machines concurrently
