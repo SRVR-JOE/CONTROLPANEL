@@ -12,6 +12,7 @@ import {
   Save,
   Sliders,
   LayoutDashboard,
+  Timer,
 } from 'lucide-react';
 
 const navItems = [
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/health', label: 'Health', icon: Activity },
   { href: '/brompton', label: 'Brompton', icon: Monitor },
   { href: '/disguise-config', label: 'Disguise', icon: Sliders },
+  { href: '/timecode', label: 'Timecode', icon: Timer },
   { href: '/pinboard', label: 'Pin Board', icon: Pin },
   { href: '/devices', label: 'Devices', icon: HardDrive },
   { href: '/presets', label: 'Presets', icon: Save },

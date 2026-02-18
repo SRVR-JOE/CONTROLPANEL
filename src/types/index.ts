@@ -368,6 +368,27 @@ export interface DiscoveryScan {
   error?: string;
 }
 
+// --- Timecode ---
+
+export type TimecodeFrameRate = 23.976 | 24 | 25 | 29.97 | 30 | 50 | 59.94 | 60;
+
+export type TimecodeSource = 'internal' | 'ltc' | 'mtc' | 'artnet';
+
+export interface TimecodeGenerator {
+  id: string;
+  name: string;
+  frameRate: TimecodeFrameRate;
+  dropFrame: boolean;
+  source: TimecodeSource;
+  running: boolean;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  frames: number;
+  startedAt?: string;
+  linkedDeviceId?: string;
+}
+
 // --- Commands ---
 
 export interface DeviceCommand {

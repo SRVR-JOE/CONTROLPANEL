@@ -22,6 +22,8 @@ import {
   MachineDeploymentState,
   DiscoveredMachine,
   DiscoveryScan,
+  TimecodeGenerator,
+  TimecodeFrameRate,
 } from '@/types';
 
 // ============================================================
@@ -599,6 +601,15 @@ interface AppStore {
   systemPresets: SystemPreset[];
   commandHistory: DeviceCommand[];
 
+  // Timecode
+  timecodeGenerators: TimecodeGenerator[];
+  addTimecodeGenerator: (gen: TimecodeGenerator) => void;
+  removeTimecodeGenerator: (id: string) => void;
+  updateTimecodeGenerator: (id: string, updates: Partial<TimecodeGenerator>) => void;
+  toggleTimecodeRunning: (id: string) => void;
+  resetTimecode: (id: string) => void;
+  tickTimecode: (id: string) => void;
+
   // Disguise config
   disguiseSessions: DisguiseSession[];
   selectedSessionId: string | null;
@@ -675,6 +686,73 @@ export const useStore = create<AppStore>((set, get) => ({
   matrixPresets: initialMatrixPresets,
   systemPresets: initialSystemPresets,
   commandHistory: [],
+
+  // Timecode
+  timecodeGenerators: [
+    { id: 'tc-1', name: 'Main Show TC', frameRate: 25, dropFrame: false, source: 'internal', running: false, hours: 1, minutes: 0, seconds: 0, frames: 0 },
+    { id: 'tc-2', name: 'Record TC', frameRate: 29.97, dropFrame: true, source: 'internal', running: false, hours: 0, minutes: 0, seconds: 0, frames: 0 },
+  ] as TimecodeGenerator[],
+
+  addTimecodeGenerator: (gen) => set((s) => ({ timecodeGenerators: [...s.timecodeGenerators, gen] })),
+
+  removeTimecodeGenerator: (id) => set((s) => ({ timecodeGenerators: s.timecodeGenerators.filter((g) => g.id !== id) })),
+
+  updateTimecodeGenerator: (id, updates) =>
+    set((s) => ({
+      timecodeGenerators: s.timecodeGenerators.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+    })),
+
+  toggleTimecodeRunning: (id) =>
+    set((s) => ({
+      timecodeGenerators: s.timecodeGenerators.map((g) =>
+        g.id === id ? { ...g, running: !g.running, startedAt: !g.running ? new Date().toISOString() : undefined } : g
+      ),
+    })),
+
+  resetTimecode: (id) =>
+    set((s) => ({
+      timecodeGenerators: s.timecodeGenerators.map((g) =>
+        g.id === id ? { ...g, hours: 0, minutes: 0, seconds: 0, frames: 0, running: false, startedAt: undefined } : g
+      ),
+    })),
+
+  tickTimecode: (id) =>
+    set((s) => ({
+      timecodeGenerators: s.timecodeGenerators.map((g) => {
+        if (g.id !== id || !g.running) return g;
+        let { hours, minutes, seconds, frames } = g;
+        const maxFrames = Math.ceil(g.frameRate);
+        frames++;
+        if (frames >= maxFrames) {
+          frames = 0;
+          seconds++;
+          // Drop-frame: skip frames 0 and 1 at the start of each minute, except every 10th minute
+          if (g.dropFrame && (g.frameRate === 29.97 || g.frameRate === 59.94)) {
+            const skip = g.frameRate === 59.94 ? 4 : 2;
+            if (seconds >= 60) {
+              seconds = 0;
+              minutes++;
+              if (minutes % 10 !== 0) {
+                frames = skip;
+              }
+            }
+          } else {
+            if (seconds >= 60) {
+              seconds = 0;
+              minutes++;
+            }
+          }
+          if (minutes >= 60) {
+            minutes = 0;
+            hours++;
+          }
+          if (hours >= 24) {
+            hours = 0;
+          }
+        }
+        return { ...g, hours, minutes, seconds, frames };
+      }),
+    })),
 
   // Disguise config
   disguiseSessions: initialDisguiseSessions,
