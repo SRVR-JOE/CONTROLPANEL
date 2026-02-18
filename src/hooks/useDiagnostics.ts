@@ -6,7 +6,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useStore } from '@/store';
 import type { DiagnosticAlert } from '@/lib/ai/types';
-import { v4 as uuidv4 } from 'uuid';
 
 export function useDiagnostics(intervalMs = 15000) {
   const [alerts, setAlerts] = useState<DiagnosticAlert[]>([]);

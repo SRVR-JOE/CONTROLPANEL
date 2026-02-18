@@ -87,7 +87,10 @@ export default function SMBSettingsSection() {
               <div className="rounded-lg border border-accent/20 bg-accent/5 px-4 py-3">
                 <span className="text-xs text-muted">Director Share Target:</span>
                 <span className="ml-2 font-mono text-sm text-accent">
-                  \\{dirD3NetIp}\{smb.shareName}
+                  {'\\\\'}
+                  {dirD3NetIp}
+                  {'\\'}
+                  {smb.shareName}
                 </span>
               </div>
             )}

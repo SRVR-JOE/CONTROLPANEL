@@ -60,10 +60,8 @@ export default function RackThermalView({ rack, devices }: RackThermalViewProps)
           isStart: true,
           spanHeight: device.rackUnits,
         });
-        // Skip remaining RUs for this device
-        for (let j = 1; j < device.rackUnits; j++) {
-          ru++;
-        }
+        // Skip remaining RUs for this device (subtract 1 because the outer for loop also increments)
+        ru += device.rackUnits - 1;
       } else if (!device) {
         ruInfo.push({ ru, device: null, isStart: false, spanHeight: 1 });
       }

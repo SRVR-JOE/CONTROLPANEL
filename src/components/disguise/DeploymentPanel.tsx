@@ -72,12 +72,13 @@ export default function DeploymentPanel() {
   const session = disguiseSessions.find((s) => s.id === selectedSessionId);
   const activeJob = deploymentJobs.find((j) => j.status === 'deploying');
 
-  // Auto-select all machines when session changes
+  // Auto-select all machines when session or machine list changes
+  const machineCount = session?.machines.length ?? 0;
   useEffect(() => {
     if (session) {
       setSelectedMachines(session.machines.map((m) => m.id));
     }
-  }, [session?.id]);
+  }, [session?.id, machineCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleMachine = useCallback((id: string) => {
     setSelectedMachines((prev) =>
