@@ -2,6 +2,7 @@
 
 import Sidebar from './Sidebar';
 import StatusBar from './StatusBar';
+import CopilotWrapper from '@/components/copilot/CopilotWrapper';
 import { useDevicePolling } from '@/hooks/useDevicePolling';
 
 interface AppShellProps {
@@ -19,6 +20,7 @@ export default function AppShell({ children }: AppShellProps) {
       <main className="pl-16 pt-10">
         <div className="p-6">{children}</div>
       </main>
+      <CopilotWrapper />
     </div>
   );
 }
