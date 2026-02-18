@@ -2,12 +2,16 @@
 
 import Sidebar from './Sidebar';
 import StatusBar from './StatusBar';
+import { useDevicePolling } from '@/hooks/useDevicePolling';
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
 export default function AppShell({ children }: AppShellProps) {
+  // Poll all devices for real health data every 5 seconds
+  useDevicePolling(5000);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar />

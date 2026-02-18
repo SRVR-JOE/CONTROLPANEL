@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Device,
+  DeviceHealth,
   Rack,
   MatrixRouter,
   PinBoard,
@@ -640,6 +641,7 @@ interface AppStore {
 
   // Device actions
   updateDeviceStatus: (deviceId: string, status: DeviceStatus) => void;
+  updateDeviceHealth: (deviceId: string, health: DeviceHealth, status?: DeviceStatus) => void;
   assignDeviceToRack: (deviceId: string, rackId: string, startSlot: number) => void;
   removeDeviceFromRack: (deviceId: string) => void;
   sendCommand: (deviceId: string, command: string, params?: Record<string, unknown>) => void;
@@ -1222,6 +1224,15 @@ export const useStore = create<AppStore>((set, get) => ({
   updateDeviceStatus: (deviceId, status) =>
     set((state) => ({
       devices: state.devices.map((d) => (d.id === deviceId ? { ...d, status } : d)),
+    })),
+
+  updateDeviceHealth: (deviceId, health, status) =>
+    set((state) => ({
+      devices: state.devices.map((d) =>
+        d.id === deviceId
+          ? { ...d, health, ...(status !== undefined ? { status } : {}) }
+          : d
+      ),
     })),
 
   assignDeviceToRack: (deviceId, rackId, startSlot) =>
