@@ -2,35 +2,8 @@
 
 import { useStore } from '@/store';
 import { Gauge, AlertTriangle } from 'lucide-react';
+import { Toggle } from '@/components/ui/Toggle';
 import type { PerformanceTweaks, CodecPreference, ActorGUIMode } from '@/types';
-
-function Toggle({ value, onChange, label, warning }: { value: boolean; onChange: (v: boolean) => void; label: string; warning?: string }) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-1.5">
-        <span className="text-sm text-foreground">{label}</span>
-        {warning && (
-          <span className="group relative">
-            <AlertTriangle className="h-3 w-3 text-error" />
-            <span className="absolute -top-8 left-0 z-10 hidden whitespace-nowrap rounded bg-surface-2 px-2 py-1 text-[10px] text-error shadow-lg group-hover:block">
-              {warning}
-            </span>
-          </span>
-        )}
-      </div>
-      <button
-        onClick={() => onChange(!value)}
-        className={`relative h-6 w-11 rounded-full transition-colors ${value ? 'bg-accent' : 'bg-border'}`}
-      >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-            value ? 'translate-x-5' : 'translate-x-0.5'
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
 
 const codecLabels: Record<CodecPreference, string> = {
   'hap-hapq': 'HAP / HAPQ (GPU)',
@@ -114,15 +87,15 @@ export default function PerformanceTweaksSection() {
         {/* Toggles */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Toggle
-            value={perf.gpuDriverLock}
+            enabled={perf.gpuDriverLock}
             onChange={(v) => update('gpuDriverLock', v)}
             label="GPU Driver Lock"
           />
           <Toggle
-            value={perf.ndiTools5Installed}
+            enabled={perf.ndiTools5Installed}
             onChange={(v) => update('ndiTools5Installed', v)}
             label="NDI Tools 5"
-            warning="Causes BSOD on disguise servers"
+            warning
           />
         </div>
 

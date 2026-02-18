@@ -124,8 +124,8 @@ export default function DashboardPage() {
 
   return (
     <div
-      className="min-h-screen w-full"
-      style={{ backgroundColor: "#0c0c14", color: "#e0e0e8" }}
+      className="min-h-screen w-full bg-background"
+      style={{ color: "#e0e0e8" }}
     >
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* ============================================================ */}

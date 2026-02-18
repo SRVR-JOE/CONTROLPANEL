@@ -17,7 +17,7 @@ export default function SavePresetDialog() {
 
   const currentRoutes = selectedRouter
     ? selectedRouter.outputs
-        .filter((o) => o.routedFrom !== undefined)
+        .filter((o) => o.routedFrom !== undefined && o.routedFrom > 0)
         .map((o) => ({ input: o.routedFrom!, output: o.index }))
     : [];
 
@@ -52,8 +52,11 @@ export default function SavePresetDialog() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-lg">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }}
+    >
+      <div className="glass-card w-full max-w-lg" role="dialog" aria-modal="true">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="flex items-center gap-2">

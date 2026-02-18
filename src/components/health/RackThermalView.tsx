@@ -116,7 +116,7 @@ export default function RackThermalView({ rack, devices }: RackThermalViewProps)
                 );
               }
 
-              const temp = info.device.health.temperature;
+              const temp = info.device.health.temperature ?? 0;
               const color = temperatureToColor(temp);
               const opacity = temperatureToOpacity(temp);
 

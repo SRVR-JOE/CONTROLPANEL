@@ -99,10 +99,10 @@ export default function DeviceDetailPage() {
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Thermometer size={18} /> Health Metrics</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               {[
-                { icon: Thermometer, label: 'Temp', value: `${h.temperature.toFixed(1)}°C`, color: h.temperature > 55 ? '#ef4444' : h.temperature > 45 ? '#f59e0b' : '#22c55e' },
+                { icon: Thermometer, label: 'Temp', value: h.temperature != null ? `${h.temperature.toFixed(1)}°C` : 'N/A', color: (h.temperature ?? 0) > 55 ? '#ef4444' : (h.temperature ?? 0) > 45 ? '#f59e0b' : '#22c55e' },
                 { icon: Zap, label: 'Power', value: h.powerDraw ? `${h.powerDraw.toFixed(0)}W` : 'N/A', color: '#3b82f6' },
                 { icon: Fan, label: 'Fan', value: h.fanSpeed ? `${h.fanSpeed.toFixed(0)} RPM` : 'N/A', color: '#8b5cf6' },
-                { icon: Clock, label: 'Uptime', value: formatUptime(h.uptime), color: '#22c55e' },
+                { icon: Clock, label: 'Uptime', value: h.uptime != null ? formatUptime(h.uptime) : 'N/A', color: '#22c55e' },
               ].map((s) => (
                 <div key={s.label} className="bg-[#1c1c2b] rounded-lg p-3 text-center">
                   <s.icon size={16} className="mx-auto mb-1" style={{ color: s.color }} />

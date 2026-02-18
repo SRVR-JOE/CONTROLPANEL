@@ -1,28 +1,6 @@
 import { DeviceHealth } from '@/types';
 import { DeviceAdapter, DeviceQueryResult } from './types';
-
-const TIMEOUT_MS = 3000;
-
-async function fetchWithTimeout(url: string): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    return response;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function fetchJson<T>(url: string): Promise<T | null> {
-  try {
-    const res = await fetchWithTimeout(url);
-    if (!res.ok) return null;
-    return (await res.json()) as T;
-  } catch {
-    return null;
-  }
-}
+import { fetchJson } from './utils';
 
 // Map CPU temperature to an approximate "usage" percentage.
 // Tessera CPUs typically idle around 40C and max around 85C.
@@ -95,7 +73,7 @@ export class BromptonAdapter implements DeviceAdapter {
       }
 
       const health: DeviceHealth = {
-        temperature: ambientTemp || cpuTemp,
+        temperature: ambientTemp ?? cpuTemp,
         cpuUsage: cpuTemp > 0 ? cpuTempToUsage(cpuTemp) : undefined,
         gpuTemp,
         uptime,

@@ -143,15 +143,17 @@ function DeviceHealthCard({ device }: { device: Device }) {
       {/* Health metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4">
         {/* Temperature */}
-        <div className="flex items-center gap-2">
-          <Thermometer size={14} className="text-amber-400" />
-          <div>
-            <div style={{ fontSize: '10px', color: 'var(--muted)' }}>Temp</div>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)' }}>
-              {h.temperature.toFixed(1)}&deg;C
+        {h.temperature != null && (
+          <div className="flex items-center gap-2">
+            <Thermometer size={14} className="text-amber-400" />
+            <div>
+              <div style={{ fontSize: '10px', color: 'var(--muted)' }}>Temp</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)' }}>
+                {h.temperature.toFixed(1)}&deg;C
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* CPU */}
         {h.cpuUsage != null && (
@@ -211,15 +213,17 @@ function DeviceHealthCard({ device }: { device: Device }) {
         )}
 
         {/* Uptime */}
-        <div className="flex items-center gap-2">
-          <Clock size={14} className="text-cyan-400" />
-          <div>
-            <div style={{ fontSize: '10px', color: 'var(--muted)' }}>Uptime</div>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)' }}>
-              {formatUptime(h.uptime)}
+        {h.uptime != null && (
+          <div className="flex items-center gap-2">
+            <Clock size={14} className="text-cyan-400" />
+            <div>
+              <div style={{ fontSize: '10px', color: 'var(--muted)' }}>Uptime</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--foreground)' }}>
+                {formatUptime(h.uptime)}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Warnings / Errors */}

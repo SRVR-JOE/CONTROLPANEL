@@ -48,6 +48,7 @@ interface FeatureToggleProps {
 function FeatureToggle({ label, enabled, icon }: FeatureToggleProps) {
   return (
     <div
+      aria-label={`${label}: ${enabled ? 'Enabled' : 'Disabled'}`}
       className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
         enabled
           ? 'bg-green-500/5 border-green-500/20 text-green-400'
@@ -368,7 +369,7 @@ export default function BromptonStatusPanel({
         <div className="pt-3 border-t border-border">
           <div className="flex items-center gap-3">
             <TemperatureGauge
-              value={device.health.temperature}
+              value={device.health.temperature ?? 0}
               label="PROCESSOR"
             />
             <div className="flex-1 grid grid-cols-2 gap-2">

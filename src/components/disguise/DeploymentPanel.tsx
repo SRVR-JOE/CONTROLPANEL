@@ -72,20 +72,12 @@ export default function DeploymentPanel() {
   const session = disguiseSessions.find((s) => s.id === selectedSessionId);
   const activeJob = deploymentJobs.find((j) => j.status === 'deploying');
 
-  // Keep the machine states updating while deploying
-  const [, forceUpdate] = useState(0);
-  useEffect(() => {
-    if (!activeJob) return;
-    const interval = setInterval(() => forceUpdate((n) => n + 1), 200);
-    return () => clearInterval(interval);
-  }, [activeJob]);
-
   // Auto-select all machines when session changes
   useEffect(() => {
     if (session) {
       setSelectedMachines(session.machines.map((m) => m.id));
     }
-  }, [session]);
+  }, [session?.id]);
 
   const toggleMachine = useCallback((id: string) => {
     setSelectedMachines((prev) =>

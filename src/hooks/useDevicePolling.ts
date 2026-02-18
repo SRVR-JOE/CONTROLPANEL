@@ -3,20 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useStore } from '@/store';
 import { DeviceHealth, DeviceStatus } from '@/types';
-
-interface HealthQueryDevice {
-  id: string;
-  ip: string;
-  manufacturer: string;
-  port?: number;
-}
-
-interface DeviceQueryResult {
-  reachable: boolean;
-  health: DeviceHealth | null;
-  firmware?: string;
-  errors?: string[];
-}
+import { DeviceQueryResult } from '@/lib/device-adapters';
 
 interface HealthResponse {
   results: Record<string, DeviceQueryResult>;
@@ -36,8 +23,11 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
   const devices = useStore((s) => s.devices);
   const updateDeviceHealth = useStore((s) => s.updateDeviceHealth);
   const updateDeviceStatus = useStore((s) => s.updateDeviceStatus);
+  const updateDeviceFirmware = useStore((s) => s.updateDeviceFirmware);
   const offlineTimestamps = useRef<Record<string, number>>({});
   const pollingRef = useRef(false);
+  const devicesRef = useRef(devices);
+  devicesRef.current = devices;
 
   const pollDevices = useCallback(async () => {
     if (pollingRef.current) return; // skip if previous poll still running
@@ -47,7 +37,7 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
       const now = Date.now();
 
       // Build list of devices to query (skip recently-failed offline devices)
-      const toQuery: HealthQueryDevice[] = devices
+      const toQuery: Pick<import('@/types').Device, 'id' | 'ipAddress' | 'manufacturer'>[] = devicesRef.current
         .filter((d) => {
           if (!d.ipAddress) return false;
           const lastOffline = offlineTimestamps.current[d.id];
@@ -57,6 +47,7 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
         .map((d) => ({
           id: d.id,
           ip: d.ipAddress,
+          ipAddress: d.ipAddress,
           manufacturer: d.manufacturer,
         }));
 
@@ -68,7 +59,7 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
       const res = await fetch('/api/health', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ devices: toQuery }),
+        body: JSON.stringify({ devices: toQuery.map((d) => ({ id: d.id, ip: d.ipAddress, manufacturer: d.manufacturer })) }),
       });
 
       if (!res.ok) {
@@ -89,6 +80,12 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
             status = 'warning';
           }
           updateDeviceHealth(deviceId, result.health, status);
+
+          // Update firmware if the adapter reported it
+          if (result.firmware) {
+            updateDeviceFirmware(deviceId, result.firmware);
+          }
+
           delete offlineTimestamps.current[deviceId];
         } else {
           // Device unreachable
@@ -101,7 +98,7 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
     } finally {
       pollingRef.current = false;
     }
-  }, [devices, updateDeviceHealth, updateDeviceStatus]);
+  }, [updateDeviceHealth, updateDeviceStatus, updateDeviceFirmware]);
 
   useEffect(() => {
     if (!enabled) return;

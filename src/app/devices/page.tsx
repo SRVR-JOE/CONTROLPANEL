@@ -70,7 +70,7 @@ export default function DevicesPage() {
   };
 
   return (
-    <div className="min-h-screen pl-16 pt-10">
+    <div className="min-h-screen">
       <div className="mx-auto max-w-7xl space-y-6 p-6">
         {/* Page header */}
         <div>
@@ -223,17 +223,21 @@ export default function DevicesPage() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <Thermometer className="h-3.5 w-3.5 text-muted" />
-                          <span
-                            className={`font-mono text-sm ${
-                              device.health.temperature > 55
-                                ? 'text-error'
-                                : device.health.temperature > 40
-                                  ? 'text-warning'
-                                  : 'text-success'
-                            }`}
-                          >
-                            {device.health.temperature.toFixed(1)}&deg;C
-                          </span>
+                          {device.health.temperature != null ? (
+                            <span
+                              className={`font-mono text-sm ${
+                                device.health.temperature > 55
+                                  ? 'text-error'
+                                  : device.health.temperature > 40
+                                    ? 'text-warning'
+                                    : 'text-success'
+                              }`}
+                            >
+                              {device.health.temperature.toFixed(1)}&deg;C
+                            </span>
+                          ) : (
+                            <span className="font-mono text-sm text-muted">N/A</span>
+                          )}
                         </div>
                       </td>
                     </tr>

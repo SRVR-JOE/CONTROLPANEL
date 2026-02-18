@@ -63,14 +63,6 @@ export default function DiscoveryPanel() {
   const latestScan = discoveryScans[0];
   const scanning = activeScan?.status === 'scanning';
 
-  // Force-update while scanning for progress
-  const [, forceUpdate] = useState(0);
-  useEffect(() => {
-    if (!scanning) return;
-    const interval = setInterval(() => forceUpdate((n) => n + 1), 200);
-    return () => clearInterval(interval);
-  }, [scanning]);
-
   // Auto-detect subnet from session's existing d3Net IPs
   useEffect(() => {
     if (!session) return;
@@ -84,7 +76,7 @@ export default function DiscoveryPanel() {
         setSubnet(`${parts[0]}.${parts[1]}.${parts[2]}`);
       }
     }
-  }, [session]);
+  }, [session?.id]);
 
   const handleScan = () => {
     startDiscovery(subnet, rangeStart, rangeEnd, port);

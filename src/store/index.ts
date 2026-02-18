@@ -642,6 +642,7 @@ interface AppStore {
   // Device actions
   updateDeviceStatus: (deviceId: string, status: DeviceStatus) => void;
   updateDeviceHealth: (deviceId: string, health: DeviceHealth, status?: DeviceStatus) => void;
+  updateDeviceFirmware: (deviceId: string, firmware: string) => void;
   assignDeviceToRack: (deviceId: string, rackId: string, startSlot: number) => void;
   removeDeviceFromRack: (deviceId: string) => void;
   sendCommand: (deviceId: string, command: string, params?: Record<string, unknown>) => void;
@@ -871,10 +872,10 @@ export const useStore = create<AppStore>((set, get) => ({
             const updates: Partial<DisguiseProfile> = {};
             for (const section of sections) {
               if (section === 'networkAdapters') {
-                // Copy adapter configs but keep original IDs
+                // Copy adapter configs but keep original IDs; generate new IDs for extra adapters
                 updates.networkAdapters = source.networkAdapters.map((srcAdapter, i) => ({
                   ...srcAdapter,
-                  id: p.networkAdapters[i]?.id ?? srcAdapter.id,
+                  id: p.networkAdapters[i]?.id ?? ('adapter-' + Date.now() + '-' + i),
                 }));
               } else if (section === 'machineIdentity') {
                 // Copy identity but keep hostname
@@ -1067,6 +1068,20 @@ export const useStore = create<AppStore>((set, get) => ({
       activeDiscoveryId: scanId,
     }));
 
+    // Simulate progress updates while waiting
+    let scanned = 0;
+    const progressInterval = setInterval(() => {
+      scanned += Math.floor(Math.random() * 8) + 3;
+      if (scanned >= totalCount) {
+        clearInterval(progressInterval);
+        return;
+      }
+      get().updateDiscoveryScan(scanId, {
+        progress: Math.round((scanned / totalCount) * 90),
+        scannedCount: scanned,
+      });
+    }, 300);
+
     // Fire the API call to scan
     fetch('/api/discover', {
       method: 'POST',
@@ -1075,6 +1090,7 @@ export const useStore = create<AppStore>((set, get) => ({
     })
       .then((res) => res.json())
       .then((data) => {
+        clearInterval(progressInterval);
         if (data.machines) {
           get().updateDiscoveryScan(scanId, {
             status: 'done',
@@ -1086,6 +1102,7 @@ export const useStore = create<AppStore>((set, get) => ({
         }
       })
       .catch((err) => {
+        clearInterval(progressInterval);
         get().updateDiscoveryScan(scanId, {
           status: 'error',
           error: String(err),
@@ -1095,23 +1112,6 @@ export const useStore = create<AppStore>((set, get) => ({
       .finally(() => {
         set({ activeDiscoveryId: null });
       });
-
-    // Simulate progress updates while waiting
-    let scanned = 0;
-    const interval = setInterval(() => {
-      scanned += Math.floor(Math.random() * 8) + 3;
-      if (scanned >= totalCount) {
-        clearInterval(interval);
-        return;
-      }
-      get().updateDiscoveryScan(scanId, {
-        progress: Math.round((scanned / totalCount) * 90),
-        scannedCount: scanned,
-      });
-    }, 300);
-
-    // Safety: clear interval after scan should be done
-    setTimeout(() => clearInterval(interval), totalCount * 100 + 5000);
 
     return scanId;
   },
@@ -1230,8 +1230,20 @@ export const useStore = create<AppStore>((set, get) => ({
     set((state) => ({
       devices: state.devices.map((d) =>
         d.id === deviceId
-          ? { ...d, health, ...(status !== undefined ? { status } : {}) }
+          ? {
+              ...d,
+              health: d.health ? { ...d.health, ...health } : health,
+              lastPolledAt: new Date().toISOString(),
+              ...(status !== undefined ? { status } : {}),
+            }
           : d
+      ),
+    })),
+
+  updateDeviceFirmware: (deviceId, firmware) =>
+    set((state) => ({
+      devices: state.devices.map((d) =>
+        d.id === deviceId ? { ...d, firmware } : d
       ),
     })),
 
@@ -1244,14 +1256,21 @@ export const useStore = create<AppStore>((set, get) => ({
         d.id === deviceId ? { ...d, rackId, rackSlot: startSlot } : d
       );
 
+      // First, clear the device from ALL racks (old rack cleanup), then assign to new rack
       const updatedRacks = state.racks.map((rack) => {
-        if (rack.id !== rackId) return rack;
-        const newSlots = rack.slots.map((slot) => {
-          if (slot.ru >= startSlot && slot.ru < startSlot + device.rackUnits) {
-            return { ...slot, deviceId };
-          }
-          return slot.deviceId === deviceId ? { ...slot, deviceId: undefined } : slot;
-        });
+        // Clear device from any existing slot in any rack
+        let newSlots = rack.slots.map((slot) =>
+          slot.deviceId === deviceId ? { ...slot, deviceId: undefined } : slot
+        );
+        // Assign device to new slots in the target rack
+        if (rack.id === rackId) {
+          newSlots = newSlots.map((slot) => {
+            if (slot.ru >= startSlot && slot.ru < startSlot + device.rackUnits) {
+              return { ...slot, deviceId };
+            }
+            return slot;
+          });
+        }
         return { ...rack, slots: newSlots };
       });
 

@@ -51,7 +51,7 @@ export default function HealthPage() {
     }
 
     if (sortMode === 'temperature') {
-      result.sort((a, b) => b.health.temperature - a.health.temperature);
+      result.sort((a, b) => (b.health.temperature ?? 0) - (a.health.temperature ?? 0));
     } else {
       result.sort((a, b) => a.name.localeCompare(b.name));
     }

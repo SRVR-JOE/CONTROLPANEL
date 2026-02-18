@@ -46,8 +46,11 @@ export default function AddPinDialog({ boardId, open, onClose }: AddPinDialogPro
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-md">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+    >
+      <div className="glass-card w-full max-w-md" role="dialog" aria-modal="true">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="flex items-center gap-2">

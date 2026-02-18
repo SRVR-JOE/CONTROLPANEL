@@ -91,7 +91,7 @@ function PinBoardCard({ item, device, boardId, onDragStart }: PinBoardCardProps)
         </div>
 
         {/* Temperature */}
-        {item.showTemperature && (
+        {item.showTemperature && device.health.temperature != null && (
           <div className="flex items-center gap-2">
             <Thermometer className="h-3.5 w-3.5 text-muted" />
             <div className="flex flex-1 items-center gap-2">
@@ -147,10 +147,12 @@ function PinBoardCard({ item, device, boardId, onDragStart }: PinBoardCardProps)
                 </div>
               )}
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted">Uptime</span>
-              <span className="font-mono text-foreground">{formatUptime(device.health.uptime)}</span>
-            </div>
+            {device.health.uptime != null && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted">Uptime</span>
+                <span className="font-mono text-foreground">{formatUptime(device.health.uptime)}</span>
+              </div>
+            )}
           </div>
         )}
 

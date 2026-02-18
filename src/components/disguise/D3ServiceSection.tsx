@@ -2,25 +2,8 @@
 
 import { useStore } from '@/store';
 import { Cog } from 'lucide-react';
+import { Toggle } from '@/components/ui/Toggle';
 import type { D3ServiceSettings, D3ServiceStartup } from '@/types';
-
-function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm text-foreground">{label}</span>
-      <button
-        onClick={() => onChange(!value)}
-        className={`relative h-6 w-11 rounded-full transition-colors ${value ? 'bg-accent' : 'bg-border'}`}
-      >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-            value ? 'translate-x-5' : 'translate-x-0.5'
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
 
 const startupLabels: Record<D3ServiceStartup, string> = {
   auto: 'Auto Start',
@@ -134,7 +117,7 @@ export default function D3ServiceSection() {
       </div>
 
       <div className="mt-4">
-        <Toggle value={svc.genlock} onChange={(v) => update('genlock', v)} label="Genlock" />
+        <Toggle enabled={svc.genlock} onChange={(v) => update('genlock', v)} label="Genlock" />
       </div>
     </div>
   );

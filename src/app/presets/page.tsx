@@ -19,7 +19,7 @@ export default function PresetsPage() {
       : matrixPresets.filter((p) => p.routerId === filterRouterId);
 
   return (
-    <div className="min-h-screen pl-16 pt-10">
+    <div className="min-h-screen">
       <div className="mx-auto max-w-6xl space-y-8 p-6">
         {/* Page header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

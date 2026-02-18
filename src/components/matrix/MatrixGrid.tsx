@@ -2,15 +2,10 @@
 
 import { useCallback, useMemo, useRef } from 'react';
 import { useStore } from '@/store';
-import type { MatrixRouter, MatrixManufacturer } from '@/types';
+import { MANUFACTURER_COLORS } from '@/lib/colors';
+import type { MatrixRouter } from '@/types';
 
 const CELL_SIZE = 24;
-
-const MANUFACTURER_COLORS: Record<MatrixManufacturer, string> = {
-  aja: '#ffc107',
-  lightware: '#ff9800',
-  blackmagic: '#607d8b',
-};
 
 interface MatrixGridProps {
   router: MatrixRouter;
@@ -155,6 +150,8 @@ export default function MatrixGrid({ router }: MatrixGridProps) {
                     }}
                     onClick={() => handleCellClick(output.index, input.index)}
                     title={`${input.label} -> ${output.label}`}
+                    aria-label={`Route ${input.label} to ${output.label}`}
+                    aria-pressed={isActive}
                   >
                     {isActive ? (
                       <div className="h-3 w-3 rounded-full bg-[var(--accent)] shadow-[0_0_6px_var(--accent)]" />

@@ -1,14 +1,9 @@
 'use client';
 
 import { useStore } from '@/store';
+import { MANUFACTURER_COLORS } from '@/lib/colors';
 import type { MatrixManufacturer } from '@/types';
 import { Grid3x3 } from 'lucide-react';
-
-const MANUFACTURER_COLORS: Record<MatrixManufacturer, string> = {
-  aja: '#ffc107',
-  lightware: '#ff9800',
-  blackmagic: '#607d8b',
-};
 
 const MANUFACTURER_LABELS: Record<MatrixManufacturer, string> = {
   aja: 'AJA',

@@ -37,27 +37,31 @@ export default function StatusBar() {
         <span className="text-xs font-medium text-muted">SYSTEM STATUS</span>
         <div className="flex items-center gap-3">
           {statusCounts.online > 0 && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5" aria-label={`${statusCounts.online} online`}>
               <span className="inline-block h-2 w-2 rounded-full bg-success" />
               <span className="text-xs text-foreground">{statusCounts.online}</span>
+              <span className="sr-only">online</span>
             </div>
           )}
           {statusCounts.warning > 0 && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5" aria-label={`${statusCounts.warning} warning`}>
               <span className="inline-block h-2 w-2 rounded-full bg-warning" />
               <span className="text-xs text-foreground">{statusCounts.warning}</span>
+              <span className="sr-only">warning</span>
             </div>
           )}
           {statusCounts.error > 0 && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5" aria-label={`${statusCounts.error} error`}>
               <span className="inline-block h-2 w-2 rounded-full bg-error" />
               <span className="text-xs text-foreground">{statusCounts.error}</span>
+              <span className="sr-only">error</span>
             </div>
           )}
           {statusCounts.offline > 0 && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5" aria-label={`${statusCounts.offline} offline`}>
               <span className="inline-block h-2 w-2 rounded-full bg-muted" />
               <span className="text-xs text-foreground">{statusCounts.offline}</span>
+              <span className="sr-only">offline</span>
             </div>
           )}
         </div>

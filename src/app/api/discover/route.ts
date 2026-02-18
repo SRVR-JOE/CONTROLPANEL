@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { validatePort } from '@/lib/validation';
 
 /**
  * POST /api/discover
@@ -57,12 +58,63 @@ function generateMachine(ip: string, port: number) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: DiscoverRequest = await request.json();
+    let body: DiscoverRequest;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+
     const { subnet, rangeStart, rangeEnd, port } = body;
 
     if (!subnet || rangeStart == null || rangeEnd == null) {
       return NextResponse.json(
         { error: 'Missing required fields: subnet, rangeStart, rangeEnd' },
+        { status: 400 }
+      );
+    }
+
+    // Validate subnet: must be exactly 3 octets (e.g. "10.0.0"), each 0-255
+    if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(subnet)) {
+      return NextResponse.json(
+        { error: 'Invalid subnet format. Expected format: "x.x.x" (e.g. "10.0.0")' },
+        { status: 400 }
+      );
+    }
+
+    const subnetOctets = subnet.split('.').map(Number);
+    if (subnetOctets.some((o) => o < 0 || o > 255)) {
+      return NextResponse.json(
+        { error: 'Invalid subnet: each octet must be 0-255' },
+        { status: 400 }
+      );
+    }
+
+    // Validate rangeStart and rangeEnd are integers 0-255 and rangeStart <= rangeEnd
+    if (
+      !Number.isInteger(rangeStart) || rangeStart < 0 || rangeStart > 255 ||
+      !Number.isInteger(rangeEnd) || rangeEnd < 0 || rangeEnd > 255
+    ) {
+      return NextResponse.json(
+        { error: 'rangeStart and rangeEnd must be integers between 0 and 255' },
+        { status: 400 }
+      );
+    }
+
+    if (rangeStart > rangeEnd) {
+      return NextResponse.json(
+        { error: 'rangeStart must be less than or equal to rangeEnd' },
+        { status: 400 }
+      );
+    }
+
+    // Validate port if present
+    if (port !== undefined && !validatePort(port)) {
+      return NextResponse.json(
+        { error: 'Invalid port number. Must be an integer between 1 and 65535.' },
         { status: 400 }
       );
     }
@@ -132,7 +184,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: 'Scan failed', details: String(err) },
+      { error: 'Scan failed' },
       { status: 500 }
     );
   }

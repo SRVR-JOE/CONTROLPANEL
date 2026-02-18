@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { validateIp } from '@/lib/validation';
 
 /**
  * POST /api/deploy
@@ -31,12 +32,28 @@ interface DeployResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: DeployRequest = await request.json();
+    let body: DeployRequest;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+
     const { machineId, hostname, targetIp, apiPort, sections } = body;
 
     if (!machineId || !targetIp || !sections || sections.length === 0) {
       return NextResponse.json(
         { error: 'Missing required fields: machineId, targetIp, sections' },
+        { status: 400 }
+      );
+    }
+
+    if (!validateIp(targetIp)) {
+      return NextResponse.json(
+        { error: 'Invalid target IP address' },
         { status: 400 }
       );
     }
@@ -91,28 +108,43 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: 'Internal server error', details: String(err) },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
 /**
- * POST /api/deploy/batch
+ * PUT /api/deploy
  *
  * Batch deploy to multiple machines. Each machine is deployed
  * concurrently for speed.
  */
 export async function PUT(request: NextRequest) {
   try {
-    const body: { machines: DeployRequest[] } = await request.json();
+    let body: { machines: DeployRequest[] };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
 
     if (!body.machines || body.machines.length === 0) {
       return NextResponse.json({ error: 'No machines specified' }, { status: 400 });
     }
 
+    if (body.machines.length > 50) {
+      return NextResponse.json(
+        { error: 'Too many machines. Maximum 50 machines per batch deploy.' },
+        { status: 400 }
+      );
+    }
+
     // Process all machines concurrently
-    const results = await Promise.all(
+    const settledResults = await Promise.allSettled(
       body.machines.map(async (machine) => {
         const startTime = Date.now();
 
@@ -145,6 +177,20 @@ export async function PUT(request: NextRequest) {
       })
     );
 
+    const results: DeployResponse[] = settledResults.map((settled, i) => {
+      if (settled.status === 'fulfilled') {
+        return settled.value;
+      }
+      return {
+        machineId: body.machines[i].machineId,
+        success: false,
+        message: `Failed to deploy to ${body.machines[i].hostname}`,
+        appliedSections: [],
+        duration: 0,
+        error: settled.reason instanceof Error ? settled.reason.message : String(settled.reason),
+      };
+    });
+
     const allSuccess = results.every((r) => r.success);
     const successCount = results.filter((r) => r.success).length;
 
@@ -157,7 +203,7 @@ export async function PUT(request: NextRequest) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: 'Internal server error', details: String(err) },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

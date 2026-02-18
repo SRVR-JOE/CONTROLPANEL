@@ -1,7 +1,6 @@
 import { DeviceHealth } from '@/types';
 import { DeviceAdapter, DeviceQueryResult } from './types';
-
-const TIMEOUT_MS = 3000;
+import { fetchJson } from './utils';
 
 interface BMSystemInfo {
   status?: string;
@@ -21,27 +20,6 @@ interface BMTransportStatus {
   speed?: number;
   inputVideoFormat?: string;
   loop?: boolean;
-}
-
-async function fetchWithTimeout(url: string): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    return response;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function fetchJson<T>(url: string): Promise<T | null> {
-  try {
-    const res = await fetchWithTimeout(url);
-    if (!res.ok) return null;
-    return (await res.json()) as T;
-  } catch {
-    return null;
-  }
 }
 
 export class BlackmagicAdapter implements DeviceAdapter {

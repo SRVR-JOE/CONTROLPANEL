@@ -1,36 +1,9 @@
 'use client';
 
 import { useStore } from '@/store';
-import { Settings, AlertTriangle } from 'lucide-react';
+import { Settings } from 'lucide-react';
+import { Toggle } from '@/components/ui/Toggle';
 import type { WindowsSettings, PowerPlan, WindowsUpdatePolicy } from '@/types';
-
-function Toggle({ value, onChange, label, warning }: { value: boolean; onChange: (v: boolean) => void; label: string; warning?: string }) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-1.5">
-        <span className="text-sm text-foreground">{label}</span>
-        {warning && (
-          <span className="group relative">
-            <AlertTriangle className="h-3 w-3 text-warning" />
-            <span className="absolute -top-8 left-0 z-10 hidden whitespace-nowrap rounded bg-surface-2 px-2 py-1 text-[10px] text-warning shadow-lg group-hover:block">
-              {warning}
-            </span>
-          </span>
-        )}
-      </div>
-      <button
-        onClick={() => onChange(!value)}
-        className={`relative h-6 w-11 rounded-full transition-colors ${value ? 'bg-accent' : 'bg-border'}`}
-      >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-            value ? 'translate-x-5' : 'translate-x-0.5'
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
 
 const powerPlanLabels: Record<PowerPlan, string> = {
   'balanced': 'Balanced',
@@ -99,18 +72,18 @@ export default function WindowsSettingsSection() {
 
         {/* Toggles */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Toggle value={win.sleepWhenPlugged} onChange={(v) => update('sleepWhenPlugged', v)} label="Sleep When Plugged In" />
-          <Toggle value={win.hibernate} onChange={(v) => update('hibernate', v)} label="Hibernate" />
-          <Toggle value={win.windowsFirewall} onChange={(v) => update('windowsFirewall', v)} label="Windows Firewall" />
-          <Toggle value={win.remoteDesktop} onChange={(v) => update('remoteDesktop', v)} label="Remote Desktop" />
+          <Toggle enabled={win.sleepWhenPlugged} onChange={(v) => update('sleepWhenPlugged', v)} label="Sleep When Plugged In" />
+          <Toggle enabled={win.hibernate} onChange={(v) => update('hibernate', v)} label="Hibernate" />
+          <Toggle enabled={win.windowsFirewall} onChange={(v) => update('windowsFirewall', v)} label="Windows Firewall" />
+          <Toggle enabled={win.remoteDesktop} onChange={(v) => update('remoteDesktop', v)} label="Remote Desktop" />
           <Toggle
-            value={win.antivirus}
+            enabled={win.antivirus}
             onChange={(v) => update('antivirus', v)}
             label="Antivirus"
-            warning="disguise recommends disabled"
+            warning
           />
-          <Toggle value={win.visualEffectsPerformance} onChange={(v) => update('visualEffectsPerformance', v)} label="Visual Effects: Performance" />
-          <Toggle value={win.usbSelectiveSuspend} onChange={(v) => update('usbSelectiveSuspend', v)} label="USB Selective Suspend" />
+          <Toggle enabled={win.visualEffectsPerformance} onChange={(v) => update('visualEffectsPerformance', v)} label="Visual Effects: Performance" />
+          <Toggle enabled={win.usbSelectiveSuspend} onChange={(v) => update('usbSelectiveSuspend', v)} label="USB Selective Suspend" />
         </div>
       </div>
     </div>

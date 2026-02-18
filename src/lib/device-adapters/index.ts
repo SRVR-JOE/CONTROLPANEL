@@ -7,21 +7,24 @@ import { LightwareAdapter } from './lightware';
 import { GenericAdapter } from './generic';
 
 export type { DeviceAdapter, DeviceQueryResult } from './types';
+export { fetchWithTimeout, fetchJson } from './utils';
 
 const disguiseAdapter = new DisguiseAdapter();
 const bromptonAdapter = new BromptonAdapter();
 const blackmagicAdapter = new BlackmagicAdapter();
 const lightwareAdapter = new LightwareAdapter();
-const genericAdapter = new GenericAdapter();
+const genericAja = new GenericAdapter('aja');
+const genericRoss = new GenericAdapter('ross');
+const genericBarco = new GenericAdapter('barco');
 
 const adapterMap: Record<DeviceManufacturer, DeviceAdapter> = {
   disguise: disguiseAdapter,
   brompton: bromptonAdapter,
   blackmagic: blackmagicAdapter,
   lightware: lightwareAdapter,
-  aja: genericAdapter,
-  ross: genericAdapter,
-  barco: genericAdapter,
+  aja: genericAja,
+  ross: genericRoss,
+  barco: genericBarco,
 };
 
 /**
@@ -29,5 +32,5 @@ const adapterMap: Record<DeviceManufacturer, DeviceAdapter> = {
  * Falls back to the generic adapter for unknown manufacturers.
  */
 export function getAdapter(manufacturer: DeviceManufacturer): DeviceAdapter {
-  return adapterMap[manufacturer] ?? genericAdapter;
+  return adapterMap[manufacturer] ?? new GenericAdapter(manufacturer);
 }

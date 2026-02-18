@@ -14,14 +14,14 @@ export default function PinBoardPage() {
 
   if (!board) {
     return (
-      <div className="flex h-screen items-center justify-center pl-16 pt-10 text-muted">
+      <div className="flex h-full items-center justify-center text-muted">
         No pin boards configured.
       </div>
     );
   }
 
   return (
-    <div className="h-screen pl-16 pt-10">
+    <div className="h-full">
       <div className="relative h-full w-full">
         <PinBoardCanvas boardId={board.id} />
 

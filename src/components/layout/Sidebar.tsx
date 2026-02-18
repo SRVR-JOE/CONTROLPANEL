@@ -11,10 +11,12 @@ import {
   HardDrive,
   Save,
   Sliders,
+  LayoutDashboard,
 } from 'lucide-react';
 
 const navItems = [
-  { href: '/', label: 'Racks', icon: Server },
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/racks', label: 'Racks', icon: Server },
   { href: '/matrix', label: 'Matrix', icon: Grid3x3 },
   { href: '/health', label: 'Health', icon: Activity },
   { href: '/brompton', label: 'Brompton', icon: Monitor },
@@ -52,6 +54,7 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? 'page' : undefined}
               className={`flex h-10 items-center gap-3 rounded-lg px-3 transition-all duration-200 ${
                 isActive
                   ? 'bg-accent/15 text-accent'

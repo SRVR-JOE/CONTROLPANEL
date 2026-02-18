@@ -1,7 +1,6 @@
 import { DeviceHealth } from '@/types';
 import { DeviceAdapter, DeviceQueryResult } from './types';
-
-const TIMEOUT_MS = 3000;
+import { fetchWithTimeout } from './utils';
 
 interface D3HealthState {
   name: string;
@@ -26,17 +25,6 @@ interface D3Notification {
   summary?: string;
   severity?: string;
   timestamp?: string;
-}
-
-async function fetchWithTimeout(url: string): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    return response;
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 function parseSeverity(
@@ -117,24 +105,55 @@ export class DisguiseAdapter implements DeviceAdapter {
     const base = `http://${ip}:${port}`;
 
     try {
-      // Try session API first (requires designer to be running)
+      // Run session health and detectsystems in parallel
       let sessionHealth: D3SessionHealth | null = null;
       let notifications: D3Notification[] = [];
-      let sessionAvailable = true;
+      let sessionAvailable = false;
+      let serviceAvailable = false;
+      let firmware: string | undefined;
 
-      try {
-        const healthRes = await fetchWithTimeout(`${base}/api/session/status/health`);
-        if (healthRes.ok) {
-          sessionHealth = await healthRes.json() as D3SessionHealth;
-        } else {
-          sessionAvailable = false;
-        }
-      } catch {
-        // Designer not running — session API unavailable
-        sessionAvailable = false;
+      const [sessionResult, serviceResult] = await Promise.allSettled([
+        (async () => {
+          const healthRes = await fetchWithTimeout(`${base}/api/session/status/health`);
+          if (healthRes.ok) {
+            return (await healthRes.json()) as D3SessionHealth;
+          }
+          return null;
+        })(),
+        (async () => {
+          const sysRes = await fetchWithTimeout(`${base}/api/service/system/detectsystems`);
+          if (sysRes.ok) {
+            return await sysRes.json();
+          }
+          return null;
+        })(),
+      ]);
+
+      // Process session health result
+      if (sessionResult.status === 'fulfilled' && sessionResult.value !== null) {
+        sessionAvailable = true;
+        sessionHealth = sessionResult.value;
       }
 
-      // Fetch notifications if session is available
+      // Process service/detectsystems result
+      if (serviceResult.status === 'fulfilled' && serviceResult.value !== null) {
+        serviceAvailable = true;
+        const data = serviceResult.value;
+        const systems = Array.isArray(data) ? data : (data?.result ?? data?.systems ?? [data]);
+        const sys: D3DetectedSystem | undefined = systems.find(
+          (s: D3DetectedSystem) => s.ipAddress === ip
+        ) ?? systems[0];
+        if (sys?.version) {
+          firmware = `r${sys.version.major}.${sys.version.minor}.${sys.version.hotfix}`;
+        }
+      }
+
+      // If neither API responded, device is unreachable
+      if (!sessionAvailable && !serviceAvailable) {
+        return { reachable: false, health: null };
+      }
+
+      // Fetch notifications sequentially (depends on sessionAvailable)
       if (sessionAvailable) {
         try {
           const notifRes = await fetchWithTimeout(`${base}/api/session/status/notifications`);
@@ -147,29 +166,7 @@ export class DisguiseAdapter implements DeviceAdapter {
         }
       }
 
-      // Always try service API for system info
-      let firmware: string | undefined;
-      try {
-        const sysRes = await fetchWithTimeout(`${base}/api/service/system/detectsystems`);
-        if (sysRes.ok) {
-          const data = await sysRes.json();
-          const systems = Array.isArray(data) ? data : (data?.result ?? data?.systems ?? [data]);
-          const sys: D3DetectedSystem | undefined = systems.find(
-            (s: D3DetectedSystem) => s.ipAddress === ip
-          ) ?? systems[0];
-          if (sys?.version) {
-            firmware = `r${sys.version.major}.${sys.version.minor}.${sys.version.hotfix}`;
-          }
-        }
-      } catch {
-        // Service API not available
-        if (!sessionAvailable) {
-          // Neither API is reachable
-          return { reachable: false, health: null };
-        }
-      }
-
-      // If we got here, at least one API responded
+      // Build health from session states
       const states = sessionHealth?.states ?? [];
       const { gpuTemp, cpuUsage, temperature } = extractFromStates(states);
       const { errors, warnings } = parseSeverity(states, notifications);

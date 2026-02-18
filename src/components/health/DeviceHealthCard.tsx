@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Device, DeviceManufacturer } from '@/types';
+import { Device } from '@/types';
+import { MANUFACTURER_COLORS } from '@/lib/colors';
 import TemperatureGauge from './TemperatureGauge';
 import {
   Cpu,
@@ -13,16 +14,6 @@ import {
   AlertCircle,
   MonitorSpeaker,
 } from 'lucide-react';
-
-const manufacturerColors: Record<DeviceManufacturer, string> = {
-  disguise: '#ff3366',
-  barco: '#0099ff',
-  brompton: '#00cc88',
-  lightware: '#8855ff',
-  aja: '#ff8800',
-  blackmagic: '#888888',
-  ross: '#cc3333',
-};
 
 const statusConfig: Record<
   Device['status'],
@@ -82,7 +73,7 @@ interface DeviceHealthCardProps {
 
 export default function DeviceHealthCard({ device }: DeviceHealthCardProps) {
   const { health, status, manufacturer, name, model } = device;
-  const accentColor = manufacturerColors[manufacturer];
+  const accentColor = MANUFACTURER_COLORS[manufacturer];
   const statusInfo = statusConfig[status];
 
   return (
@@ -111,7 +102,7 @@ export default function DeviceHealthCard({ device }: DeviceHealthCardProps) {
       <div className="px-4 pb-3 space-y-3">
         {/* Temperature + Stats Row */}
         <div className="flex items-start gap-3">
-          <TemperatureGauge value={health.temperature} label="TEMP" />
+          <TemperatureGauge value={health.temperature ?? 0} label="TEMP" />
 
           <div className="flex-1 space-y-2 min-w-0 pt-1">
             {health.cpuUsage !== undefined && (
@@ -175,15 +166,17 @@ export default function DeviceHealthCard({ device }: DeviceHealthCardProps) {
               <span className="text-[9px] text-muted ml-0.5">W</span>
             </div>
           )}
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-muted mb-0.5">
-              <Clock size={10} />
-              <span className="text-[9px] uppercase tracking-wider">Uptime</span>
+          {health.uptime != null && (
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-muted mb-0.5">
+                <Clock size={10} />
+                <span className="text-[9px] uppercase tracking-wider">Uptime</span>
+              </div>
+              <span className="text-[11px] font-mono text-foreground">
+                {formatUptime(health.uptime)}
+              </span>
             </div>
-            <span className="text-[11px] font-mono text-foreground">
-              {formatUptime(health.uptime)}
-            </span>
-          </div>
+          )}
         </div>
 
         {/* Errors */}

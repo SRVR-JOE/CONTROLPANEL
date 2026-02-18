@@ -33,14 +33,14 @@ export interface DevicePort {
 }
 
 export interface DeviceHealth {
-  temperature: number; // Celsius
+  temperature?: number; // Celsius
   cpuUsage?: number; // percent
   memoryUsage?: number; // percent
   gpuUsage?: number; // percent
   gpuTemp?: number;
   fanSpeed?: number; // RPM
   powerDraw?: number; // Watts
-  uptime: number; // seconds
+  uptime?: number; // seconds
   errors: string[];
   warnings: string[];
 }
@@ -60,6 +60,7 @@ export interface Device {
   health: DeviceHealth;
   firmware?: string;
   serialNumber?: string;
+  lastPolledAt?: string;
 }
 
 // --- Brompton-specific ---

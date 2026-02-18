@@ -2,25 +2,8 @@
 
 import { useStore } from '@/store';
 import { FolderOpen } from 'lucide-react';
+import { Toggle } from '@/components/ui/Toggle';
 import type { SMBSettings, SMBVersion } from '@/types';
-
-function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm text-foreground">{label}</span>
-      <button
-        onClick={() => onChange(!value)}
-        className={`relative h-6 w-11 rounded-full transition-colors ${value ? 'bg-accent' : 'bg-border'}`}
-      >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-            value ? 'translate-x-5' : 'translate-x-0.5'
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
 
 export default function SMBSettingsSection() {
   const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore();
@@ -53,7 +36,7 @@ export default function SMBSettingsSection() {
 
       <div className="space-y-4">
         {/* Main toggle */}
-        <Toggle value={smb.enabled} onChange={(v) => update('enabled', v)} label="File Sharing" />
+        <Toggle enabled={smb.enabled} onChange={(v) => update('enabled', v)} label="File Sharing" />
 
         {smb.enabled && (
           <>
@@ -79,10 +62,10 @@ export default function SMBSettingsSection() {
 
             {/* Toggles */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Toggle value={smb.networkDiscovery} onChange={(v) => update('networkDiscovery', v)} label="Network Discovery" />
-              <Toggle value={smb.passwordProtected} onChange={(v) => update('passwordProtected', v)} label="Password Protected" />
-              <Toggle value={smb.guestAccess} onChange={(v) => update('guestAccess', v)} label="Guest Access" />
-              <Toggle value={smb.allowInsecureGuest} onChange={(v) => update('allowInsecureGuest', v)} label="AllowInsecureGuest (Win11)" />
+              <Toggle enabled={smb.networkDiscovery} onChange={(v) => update('networkDiscovery', v)} label="Network Discovery" />
+              <Toggle enabled={smb.passwordProtected} onChange={(v) => update('passwordProtected', v)} label="Password Protected" />
+              <Toggle enabled={smb.guestAccess} onChange={(v) => update('guestAccess', v)} label="Guest Access" />
+              <Toggle enabled={smb.allowInsecureGuest} onChange={(v) => update('allowInsecureGuest', v)} label="AllowInsecureGuest (Win11)" />
             </div>
 
             {/* SMB Version */}
