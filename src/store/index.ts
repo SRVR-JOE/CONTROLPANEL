@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Device,
+  DeviceHealth,
   Rack,
   MatrixRouter,
   PinBoard,
@@ -11,6 +12,16 @@ import {
   DeviceCommand,
   BromptonProcessorStatus,
   DeviceStatus,
+  DisguiseSession,
+  DisguiseProfile,
+  SessionMachine,
+  NetworkAdapterConfig,
+  NetworkAdapterRole,
+  DeploymentJob,
+  DeploymentSection,
+  MachineDeploymentState,
+  DiscoveredMachine,
+  DiscoveryScan,
 } from '@/types';
 
 // ============================================================
@@ -463,6 +474,117 @@ const initialSystemPresets: SystemPreset[] = [
 ];
 
 // ============================================================
+// Disguise Server Config - Mock Data
+// ============================================================
+
+function createDefaultAdapters(lastOctet: number): NetworkAdapterConfig[] {
+  const roles: { role: NetworkAdapterRole; name: string; baseIp: string; subnet: string; gateway: string; speed: NetworkAdapterConfig['linkSpeed'] }[] = [
+    { role: 'd3net', name: 'NIC A - d3Net', baseIp: `10.0.0.${lastOctet}`, subnet: '255.255.255.0', gateway: '10.0.0.1', speed: '10GbE' },
+    { role: 'media', name: 'NIC B - Media', baseIp: `192.168.10.${lastOctet}`, subnet: '255.255.255.0', gateway: '192.168.10.1', speed: '10GbE' },
+    { role: 'artnet-sacn', name: 'NIC C - Art-Net/sACN', baseIp: `2.0.0.${lastOctet}`, subnet: '255.0.0.0', gateway: '', speed: '1GbE' },
+    { role: 'kvm', name: 'NIC D - KVM', baseIp: `192.168.20.${lastOctet}`, subnet: '255.255.255.0', gateway: '', speed: '1GbE' },
+    { role: 'control', name: 'NIC E - Control', baseIp: `192.168.30.${lastOctet}`, subnet: '255.255.255.0', gateway: '', speed: '1GbE' },
+    { role: 'mgmt', name: 'NIC F - MGMT', baseIp: `192.168.100.${lastOctet}`, subnet: '255.255.255.0', gateway: '192.168.100.1', speed: '1GbE' },
+  ];
+  return roles.map((r) => ({
+    id: uuidv4(),
+    role: r.role,
+    adapterName: r.name,
+    enabled: true,
+    dhcp: false,
+    ipAddress: r.baseIp,
+    subnetMask: r.subnet,
+    gateway: r.gateway,
+    dnsPrimary: '',
+    dnsSecondary: '',
+    vlanId: 0,
+    linkSpeed: r.speed,
+    mtu: 1500,
+  }));
+}
+
+function createDefaultProfile(name: string, hostname: string, role: 'director' | 'actor' | 'understudy', index: number, lastOctet: number): DisguiseProfile {
+  return {
+    id: uuidv4(),
+    name,
+    machineIdentity: {
+      hostname,
+      role,
+      actorIndex: index,
+      understudyFor: '',
+      workgroup: 'DISGUISE',
+      description: '',
+    },
+    networkAdapters: createDefaultAdapters(lastOctet),
+    smbSettings: {
+      enabled: true,
+      sharePath: 'C:\\d3 Projects',
+      shareName: 'd3Projects',
+      networkDiscovery: true,
+      passwordProtected: false,
+      guestAccess: true,
+      smbVersion: 'SMBv3',
+      allowInsecureGuest: true,
+    },
+    windowsSettings: {
+      powerPlan: 'ultimate-performance',
+      sleepWhenPlugged: false,
+      hibernate: false,
+      windowsFirewall: false,
+      remoteDesktop: true,
+      windowsUpdate: 'paused',
+      antivirus: false,
+      visualEffectsPerformance: true,
+      usbSelectiveSuspend: false,
+    },
+    d3ServiceSettings: {
+      startup: 'auto',
+      apiPort: 80,
+      designerVersion: 'r27.1',
+      d3netAdapter: 'NIC A - d3Net',
+      genlock: false,
+      syncPort: 7542,
+      vsyncPort: 7968,
+    },
+    performanceTweaks: {
+      gpuDriverLock: true,
+      gpuDriverVersion: '546.33',
+      codecPreference: 'hap-hapq',
+      guiOnActor: role === 'actor' ? 'disabled' : 'full',
+      ndiTools5Installed: false,
+    },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+const directorProfile = createDefaultProfile('Show Config', 'GX3-DIR', 'director', 0, 11);
+const actor1Profile = createDefaultProfile('Show Config', 'GX3-A1', 'actor', 1, 12);
+const actor2Profile = createDefaultProfile('Show Config', 'GX3-A2', 'actor', 2, 13);
+const actor3Profile = createDefaultProfile('Show Config', 'VX4-A3', 'actor', 3, 14);
+const us1Profile = createDefaultProfile('Show Config', 'GX3-US1', 'understudy', 1, 15);
+us1Profile.machineIdentity.understudyFor = 'machine-actor-1';
+
+const initialDisguiseSessions: DisguiseSession[] = [
+  {
+    id: 'session-1',
+    name: 'Show "Illuminate"',
+    workgroup: 'DISGUISE',
+    designerVersion: 'r27.1',
+    machines: [
+      { id: 'machine-director', name: 'GX3-DIR', model: 'GX 3', role: 'director', index: 0, understudyFor: '', deviceId: 'dev-disguise-1', activeProfileId: directorProfile.id, status: 'online' },
+      { id: 'machine-actor-1', name: 'GX3-A1', model: 'GX 3', role: 'actor', index: 1, understudyFor: '', deviceId: 'dev-disguise-2', activeProfileId: actor1Profile.id, status: 'online' },
+      { id: 'machine-actor-2', name: 'GX3-A2', model: 'GX 3', role: 'actor', index: 2, understudyFor: '', activeProfileId: actor2Profile.id, status: 'online' },
+      { id: 'machine-actor-3', name: 'VX4-A3', model: 'VX 4', role: 'actor', index: 3, understudyFor: '', activeProfileId: actor3Profile.id, status: 'warning' },
+      { id: 'machine-us-1', name: 'GX3-US1', model: 'GX 3', role: 'understudy', index: 1, understudyFor: 'machine-actor-1', activeProfileId: us1Profile.id, status: 'standby' },
+    ],
+    profiles: [directorProfile, actor1Profile, actor2Profile, actor3Profile, us1Profile],
+    createdAt: '2024-12-01T10:00:00Z',
+    updatedAt: '2024-12-10T14:30:00Z',
+  },
+];
+
+// ============================================================
 // Store interface
 // ============================================================
 
@@ -477,11 +599,49 @@ interface AppStore {
   systemPresets: SystemPreset[];
   commandHistory: DeviceCommand[];
 
+  // Disguise config
+  disguiseSessions: DisguiseSession[];
+  selectedSessionId: string | null;
+  selectedMachineId: string | null;
+
+  // Disguise actions
+  setSelectedSession: (sessionId: string) => void;
+  setSelectedMachine: (machineId: string) => void;
+  updateProfile: (sessionId: string, profileId: string, updates: Partial<DisguiseProfile>) => void;
+  addSession: (session: DisguiseSession) => void;
+  addMachineToSession: (sessionId: string, machine: SessionMachine, profile: DisguiseProfile) => void;
+  removeMachineFromSession: (sessionId: string, machineId: string) => void;
+  duplicateProfile: (sessionId: string, profileId: string, newName: string) => DisguiseProfile | null;
+  deleteProfile: (sessionId: string, profileId: string) => void;
+  setMachineActiveProfile: (sessionId: string, machineId: string, profileId: string) => void;
+  autoIncrementIPs: (sessionId: string, baseOctet: number) => void;
+  renameProfile: (sessionId: string, profileId: string, newName: string) => void;
+  renameSession: (sessionId: string, newName: string) => void;
+  updateSessionSettings: (sessionId: string, updates: Partial<Pick<DisguiseSession, 'workgroup' | 'designerVersion'>>) => void;
+  copySettingsToMachines: (sessionId: string, sourceProfileId: string, targetMachineIds: string[], sections: DeploymentSection[]) => void;
+  exportSession: (sessionId: string) => string;
+  importSession: (json: string) => boolean;
+
+  // Deployment
+  deploymentJobs: DeploymentJob[];
+  activeDeploymentId: string | null;
+  startDeployment: (sessionId: string, machineIds: string[], sections: DeploymentSection[]) => string;
+  updateMachineDeploymentState: (jobId: string, machineId: string, state: Partial<MachineDeploymentState>) => void;
+  completeDeployment: (jobId: string) => void;
+
+  // Discovery
+  discoveryScans: DiscoveryScan[];
+  activeDiscoveryId: string | null;
+  startDiscovery: (subnet: string, rangeStart: number, rangeEnd: number, port: number) => string;
+  updateDiscoveryScan: (scanId: string, update: Partial<DiscoveryScan>) => void;
+  addDiscoveredToSession: (sessionId: string, discovered: DiscoveredMachine, profileId?: string) => void;
+
   // Selected state
   selectedRouterId: string | null;
 
   // Device actions
   updateDeviceStatus: (deviceId: string, status: DeviceStatus) => void;
+  updateDeviceHealth: (deviceId: string, health: DeviceHealth, status?: DeviceStatus) => void;
   assignDeviceToRack: (deviceId: string, rackId: string, startSlot: number) => void;
   removeDeviceFromRack: (deviceId: string) => void;
   sendCommand: (deviceId: string, command: string, params?: Record<string, unknown>) => void;
@@ -514,11 +674,565 @@ export const useStore = create<AppStore>((set, get) => ({
   matrixPresets: initialMatrixPresets,
   systemPresets: initialSystemPresets,
   commandHistory: [],
+
+  // Disguise config
+  disguiseSessions: initialDisguiseSessions,
+  selectedSessionId: initialDisguiseSessions[0]?.id ?? null,
+  selectedMachineId: initialDisguiseSessions[0]?.machines[0]?.id ?? null,
+
+  setSelectedSession: (sessionId) => {
+    const session = get().disguiseSessions.find((s) => s.id === sessionId);
+    set({ selectedSessionId: sessionId, selectedMachineId: session?.machines[0]?.id ?? null });
+  },
+
+  setSelectedMachine: (machineId) => set({ selectedMachineId: machineId }),
+
+  updateProfile: (sessionId, profileId, updates) =>
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) =>
+        s.id === sessionId
+          ? {
+              ...s,
+              profiles: s.profiles.map((p) =>
+                p.id === profileId ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p
+              ),
+              updatedAt: new Date().toISOString(),
+            }
+          : s
+      ),
+    })),
+
+  addSession: (session) =>
+    set((state) => ({ disguiseSessions: [...state.disguiseSessions, session] })),
+
+  addMachineToSession: (sessionId, machine, profile) =>
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) =>
+        s.id === sessionId
+          ? { ...s, machines: [...s.machines, machine], profiles: [...s.profiles, profile], updatedAt: new Date().toISOString() }
+          : s
+      ),
+    })),
+
+  removeMachineFromSession: (sessionId, machineId) =>
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) => {
+        if (s.id !== sessionId) return s;
+        const machine = s.machines.find((m) => m.id === machineId);
+        // Prevent removing the last director
+        if (machine?.role === 'director') {
+          const directorCount = s.machines.filter((m) => m.role === 'director').length;
+          if (directorCount <= 1) return s;
+        }
+        return {
+          ...s,
+          // Clear understudyFor on any machine that was understudying the removed machine
+          machines: s.machines
+            .filter((m) => m.id !== machineId)
+            .map((m) => m.understudyFor === machineId ? { ...m, understudyFor: '' } : m),
+          profiles: machine ? s.profiles.filter((p) => p.id !== machine.activeProfileId) : s.profiles,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    })),
+
+  duplicateProfile: (sessionId, profileId, newName) => {
+    const state = get();
+    const session = state.disguiseSessions.find((s) => s.id === sessionId);
+    const original = session?.profiles.find((p) => p.id === profileId);
+    if (!original) return null;
+    const newProfile: DisguiseProfile = {
+      ...JSON.parse(JSON.stringify(original)),
+      id: uuidv4(),
+      name: newName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    // Re-generate adapter IDs
+    newProfile.networkAdapters = newProfile.networkAdapters.map((a: NetworkAdapterConfig) => ({ ...a, id: uuidv4() }));
+    set((s) => ({
+      disguiseSessions: s.disguiseSessions.map((sess) =>
+        sess.id === sessionId ? { ...sess, profiles: [...sess.profiles, newProfile], updatedAt: new Date().toISOString() } : sess
+      ),
+    }));
+    return newProfile;
+  },
+
+  deleteProfile: (sessionId, profileId) =>
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) =>
+        s.id === sessionId
+          ? { ...s, profiles: s.profiles.filter((p) => p.id !== profileId), updatedAt: new Date().toISOString() }
+          : s
+      ),
+    })),
+
+  setMachineActiveProfile: (sessionId, machineId, profileId) =>
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) =>
+        s.id === sessionId
+          ? {
+              ...s,
+              machines: s.machines.map((m) => (m.id === machineId ? { ...m, activeProfileId: profileId } : m)),
+              updatedAt: new Date().toISOString(),
+            }
+          : s
+      ),
+    })),
+
+  autoIncrementIPs: (sessionId, baseOctet) =>
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) => {
+        if (s.id !== sessionId) return s;
+        // Sequential: director first, then actors by index, then understudies — all .11, .12, .13, ...
+        const directors = s.machines.filter((m) => m.role === 'director');
+        const actors = s.machines.filter((m) => m.role === 'actor').sort((a, b) => a.index - b.index);
+        const understudies = s.machines.filter((m) => m.role === 'understudy').sort((a, b) => a.index - b.index);
+        const ordered = [...directors, ...actors, ...understudies];
+
+        // Bounds check: ensure we won't exceed .254
+        if (baseOctet + ordered.length - 1 > 254) return s;
+
+        const assignOctet = (machine: SessionMachine, octet: number) => {
+          const profile = s.profiles.find((p) => p.id === machine.activeProfileId);
+          if (!profile) return profile;
+          return {
+            ...profile,
+            networkAdapters: profile.networkAdapters.map((adapter) => {
+              const parts = adapter.ipAddress.split('.');
+              if (parts.length === 4) {
+                parts[3] = String(Math.min(254, octet));
+                return { ...adapter, ipAddress: parts.join('.') };
+              }
+              return adapter;
+            }),
+            updatedAt: new Date().toISOString(),
+          };
+        };
+
+        const updatedProfiles = [...s.profiles];
+        let octet = baseOctet;
+
+        for (const machine of ordered) {
+          const updated = assignOctet(machine, octet);
+          if (updated) {
+            const idx = updatedProfiles.findIndex((p) => p.id === machine.activeProfileId);
+            if (idx >= 0) updatedProfiles[idx] = updated;
+          }
+          octet++;
+        }
+
+        return { ...s, profiles: updatedProfiles, updatedAt: new Date().toISOString() };
+      }),
+    })),
+
+  renameProfile: (sessionId, profileId, newName) =>
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) =>
+        s.id === sessionId
+          ? {
+              ...s,
+              profiles: s.profiles.map((p) =>
+                p.id === profileId ? { ...p, name: newName, updatedAt: new Date().toISOString() } : p
+              ),
+              updatedAt: new Date().toISOString(),
+            }
+          : s
+      ),
+    })),
+
+  renameSession: (sessionId, newName) =>
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) =>
+        s.id === sessionId ? { ...s, name: newName, updatedAt: new Date().toISOString() } : s
+      ),
+    })),
+
+  updateSessionSettings: (sessionId, updates) =>
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) =>
+        s.id === sessionId ? { ...s, ...updates, updatedAt: new Date().toISOString() } : s
+      ),
+    })),
+
+  copySettingsToMachines: (sessionId, sourceProfileId, targetMachineIds, sections) =>
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) => {
+        if (s.id !== sessionId) return s;
+        const source = s.profiles.find((p) => p.id === sourceProfileId);
+        if (!source) return s;
+        const targetProfileIds = s.machines
+          .filter((m) => targetMachineIds.includes(m.id))
+          .map((m) => m.activeProfileId);
+        return {
+          ...s,
+          profiles: s.profiles.map((p) => {
+            if (!targetProfileIds.includes(p.id) || p.id === sourceProfileId) return p;
+            const updates: Partial<DisguiseProfile> = {};
+            for (const section of sections) {
+              if (section === 'networkAdapters') {
+                // Copy adapter configs but keep original IDs
+                updates.networkAdapters = source.networkAdapters.map((srcAdapter, i) => ({
+                  ...srcAdapter,
+                  id: p.networkAdapters[i]?.id ?? srcAdapter.id,
+                }));
+              } else if (section === 'machineIdentity') {
+                // Copy identity but keep hostname
+                updates.machineIdentity = { ...source.machineIdentity, hostname: p.machineIdentity.hostname };
+              } else {
+                (updates as unknown as Record<string, unknown>)[section] = JSON.parse(JSON.stringify((source as unknown as Record<string, unknown>)[section]));
+              }
+            }
+            return { ...p, ...updates, updatedAt: new Date().toISOString() };
+          }),
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    })),
+
+  exportSession: (sessionId) => {
+    const state = get();
+    const session = state.disguiseSessions.find((s) => s.id === sessionId);
+    if (!session) return '{}';
+    return JSON.stringify(session, null, 2);
+  },
+
+  importSession: (json) => {
+    try {
+      const session = JSON.parse(json) as DisguiseSession;
+      if (!session.id || !session.name || !session.machines || !session.profiles) return false;
+      // Generate new IDs to avoid collisions
+      const newId = uuidv4();
+      session.id = newId;
+      session.name = `${session.name} (Imported)`;
+      session.createdAt = new Date().toISOString();
+      session.updatedAt = new Date().toISOString();
+      set((state) => ({
+        disguiseSessions: [...state.disguiseSessions, session],
+        selectedSessionId: newId,
+        selectedMachineId: session.machines[0]?.id ?? null,
+      }));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  // Deployment
+  deploymentJobs: [],
+  activeDeploymentId: null,
+
+  startDeployment: (sessionId, machineIds, sections) => {
+    const jobId = uuidv4();
+    const machineStates: MachineDeploymentState[] = machineIds.map((id) => ({
+      machineId: id,
+      status: 'idle',
+      progress: 0,
+      message: 'Waiting...',
+    }));
+    const job: DeploymentJob = {
+      id: jobId,
+      sessionId,
+      machineIds,
+      status: 'deploying',
+      machineStates,
+      startedAt: new Date().toISOString(),
+      sections,
+    };
+    set((state) => ({
+      deploymentJobs: [job, ...state.deploymentJobs].slice(0, 50),
+      activeDeploymentId: jobId,
+    }));
+
+    // Simulate deployment to each machine
+    const state = get();
+    const session = state.disguiseSessions.find((s) => s.id === sessionId);
+    if (!session) return jobId;
+
+    machineIds.forEach((machineId, i) => {
+      const machine = session.machines.find((m) => m.id === machineId);
+      const profile = session.profiles.find((p) => p.id === machine?.activeProfileId);
+      if (!machine || !profile) return;
+
+      const d3netIp = profile.networkAdapters.find((a) => a.role === 'd3net')?.ipAddress ?? 'unknown';
+      const delay = i * 800; // Stagger starts
+
+      // Phase 1: Connecting
+      setTimeout(() => {
+        get().updateMachineDeploymentState(jobId, machineId, {
+          status: 'deploying',
+          progress: 10,
+          message: `Connecting to ${d3netIp}...`,
+        });
+      }, delay);
+
+      // Phase 2: Pushing config sections
+      sections.forEach((section, si) => {
+        setTimeout(() => {
+          const pct = 10 + Math.round(((si + 1) / sections.length) * 70);
+          get().updateMachineDeploymentState(jobId, machineId, {
+            status: 'deploying',
+            progress: pct,
+            message: `Applying ${section}...`,
+          });
+        }, delay + 1000 + si * 600);
+      });
+
+      // Phase 3: Verifying
+      setTimeout(() => {
+        get().updateMachineDeploymentState(jobId, machineId, {
+          status: 'deploying',
+          progress: 90,
+          message: 'Verifying configuration...',
+        });
+      }, delay + 1000 + sections.length * 600 + 400);
+
+      // Phase 4: Complete (simulate random success/failure)
+      setTimeout(() => {
+        const success = Math.random() > 0.1; // 90% success rate
+        get().updateMachineDeploymentState(jobId, machineId, {
+          status: success ? 'success' : 'failed',
+          progress: success ? 100 : 85,
+          message: success ? 'Configuration applied' : 'Connection timeout',
+          lastDeployedAt: success ? new Date().toISOString() : undefined,
+          error: success ? undefined : `Failed to reach ${d3netIp}: connection timeout`,
+        });
+        // Check if all machines are done
+        const currentJob = get().deploymentJobs.find((j) => j.id === jobId);
+        if (currentJob) {
+          const allDone = currentJob.machineStates.every((ms) =>
+            ms.status === 'success' || ms.status === 'failed'
+          );
+          if (allDone) {
+            get().completeDeployment(jobId);
+          }
+        }
+      }, delay + 1000 + sections.length * 600 + 1200);
+    });
+
+    return jobId;
+  },
+
+  updateMachineDeploymentState: (jobId, machineId, stateUpdate) =>
+    set((state) => ({
+      deploymentJobs: state.deploymentJobs.map((j) =>
+        j.id === jobId
+          ? {
+              ...j,
+              machineStates: j.machineStates.map((ms) =>
+                ms.machineId === machineId ? { ...ms, ...stateUpdate } : ms
+              ),
+            }
+          : j
+      ),
+    })),
+
+  completeDeployment: (jobId) =>
+    set((state) => ({
+      deploymentJobs: state.deploymentJobs.map((j) => {
+        if (j.id !== jobId) return j;
+        const allSuccess = j.machineStates.every((ms) => ms.status === 'success');
+        const allFailed = j.machineStates.every((ms) => ms.status === 'failed');
+        return {
+          ...j,
+          status: allSuccess ? 'success' : allFailed ? 'failed' : 'partial',
+          completedAt: new Date().toISOString(),
+        };
+      }),
+      activeDeploymentId: null,
+    })),
+
+  // Discovery
+  discoveryScans: [],
+  activeDiscoveryId: null,
+
+  startDiscovery: (subnet, rangeStart, rangeEnd, port) => {
+    const scanId = uuidv4();
+    const totalCount = rangeEnd - rangeStart + 1;
+    const scan: DiscoveryScan = {
+      id: scanId,
+      subnet,
+      rangeStart,
+      rangeEnd,
+      port,
+      status: 'scanning',
+      progress: 0,
+      found: [],
+      scannedCount: 0,
+      totalCount,
+      startedAt: new Date().toISOString(),
+    };
+    set((state) => ({
+      discoveryScans: [scan, ...state.discoveryScans].slice(0, 20),
+      activeDiscoveryId: scanId,
+    }));
+
+    // Fire the API call to scan
+    fetch('/api/discover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subnet, rangeStart, rangeEnd, port }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.machines) {
+          get().updateDiscoveryScan(scanId, {
+            status: 'done',
+            progress: 100,
+            found: data.machines,
+            scannedCount: totalCount,
+            completedAt: new Date().toISOString(),
+          });
+        }
+      })
+      .catch((err) => {
+        get().updateDiscoveryScan(scanId, {
+          status: 'error',
+          error: String(err),
+          completedAt: new Date().toISOString(),
+        });
+      })
+      .finally(() => {
+        set({ activeDiscoveryId: null });
+      });
+
+    // Simulate progress updates while waiting
+    let scanned = 0;
+    const interval = setInterval(() => {
+      scanned += Math.floor(Math.random() * 8) + 3;
+      if (scanned >= totalCount) {
+        clearInterval(interval);
+        return;
+      }
+      get().updateDiscoveryScan(scanId, {
+        progress: Math.round((scanned / totalCount) * 90),
+        scannedCount: scanned,
+      });
+    }, 300);
+
+    // Safety: clear interval after scan should be done
+    setTimeout(() => clearInterval(interval), totalCount * 100 + 5000);
+
+    return scanId;
+  },
+
+  updateDiscoveryScan: (scanId, update) =>
+    set((state) => ({
+      discoveryScans: state.discoveryScans.map((s) =>
+        s.id === scanId ? { ...s, ...update } : s
+      ),
+    })),
+
+  addDiscoveredToSession: (sessionId, discovered, profileId) => {
+    const state = get();
+    const session = state.disguiseSessions.find((s) => s.id === sessionId);
+    if (!session) return;
+
+    const machineId = uuidv4();
+    const newProfileId = profileId ?? uuidv4();
+
+    // If a profileId was given, duplicate that profile for this machine
+    let profile: DisguiseProfile;
+    const sourceProfile = profileId ? session.profiles.find((p) => p.id === profileId) : null;
+
+    if (sourceProfile) {
+      // Clone the selected profile, update identity to match discovered machine
+      profile = {
+        ...JSON.parse(JSON.stringify(sourceProfile)),
+        id: newProfileId,
+        name: `${sourceProfile.name} (${discovered.hostname})`,
+        machineIdentity: {
+          ...sourceProfile.machineIdentity,
+          hostname: discovered.hostname,
+          role: discovered.role,
+          actorIndex: discovered.role === 'director' ? 0 :
+            session.machines.filter((m) => m.role === discovered.role).length + 1,
+          workgroup: discovered.workgroup || sourceProfile.machineIdentity.workgroup,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      // Update d3Net adapter IP to match discovered IP
+      profile.networkAdapters = profile.networkAdapters.map((a) =>
+        a.role === 'd3net' ? { ...a, ipAddress: discovered.ip } : a
+      );
+      profile.d3ServiceSettings = {
+        ...profile.d3ServiceSettings,
+        apiPort: discovered.apiPort,
+        designerVersion: discovered.designerVersion || profile.d3ServiceSettings.designerVersion,
+      };
+    } else {
+      // Create a bare-bones profile from discovered info
+      const actorIndex = discovered.role === 'director' ? 0 :
+        session.machines.filter((m) => m.role === discovered.role).length + 1;
+      profile = {
+        id: newProfileId,
+        name: `Discovered - ${discovered.hostname}`,
+        machineIdentity: {
+          hostname: discovered.hostname,
+          role: discovered.role,
+          actorIndex,
+          understudyFor: '',
+          workgroup: discovered.workgroup || session.workgroup,
+          description: `Auto-discovered at ${discovered.ip}`,
+        },
+        networkAdapters: [
+          { id: uuidv4(), role: 'd3net', adapterName: 'NIC A - d3Net', enabled: true, dhcp: false, ipAddress: discovered.ip, subnetMask: '255.255.255.0', gateway: discovered.ip.replace(/\.\d+$/, '.1'), dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '10GbE', mtu: 1500 },
+          { id: uuidv4(), role: 'media', adapterName: 'NIC B - Media', enabled: true, dhcp: false, ipAddress: '0.0.0.0', subnetMask: '255.255.255.0', gateway: '', dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '10GbE', mtu: 1500 },
+          { id: uuidv4(), role: 'artnet-sacn', adapterName: 'NIC C - Art-Net/sACN', enabled: true, dhcp: false, ipAddress: '2.0.0.1', subnetMask: '255.0.0.0', gateway: '', dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '1GbE', mtu: 1500 },
+          { id: uuidv4(), role: 'kvm', adapterName: 'NIC D - KVM', enabled: true, dhcp: false, ipAddress: '0.0.0.0', subnetMask: '255.255.255.0', gateway: '', dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '1GbE', mtu: 1500 },
+          { id: uuidv4(), role: 'control', adapterName: 'NIC E - Control', enabled: true, dhcp: false, ipAddress: '0.0.0.0', subnetMask: '255.255.255.0', gateway: '', dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '1GbE', mtu: 1500 },
+          { id: uuidv4(), role: 'mgmt', adapterName: 'NIC F - MGMT', enabled: true, dhcp: false, ipAddress: '0.0.0.0', subnetMask: '255.255.255.0', gateway: '', dnsPrimary: '', dnsSecondary: '', vlanId: 0, linkSpeed: '1GbE', mtu: 1500 },
+        ],
+        smbSettings: { enabled: true, sharePath: 'C:\\d3 Projects', shareName: 'd3Projects', networkDiscovery: true, passwordProtected: false, guestAccess: true, smbVersion: 'SMBv3', allowInsecureGuest: true },
+        windowsSettings: { powerPlan: 'ultimate-performance', sleepWhenPlugged: false, hibernate: false, windowsFirewall: false, remoteDesktop: true, windowsUpdate: 'paused', antivirus: false, visualEffectsPerformance: true, usbSelectiveSuspend: false },
+        d3ServiceSettings: { startup: 'auto', apiPort: discovered.apiPort, designerVersion: discovered.designerVersion || session.designerVersion, d3netAdapter: 'NIC A - d3Net', genlock: false, syncPort: 7542, vsyncPort: 7968 },
+        performanceTweaks: { gpuDriverLock: true, gpuDriverVersion: '546.33', codecPreference: 'hap-hapq', guiOnActor: discovered.role === 'actor' ? 'disabled' : 'full', ndiTools5Installed: false },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    const machine: SessionMachine = {
+      id: machineId,
+      name: discovered.hostname,
+      model: discovered.model,
+      role: discovered.role,
+      index: discovered.role === 'director' ? 0 :
+        session.machines.filter((m) => m.role === discovered.role).length + 1,
+      understudyFor: '',
+      activeProfileId: newProfileId,
+      status: discovered.d3ServiceRunning ? 'online' : 'offline',
+    };
+
+    set((state) => ({
+      disguiseSessions: state.disguiseSessions.map((s) => {
+        if (s.id !== sessionId) return s;
+        return {
+          ...s,
+          machines: [...s.machines, machine],
+          profiles: [...s.profiles, profile],
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+      selectedMachineId: machineId,
+    }));
+  },
+
   selectedRouterId: initialRouters[0]?.id ?? null,
 
   updateDeviceStatus: (deviceId, status) =>
     set((state) => ({
       devices: state.devices.map((d) => (d.id === deviceId ? { ...d, status } : d)),
+    })),
+
+  updateDeviceHealth: (deviceId, health, status) =>
+    set((state) => ({
+      devices: state.devices.map((d) =>
+        d.id === deviceId
+          ? { ...d, health, ...(status !== undefined ? { status } : {}) }
+          : d
+      ),
     })),
 
   assignDeviceToRack: (deviceId, rackId, startSlot) =>

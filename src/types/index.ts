@@ -176,6 +176,197 @@ export interface SystemPreset {
   createdAt: string;
 }
 
+// --- Disguise Server Configuration ---
+
+export type DisguiseModel = 'GX 3' | 'GX 3c' | 'VX 4' | 'VX 4+' | 'VX 2' | 'VX 2+' | 'EX 3' | 'EX 2' | 'EX 2C' | 'Custom';
+
+export type D3NetRole = 'director' | 'actor' | 'understudy';
+
+export type NetworkAdapterRole = 'd3net' | 'media' | 'artnet-sacn' | 'kvm' | 'control' | 'mgmt';
+
+export type PowerPlan = 'balanced' | 'high-performance' | 'ultimate-performance';
+
+export type SMBVersion = 'SMBv1' | 'SMBv2' | 'SMBv3';
+
+export type WindowsUpdatePolicy = 'enabled' | 'paused' | 'disabled';
+
+export type D3ServiceStartup = 'auto' | 'manual' | 'disabled';
+
+export type CodecPreference = 'hap-hapq' | 'notch' | 'photo-jpeg' | 'h264-h265';
+
+export type ActorGUIMode = 'disabled' | 'minimal' | 'full';
+
+export type LinkSpeed = 'auto' | '100Mbps' | '1GbE' | '2.5GbE' | '5GbE' | '10GbE' | '25GbE' | '40GbE' | '100GbE';
+
+export interface NetworkAdapterConfig {
+  id: string;
+  role: NetworkAdapterRole;
+  adapterName: string;
+  enabled: boolean;
+  dhcp: boolean;
+  ipAddress: string;
+  subnetMask: string;
+  gateway: string;
+  dnsPrimary: string;
+  dnsSecondary: string;
+  vlanId: number;
+  linkSpeed: LinkSpeed;
+  mtu: number;
+}
+
+export interface MachineIdentity {
+  hostname: string;
+  role: D3NetRole;
+  actorIndex: number;
+  understudyFor: string;
+  workgroup: string;
+  description: string;
+}
+
+export interface SMBSettings {
+  enabled: boolean;
+  sharePath: string;
+  shareName: string;
+  networkDiscovery: boolean;
+  passwordProtected: boolean;
+  guestAccess: boolean;
+  smbVersion: SMBVersion;
+  allowInsecureGuest: boolean;
+}
+
+export interface WindowsSettings {
+  powerPlan: PowerPlan;
+  sleepWhenPlugged: boolean;
+  hibernate: boolean;
+  windowsFirewall: boolean;
+  remoteDesktop: boolean;
+  windowsUpdate: WindowsUpdatePolicy;
+  antivirus: boolean;
+  visualEffectsPerformance: boolean;
+  usbSelectiveSuspend: boolean;
+}
+
+export interface D3ServiceSettings {
+  startup: D3ServiceStartup;
+  apiPort: number;
+  designerVersion: string;
+  d3netAdapter: string;
+  genlock: boolean;
+  syncPort: number;
+  vsyncPort: number;
+}
+
+export interface PerformanceTweaks {
+  gpuDriverLock: boolean;
+  gpuDriverVersion: string;
+  codecPreference: CodecPreference;
+  guiOnActor: ActorGUIMode;
+  ndiTools5Installed: boolean;
+}
+
+export interface DisguiseProfile {
+  id: string;
+  name: string;
+  machineIdentity: MachineIdentity;
+  networkAdapters: NetworkAdapterConfig[];
+  smbSettings: SMBSettings;
+  windowsSettings: WindowsSettings;
+  d3ServiceSettings: D3ServiceSettings;
+  performanceTweaks: PerformanceTweaks;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SessionMachine {
+  id: string;
+  name: string;
+  model: DisguiseModel;
+  role: D3NetRole;
+  index: number;
+  understudyFor: string;
+  deviceId?: string;
+  activeProfileId: string;
+  status: 'online' | 'offline' | 'standby' | 'warning';
+}
+
+export interface DisguiseSession {
+  id: string;
+  name: string;
+  workgroup: string;
+  designerVersion: string;
+  machines: SessionMachine[];
+  profiles: DisguiseProfile[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// --- Network Deployment ---
+
+export type DeploymentStatus = 'idle' | 'deploying' | 'success' | 'failed' | 'partial';
+
+export interface MachineDeploymentState {
+  machineId: string;
+  status: DeploymentStatus;
+  progress: number; // 0-100
+  message: string;
+  lastDeployedAt?: string;
+  error?: string;
+}
+
+export interface DeploymentJob {
+  id: string;
+  sessionId: string;
+  machineIds: string[];
+  status: DeploymentStatus;
+  machineStates: MachineDeploymentState[];
+  startedAt: string;
+  completedAt?: string;
+  sections: DeploymentSection[];
+}
+
+export type DeploymentSection =
+  | 'machineIdentity'
+  | 'networkAdapters'
+  | 'smbSettings'
+  | 'windowsSettings'
+  | 'd3ServiceSettings'
+  | 'performanceTweaks';
+
+// --- Network Discovery ---
+
+export interface DiscoveredMachine {
+  ip: string;
+  hostname: string;
+  model: DisguiseModel;
+  role: D3NetRole;
+  designerVersion: string;
+  apiPort: number;
+  workgroup: string;
+  uptime: number; // seconds
+  d3ServiceRunning: boolean;
+  gpuName?: string;
+  currentProject?: string;
+  discoveredAt: string;
+}
+
+export type DiscoveryStatus = 'idle' | 'scanning' | 'done' | 'error';
+
+export interface DiscoveryScan {
+  id: string;
+  subnet: string;
+  rangeStart: number;
+  rangeEnd: number;
+  port: number;
+  status: DiscoveryStatus;
+  progress: number; // 0-100
+  found: DiscoveredMachine[];
+  scannedCount: number;
+  totalCount: number;
+  startedAt: string;
+  completedAt?: string;
+  error?: string;
+}
+
 // --- Commands ---
 
 export interface DeviceCommand {

@@ -5,8 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "node server.js",
+    "start:next": "next start",
+    "lint": "next lint",
+    "dist": "node scripts/build-executable.js",
+    "package": "node scripts/package-binary.js",
+    "package:all": "node scripts/package-binary.js --all"
   },
   "dependencies": {
     "lucide-react": "^0.563.0",
