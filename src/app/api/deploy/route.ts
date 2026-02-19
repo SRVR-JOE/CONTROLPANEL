@@ -41,6 +41,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate IP address format
+    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    if (!ipRegex.test(targetIp) || targetIp.split('.').some((o: string) => parseInt(o) > 255)) {
+      return NextResponse.json(
+        { error: `Invalid IP address: ${targetIp}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate port range
+    if (apiPort != null && (apiPort < 1 || apiPort > 65535)) {
+      return NextResponse.json(
+        { error: `Invalid port number: ${apiPort}. Must be between 1 and 65535.` },
+        { status: 400 }
+      );
+    }
+
     // Simulate network deployment with realistic timing
     const startTime = Date.now();
 

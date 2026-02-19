@@ -96,8 +96,8 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
           offlineTimestamps.current[deviceId] = now;
         }
       }
-    } catch {
-      // Network error reaching our own API — silently ignore
+    } catch (err) {
+      console.warn('[DevicePolling] Failed to reach /api/health:', err);
     } finally {
       pollingRef.current = false;
     }

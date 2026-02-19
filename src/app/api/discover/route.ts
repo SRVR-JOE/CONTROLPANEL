@@ -67,9 +67,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate subnet format (e.g. "10.0.0" or "192.168.1")
+    const subnetRegex = /^(\d{1,3}\.){2}\d{1,3}$/;
+    if (!subnetRegex.test(subnet) || subnet.split('.').some((o: string) => parseInt(o) > 255)) {
+      return NextResponse.json(
+        { error: `Invalid subnet format: ${subnet}. Expected format: "10.0.0"` },
+        { status: 400 }
+      );
+    }
+
+    // Validate range values
+    if (rangeStart < 0 || rangeStart > 254 || rangeEnd < 0 || rangeEnd > 254) {
+      return NextResponse.json(
+        { error: 'Range values must be between 0 and 254' },
+        { status: 400 }
+      );
+    }
+
+    if (rangeStart > rangeEnd) {
+      return NextResponse.json(
+        { error: 'rangeStart must be less than or equal to rangeEnd' },
+        { status: 400 }
+      );
+    }
+
     if (rangeEnd - rangeStart > 254) {
       return NextResponse.json(
         { error: 'Range too large, max 254 addresses per scan' },
+        { status: 400 }
+      );
+    }
+
+    // Validate port
+    const scanPort = port || 80;
+    if (scanPort < 1 || scanPort > 65535) {
+      return NextResponse.json(
+        { error: `Invalid port: ${port}. Must be between 1 and 65535.` },
         { status: 400 }
       );
     }
