@@ -22,7 +22,7 @@ export const MANUFACTURER_COLORS: Record<DeviceManufacturer, string> = {
   ross: '#9c27b0',
   novastar: '#f44336',
   panasonic: '#0068b5',
-  sony: '#000000',
+  sony: '#0066cc',
   christie: '#c62828',
   epson: '#003399',
   shure: '#1a237e',
