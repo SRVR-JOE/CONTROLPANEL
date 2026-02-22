@@ -1,19 +1,9 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import { PERSISTENT_KEYS, type PersistentKey } from '@/store/constants';
 
-export const PERSISTENT_KEYS = [
-  'devices',
-  'racks',
-  'routers',
-  'bromptonStatuses',
-  'pinBoards',
-  'matrixPresets',
-  'systemPresets',
-  'disguiseSessions',
-] as const;
-
-export type PersistentKey = (typeof PERSISTENT_KEYS)[number];
+export { PERSISTENT_KEYS, type PersistentKey };
 
 function resolveDataDir(): string {
   if (process.env.DATA_DIR) return process.env.DATA_DIR;

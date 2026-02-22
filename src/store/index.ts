@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
+import { PERSISTENT_KEYS } from '@/store/constants';
 import {
   Device,
   DeviceHealth,
   Rack,
+  RackWidth,
   MatrixRouter,
   PinBoard,
   PinBoardItem,
@@ -31,19 +33,26 @@ import {
 // Mock data generators
 // ============================================================
 
+// Simple seeded PRNG so server and client produce identical mock values
+let _seed = 42;
+function seededRandom() {
+  _seed = (_seed * 16807 + 0) % 2147483647;
+  return (_seed & 0x7fffffff) / 0x7fffffff;
+}
+
 function createMockHealth(manufacturer: string) {
   const base = {
-    temperature: 35 + Math.random() * 25,
-    cpuUsage: 10 + Math.random() * 60,
-    memoryUsage: 20 + Math.random() * 50,
-    fanSpeed: 1200 + Math.random() * 2000,
-    powerDraw: 80 + Math.random() * 400,
-    uptime: Math.floor(Math.random() * 864000),
+    temperature: 35 + seededRandom() * 25,
+    cpuUsage: 10 + seededRandom() * 60,
+    memoryUsage: 20 + seededRandom() * 50,
+    fanSpeed: 1200 + seededRandom() * 2000,
+    powerDraw: 80 + seededRandom() * 400,
+    uptime: Math.floor(seededRandom() * 864000),
     errors: [] as string[],
     warnings: [] as string[],
   };
   if (manufacturer === 'disguise' || manufacturer === 'barco') {
-    return { ...base, gpuUsage: 15 + Math.random() * 70, gpuTemp: 40 + Math.random() * 30 };
+    return { ...base, gpuUsage: 15 + seededRandom() * 70, gpuTemp: 40 + seededRandom() * 30 };
   }
   return base;
 }
@@ -74,7 +83,7 @@ function generateMockTiles(deviceId: string, chainLengths: number[], onlinePanel
     const chainLength = chainLengths[chainIdx];
 
     for (let pos = 0; pos < chainLength; pos++) {
-      const rng = Math.random();
+      const rng = seededRandom();
       const isOffline = rng < 0.08;
       const isWarning = !isOffline && rng < 0.13; // next 5% after offline band
 
@@ -88,25 +97,25 @@ function generateMockTiles(deviceId: string, chainLengths: number[], onlinePanel
       } else if (isWarning) {
         status = 'warning';
         // Hotspot temperature: 48-55C
-        temperature = 48 + Math.random() * 7;
+        temperature = 48 + seededRandom() * 7;
         // Add a high-temperature or driver-fault error
-        const errType = Math.random() < 0.6 ? 'high-temperature' : 'driver-fault';
+        const errType = seededRandom() < 0.6 ? 'high-temperature' : 'driver-fault';
         const errInfo = errorMessages[errType];
         tileErrors.push({
           type: errType,
           message: errInfo.message,
           severity: errInfo.severity,
-          timestamp: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+          timestamp: new Date(Date.now() - seededRandom() * 3600000).toISOString(),
         });
         // Sometimes add a second error
-        if (Math.random() < 0.3) {
-          const secondErrType = errorTypes.filter((t) => t !== errType)[Math.floor(Math.random() * 5)];
+        if (seededRandom() < 0.3) {
+          const secondErrType = errorTypes.filter((t) => t !== errType)[Math.floor(seededRandom() * 5)];
           const secondErrInfo = errorMessages[secondErrType];
           tileErrors.push({
             type: secondErrType,
             message: secondErrInfo.message,
             severity: secondErrInfo.severity,
-            timestamp: new Date(Date.now() - Math.random() * 7200000).toISOString(),
+            timestamp: new Date(Date.now() - seededRandom() * 7200000).toISOString(),
           });
         }
       } else if (tileGlobalIndex >= onlinePanels) {
@@ -118,22 +127,22 @@ function generateMockTiles(deviceId: string, chainLengths: number[], onlinePanel
         const hasError = rng > 0.96;
         if (hasError) {
           status = 'error';
-          temperature = 52 + Math.random() * 5;
-          const errType = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+          temperature = 52 + seededRandom() * 5;
+          const errType = errorTypes[Math.floor(seededRandom() * errorTypes.length)];
           const errInfo = errorMessages[errType];
           tileErrors.push({
             type: errType,
             message: errInfo.message,
             severity: 'error',
-            timestamp: new Date(Date.now() - Math.random() * 1800000).toISOString(),
+            timestamp: new Date(Date.now() - seededRandom() * 1800000).toISOString(),
           });
         } else {
           status = 'online';
           // Normal temperature: 30-45C, with occasional hotspot cluster
-          const isHotspot = Math.random() < 0.07;
+          const isHotspot = seededRandom() < 0.07;
           temperature = isHotspot
-            ? 43 + Math.random() * 5
-            : 30 + Math.random() * 15;
+            ? 43 + seededRandom() * 5
+            : 30 + seededRandom() * 15;
         }
       }
 
@@ -145,8 +154,8 @@ function generateMockTiles(deviceId: string, chainLengths: number[], onlinePanel
         temperature,
         errors: tileErrors,
         lastSeen: status === 'offline'
-          ? new Date(Date.now() - 60000 - Math.random() * 300000).toISOString()
-          : new Date(Date.now() - Math.random() * 5000).toISOString(),
+          ? new Date(Date.now() - 60000 - seededRandom() * 300000).toISOString()
+          : new Date(Date.now() - seededRandom() * 5000).toISOString(),
         serialNumber: status !== 'offline' ? `SN-${deviceId.slice(-3).toUpperCase()}-C${chainIdx + 1}P${String(pos + 1).padStart(2, '0')}` : undefined,
         firmwareVersion: status !== 'offline' ? '2.4.1' : undefined,
       });
@@ -161,10 +170,10 @@ function generateMockTiles(deviceId: string, chainLengths: number[], onlinePanel
 function createSDIPorts(inputs: number, outputs: number): Device['ports'] {
   const ports: Device['ports'] = [];
   for (let i = 1; i <= inputs; i++) {
-    ports.push({ id: uuidv4(), label: `SDI In ${i}`, type: 'sdi', direction: 'input', signal: Math.random() > 0.3 });
+    ports.push({ id: uuidv4(), label: `SDI In ${i}`, type: 'sdi', direction: 'input', signal: seededRandom() > 0.3 });
   }
   for (let i = 1; i <= outputs; i++) {
-    ports.push({ id: uuidv4(), label: `SDI Out ${i}`, type: 'sdi', direction: 'output', signal: Math.random() > 0.2 });
+    ports.push({ id: uuidv4(), label: `SDI Out ${i}`, type: 'sdi', direction: 'output', signal: seededRandom() > 0.2 });
   }
   return ports;
 }
@@ -182,8 +191,9 @@ const initialDevices: Device[] = [
     category: 'media-server',
     status: 'online',
     ipAddress: '10.0.1.10',
-    rackId: 'rack-1',
+    rackId: 'rack-server',
     rackSlot: 1,
+    rackColumn: 0,
     rackUnits: 4,
     ports: [
       ...createSDIPorts(0, 4),
@@ -203,8 +213,9 @@ const initialDevices: Device[] = [
     category: 'media-server',
     status: 'online',
     ipAddress: '10.0.1.11',
-    rackId: 'rack-1',
+    rackId: 'rack-server',
     rackSlot: 5,
+    rackColumn: 0,
     rackUnits: 4,
     ports: [
       ...createSDIPorts(0, 4),
@@ -223,8 +234,9 @@ const initialDevices: Device[] = [
     category: 'video-processor',
     status: 'online',
     ipAddress: '10.0.1.20',
-    rackId: 'rack-1',
+    rackId: 'rack-server',
     rackSlot: 9,
+    rackColumn: 0,
     rackUnits: 4,
     ports: createSDIPorts(8, 8),
     health: { ...createMockHealth('barco'), temperature: 38 },
@@ -239,8 +251,9 @@ const initialDevices: Device[] = [
     category: 'led-processor',
     status: 'online',
     ipAddress: '10.0.1.30',
-    rackId: 'rack-2',
-    rackSlot: 1,
+    rackId: 'rack-server',
+    rackSlot: 13,
+    rackColumn: 0,
     rackUnits: 1,
     ports: [
       { id: uuidv4(), label: 'SDI In 1', type: 'sdi', direction: 'input', signal: true },
@@ -260,8 +273,9 @@ const initialDevices: Device[] = [
     category: 'led-processor',
     status: 'warning',
     ipAddress: '10.0.1.31',
-    rackId: 'rack-2',
-    rackSlot: 2,
+    rackId: 'rack-server',
+    rackSlot: 14,
+    rackColumn: 0,
     rackUnits: 1,
     ports: [
       { id: uuidv4(), label: 'SDI In 1', type: 'sdi', direction: 'input', signal: true },
@@ -284,8 +298,9 @@ const initialDevices: Device[] = [
     category: 'matrix-switcher',
     status: 'online',
     ipAddress: '10.0.1.40',
-    rackId: 'rack-2',
-    rackSlot: 4,
+    rackId: 'rack-server',
+    rackSlot: 15,
+    rackColumn: 0,
     rackUnits: 2,
     ports: [
       ...Array.from({ length: 16 }, (_, i) => ({
@@ -293,7 +308,7 @@ const initialDevices: Device[] = [
         label: `HDMI In ${i + 1}`,
         type: 'hdmi' as const,
         direction: 'input' as const,
-        signal: Math.random() > 0.4,
+        signal: seededRandom() > 0.4,
       })),
       ...Array.from({ length: 16 }, (_, i) => ({
         id: uuidv4(),
@@ -315,8 +330,9 @@ const initialDevices: Device[] = [
     category: 'matrix-switcher',
     status: 'online',
     ipAddress: '10.0.1.50',
-    rackId: 'rack-2',
-    rackSlot: 6,
+    rackId: 'rack-server',
+    rackSlot: 17,
+    rackColumn: 0,
     rackUnits: 2,
     ports: createSDIPorts(32, 32),
     health: { ...createMockHealth('aja'), temperature: 37 },
@@ -331,8 +347,9 @@ const initialDevices: Device[] = [
     category: 'matrix-switcher',
     status: 'online',
     ipAddress: '10.0.1.60',
-    rackId: 'rack-3',
-    rackSlot: 1,
+    rackId: 'rack-server',
+    rackSlot: 19,
+    rackColumn: 0,
     rackUnits: 4,
     ports: createSDIPorts(40, 40),
     health: { ...createMockHealth('blackmagic'), temperature: 39 },
@@ -347,8 +364,9 @@ const initialDevices: Device[] = [
     category: 'production-switcher',
     status: 'online',
     ipAddress: '10.0.1.70',
-    rackId: 'rack-3',
-    rackSlot: 5,
+    rackId: 'rack-server',
+    rackSlot: 23,
+    rackColumn: 0,
     rackUnits: 4,
     ports: createSDIPorts(24, 16),
     health: { ...createMockHealth('ross'), temperature: 41 },
@@ -363,8 +381,6 @@ const initialDevices: Device[] = [
     category: 'converter',
     status: 'online',
     ipAddress: '10.0.1.80',
-    rackId: 'rack-3',
-    rackSlot: 9,
     rackUnits: 1,
     ports: [
       { id: uuidv4(), label: 'SDI In', type: 'sdi', direction: 'input', signal: true },
@@ -380,48 +396,49 @@ const initialDevices: Device[] = [
 // Initial racks
 // ============================================================
 
-function createSlots(devices: Device[], rackId: string): Rack['slots'] {
+function createSlots(devices: Device[], rackId: string, totalRU: number = 26, width: RackWidth = 1): Rack['slots'] {
   const slots: Rack['slots'] = [];
-  for (let ru = 1; ru <= 26; ru++) {
-    const device = devices.find((d) => d.rackId === rackId && d.rackSlot === ru);
-    slots.push({ ru, deviceId: device?.id });
+  for (let col = 0; col < width; col++) {
+    for (let ru = 1; ru <= totalRU; ru++) {
+      const device = devices.find((d) => d.rackId === rackId && d.rackSlot === ru && (d.rackColumn ?? 0) === col);
+      slots.push({ ru, column: col, deviceId: device?.id });
+    }
+  }
+  return slots;
+}
+
+function createEmptySlots(totalRU: number, width: RackWidth): Rack['slots'] {
+  const slots: Rack['slots'] = [];
+  for (let col = 0; col < width; col++) {
+    for (let ru = 1; ru <= totalRU; ru++) {
+      slots.push({ ru, column: col });
+    }
   }
   return slots;
 }
 
 const initialRacks: Rack[] = [
   {
-    id: 'rack-1',
-    name: 'Media Server Rack A',
+    id: 'rack-server',
+    name: 'Server Rack',
     location: 'Stage Left',
-    width: 2,
+    width: 1,
     totalRU: 26,
-    slots: createSlots(initialDevices, 'rack-1'),
+    slots: createSlots(initialDevices, 'rack-server', 26, 1),
     ambientTemp: 22,
     inletTemp: 24,
     exhaustTemp: 34,
   },
   {
-    id: 'rack-2',
-    name: 'Processing Rack B',
+    id: 'rack-foh',
+    name: 'FOH',
     location: 'FOH',
     width: 1,
-    totalRU: 26,
-    slots: createSlots(initialDevices, 'rack-2'),
-    ambientTemp: 21,
+    totalRU: 12,
+    slots: createSlots(initialDevices, 'rack-foh', 12, 1),
+    ambientTemp: 22,
     inletTemp: 23,
-    exhaustTemp: 31,
-  },
-  {
-    id: 'rack-3',
-    name: 'Routing Rack C',
-    location: 'Stage Right',
-    width: 3,
-    totalRU: 26,
-    slots: createSlots(initialDevices, 'rack-3'),
-    ambientTemp: 23,
-    inletTemp: 25,
-    exhaustTemp: 36,
+    exhaustTemp: 30,
   },
 ];
 
@@ -434,8 +451,8 @@ function createMatrixInputs(count: number): MatrixRouter['inputs'] {
     id: uuidv4(),
     index: i + 1,
     label: `Input ${i + 1}`,
-    signal: Math.random() > 0.3,
-    format: Math.random() > 0.5 ? '1080p60' : '2160p30',
+    signal: seededRandom() > 0.3,
+    format: seededRandom() > 0.5 ? '1080p60' : '2160p30',
   }));
 }
 
@@ -444,7 +461,7 @@ function createMatrixOutputs(count: number, inputCount: number): MatrixRouter['o
     id: uuidv4(),
     index: i + 1,
     label: `Output ${i + 1}`,
-    routedFrom: Math.floor(Math.random() * inputCount) + 1,
+    routedFrom: Math.floor(seededRandom() * inputCount) + 1,
   }));
 }
 
@@ -501,7 +518,7 @@ const initialBromptonStatuses: BromptonProcessorStatus[] = [
     dynastaTuneEnabled: true,
     pureToneEnabled: true,
     outputColorSpace: 'Rec. 709',
-    panelTemperatures: Array.from({ length: 120 }, () => 30 + Math.random() * 15),
+    panelTemperatures: Array.from({ length: 120 }, () => 30 + seededRandom() * 15),
     chainLengths: [30, 30, 30, 30],
     tiles: generateMockTiles('dev-brompton-1', [30, 30, 30, 30], 120),
   },
@@ -520,7 +537,7 @@ const initialBromptonStatuses: BromptonProcessorStatus[] = [
     dynastaTuneEnabled: true,
     pureToneEnabled: false,
     outputColorSpace: 'Rec. 709',
-    panelTemperatures: Array.from({ length: 96 }, () => 32 + Math.random() * 20),
+    panelTemperatures: Array.from({ length: 96 }, () => 32 + seededRandom() * 20),
     chainLengths: [24, 24, 24, 22],
     tiles: generateMockTiles('dev-brompton-2', [24, 24, 24, 22], 94),
   },
@@ -770,7 +787,7 @@ interface AppStore {
   removeDevice: (deviceId: string) => void;
   updateDeviceStatus: (deviceId: string, status: DeviceStatus) => void;
   updateDeviceHealth: (deviceId: string, health: DeviceHealth, status?: DeviceStatus) => void;
-  assignDeviceToRack: (deviceId: string, rackId: string, startSlot: number) => void;
+  assignDeviceToRack: (deviceId: string, rackId: string, startSlot: number, column?: number) => void;
   removeDeviceFromRack: (deviceId: string) => void;
   sendCommand: (deviceId: string, command: string, params?: Record<string, unknown>) => void;
 
@@ -787,6 +804,12 @@ interface AppStore {
   recallMatrixPreset: (presetId: string) => void;
   saveMatrixPreset: (preset: Omit<MatrixPreset, 'id' | 'createdAt'>) => void;
   deletePreset: (presetId: string) => void;
+
+  // Rack actions
+  addRack: (rack: Omit<Rack, 'id' | 'slots'>) => string;
+  removeRack: (rackId: string) => void;
+  updateRack: (rackId: string, updates: Partial<Pick<Rack, 'name' | 'location' | 'totalRU' | 'width'>>) => void;
+  updateRackWidth: (rackId: string, width: 1 | 2 | 3) => void;
 
   // Hydration
   _isHydrated: boolean;
@@ -806,6 +829,76 @@ export const useStore = create<AppStore>((set, get) => ({
   matrixPresets: initialMatrixPresets,
   systemPresets: initialSystemPresets,
   commandHistory: [],
+
+  // Rack actions
+  addRack: (rack) => {
+    const id = `rack-${uuidv4().slice(0, 8)}`;
+    const slots = createEmptySlots(rack.totalRU, rack.width);
+    set((state) => ({
+      racks: [...state.racks, { ...rack, id, slots }],
+    }));
+    return id;
+  },
+
+  removeRack: (rackId) =>
+    set((state) => ({
+      racks: state.racks.filter((r) => r.id !== rackId),
+      devices: state.devices.map((d) =>
+        d.rackId === rackId ? { ...d, rackId: undefined, rackSlot: undefined, rackColumn: undefined } : d
+      ),
+    })),
+
+  updateRack: (rackId, updates) =>
+    set((state) => {
+      const rack = state.racks.find((r) => r.id === rackId);
+      if (!rack) return state;
+
+      const newWidth = updates.width ?? rack.width;
+      const newTotalRU = updates.totalRU ?? rack.totalRU;
+      const needsRegenSlots = newWidth !== rack.width || newTotalRU !== rack.totalRU;
+
+      if (!needsRegenSlots) {
+        return {
+          racks: state.racks.map((r) => (r.id === rackId ? { ...r, ...updates } : r)),
+        };
+      }
+
+      // Regenerate slots, preserve devices that still fit, evict ones that don't
+      const newSlots = createEmptySlots(newTotalRU, newWidth);
+      const evictedDeviceIds: string[] = [];
+
+      // Find devices in this rack and check if they still fit
+      for (const d of state.devices) {
+        if (d.rackId !== rackId) continue;
+        const col = d.rackColumn ?? 0;
+        const ru = d.rackSlot ?? 1;
+        const endRU = ru + d.rackUnits - 1;
+        if (col < newWidth && endRU <= newTotalRU) {
+          // Still fits — assign to new slots
+          for (let r = ru; r <= endRU; r++) {
+            const slot = newSlots.find((s) => s.column === col && s.ru === r);
+            if (slot) slot.deviceId = d.id;
+          }
+        } else {
+          evictedDeviceIds.push(d.id);
+        }
+      }
+
+      return {
+        racks: state.racks.map((r) =>
+          r.id === rackId ? { ...r, ...updates, width: newWidth, totalRU: newTotalRU, slots: newSlots } : r
+        ),
+        devices: state.devices.map((d) =>
+          evictedDeviceIds.includes(d.id)
+            ? { ...d, rackId: undefined, rackSlot: undefined, rackColumn: undefined }
+            : d
+        ),
+      };
+    }),
+
+  updateRackWidth: (rackId, width) => {
+    get().updateRack(rackId, { width });
+  },
 
   // Hydration
   _isHydrated: false,
@@ -1458,12 +1551,13 @@ export const useStore = create<AppStore>((set, get) => ({
       const updatedDevices = [...state.devices, newDevice];
       // If a rack slot was specified, update rack slots
       if (newDevice.rackId && newDevice.rackSlot) {
+        const col = newDevice.rackColumn ?? 0;
         const updatedRacks = state.racks.map((rack) => {
           if (rack.id !== newDevice.rackId) return rack;
           return {
             ...rack,
             slots: rack.slots.map((slot) => {
-              if (slot.ru >= newDevice.rackSlot! && slot.ru < newDevice.rackSlot! + newDevice.rackUnits) {
+              if (slot.column === col && slot.ru >= newDevice.rackSlot! && slot.ru < newDevice.rackSlot! + newDevice.rackUnits) {
                 return { ...slot, deviceId: id };
               }
               return slot;
@@ -1507,23 +1601,30 @@ export const useStore = create<AppStore>((set, get) => ({
       ),
     })),
 
-  assignDeviceToRack: (deviceId, rackId, startSlot) =>
+  assignDeviceToRack: (deviceId, rackId, startSlot, column = 0) =>
     set((state) => {
       const device = state.devices.find((d) => d.id === deviceId);
       if (!device) return state;
 
       const updatedDevices = state.devices.map((d) =>
-        d.id === deviceId ? { ...d, rackId, rackSlot: startSlot } : d
+        d.id === deviceId ? { ...d, rackId, rackSlot: startSlot, rackColumn: column } : d
       );
 
+      // Clear device from old rack slots, then assign to new ones
       const updatedRacks = state.racks.map((rack) => {
-        if (rack.id !== rackId) return rack;
-        const newSlots = rack.slots.map((slot) => {
-          if (slot.ru >= startSlot && slot.ru < startSlot + device.rackUnits) {
-            return { ...slot, deviceId };
-          }
-          return slot.deviceId === deviceId ? { ...slot, deviceId: undefined } : slot;
-        });
+        // Clear from any rack this device was in
+        let newSlots = rack.slots.map((slot) =>
+          slot.deviceId === deviceId ? { ...slot, deviceId: undefined } : slot
+        );
+        // Assign to target rack+column
+        if (rack.id === rackId) {
+          newSlots = newSlots.map((slot) => {
+            if (slot.column === column && slot.ru >= startSlot && slot.ru < startSlot + device.rackUnits) {
+              return { ...slot, deviceId };
+            }
+            return slot;
+          });
+        }
         return { ...rack, slots: newSlots };
       });
 
@@ -1533,7 +1634,7 @@ export const useStore = create<AppStore>((set, get) => ({
   removeDeviceFromRack: (deviceId) =>
     set((state) => ({
       devices: state.devices.map((d) =>
-        d.id === deviceId ? { ...d, rackId: undefined, rackSlot: undefined } : d
+        d.id === deviceId ? { ...d, rackId: undefined, rackSlot: undefined, rackColumn: undefined } : d
       ),
       racks: state.racks.map((rack) => ({
         ...rack,
@@ -1676,10 +1777,7 @@ export const useStore = create<AppStore>((set, get) => ({
 // Persistence: debounced write-back to SQLite via API
 // ============================================================
 
-const PERSISTENT_KEYS: (keyof AppStore)[] = [
-  'devices', 'racks', 'routers', 'bromptonStatuses',
-  'pinBoards', 'matrixPresets', 'systemPresets', 'disguiseSessions',
-];
+// PERSISTENT_KEYS is imported from '@/store/constants' at the top of this file.
 
 let dirtyKeys = new Set<string>();
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
