@@ -133,14 +133,12 @@ export default function InteractiveRackEditor({ rack }: InteractiveRackEditorPro
     const deviceRU = activeDevice.rackUnits;
     const isValid = canPlace(rack, deviceRU, ru, column, activeDevice.id);
     const result: Record<number, Set<number>> = {};
-    if (isValid || true) {
-      // Highlight the span regardless (red if invalid, blue if valid)
-      const set = new Set<number>();
-      for (let r = ru; r < ru + deviceRU && r <= rack.totalRU; r++) {
-        set.add(r);
-      }
-      result[column] = set;
+    // Highlight the span regardless — red if invalid, blue if valid
+    const set = new Set<number>();
+    for (let r = ru; r < ru + deviceRU && r <= rack.totalRU; r++) {
+      set.add(r);
     }
+    result[column] = set;
     return result;
   }, [activeDevice, overSlot, rack]);
 
