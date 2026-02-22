@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdapter } from '@/lib/device-adapters';
 import type { DeviceHealth, DeviceManufacturer } from '@/types';
+import { ALL_MANUFACTURERS } from '@/lib/constants';
 
 /**
  * GET/POST /api/health
@@ -71,13 +72,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const validManufacturers: DeviceManufacturer[] = [
-      'disguise', 'barco', 'brompton', 'lightware', 'aja', 'blackmagic', 'ross',
-    ];
-
-    if (!validManufacturers.includes(manufacturer)) {
+    if (!ALL_MANUFACTURERS.includes(manufacturer)) {
       return NextResponse.json(
-        { error: `Invalid manufacturer: ${manufacturer}. Must be one of: ${validManufacturers.join(', ')}` },
+        { error: `Invalid manufacturer: ${manufacturer}. Must be one of: ${ALL_MANUFACTURERS.join(', ')}` },
         { status: 400 }
       );
     }

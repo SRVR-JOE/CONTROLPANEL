@@ -4,11 +4,9 @@
  * This is the single source of truth for manufacturer and status color
  * mappings. All components must import from here rather than defining
  * their own local copies.
- *
- * Canonical values sourced from RackUnit.tsx (most widely imported file).
  */
 
-import type { DeviceManufacturer, DeviceStatus } from '@/types';
+import type { DeviceManufacturer, DeviceStatus, DeviceCategory } from '@/types';
 
 /**
  * Brand accent colors for each device manufacturer.
@@ -22,6 +20,17 @@ export const MANUFACTURER_COLORS: Record<DeviceManufacturer, string> = {
   aja: '#ffc107',
   blackmagic: '#607d8b',
   ross: '#9c27b0',
+  novastar: '#f44336',
+  panasonic: '#0068b5',
+  sony: '#000000',
+  christie: '#c62828',
+  epson: '#003399',
+  shure: '#1a237e',
+  qsc: '#2e7d32',
+  audinate: '#00838f',
+  luminex: '#6a1b9a',
+  crestron: '#263238',
+  extron: '#1565c0',
 };
 
 /**
@@ -35,3 +44,40 @@ export const STATUS_COLORS: Record<DeviceStatus, string> = {
   error: '#ef4444',
   offline: '#6b7280',
 };
+
+export const CATEGORY_LABELS: Record<DeviceCategory, string> = {
+  'media-server': 'Media Server',
+  'led-processor': 'LED Processor',
+  'matrix-switcher': 'Matrix Switcher',
+  'video-processor': 'Video Processor',
+  converter: 'Converter',
+  'production-switcher': 'Production Switcher',
+  'ptz-camera': 'PTZ Camera',
+  'camera-controller': 'Camera Controller',
+  projector: 'Projector',
+  'wireless-microphone': 'Wireless Microphone',
+  'audio-dsp': 'Audio DSP',
+  'audio-interface': 'Audio Interface',
+  amplifier: 'Amplifier',
+  'network-switch': 'Network Switch',
+  'control-processor': 'Control Processor',
+  'streaming-processor': 'Streaming Processor',
+  recorder: 'Recorder',
+  'fiber-extender': 'Fiber Extender',
+  'encoder-decoder': 'Encoder/Decoder',
+  'graphics-processor': 'Graphics Processor',
+};
+
+export const ALL_MANUFACTURERS: DeviceManufacturer[] = [
+  'disguise', 'barco', 'brompton', 'lightware', 'aja', 'blackmagic', 'ross',
+  'novastar', 'panasonic', 'sony', 'christie', 'epson', 'shure', 'qsc',
+  'audinate', 'luminex', 'crestron', 'extron',
+];
+
+export const ALL_CATEGORIES: DeviceCategory[] = [
+  'media-server', 'led-processor', 'matrix-switcher', 'video-processor',
+  'converter', 'production-switcher', 'ptz-camera', 'camera-controller',
+  'projector', 'wireless-microphone', 'audio-dsp', 'audio-interface',
+  'amplifier', 'network-switch', 'control-processor', 'streaming-processor',
+  'recorder', 'fiber-extender', 'encoder-decoder', 'graphics-processor',
+];

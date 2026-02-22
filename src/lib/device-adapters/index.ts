@@ -6,6 +6,17 @@ import { BlackmagicAdapter } from './blackmagic';
 import { LightwareAdapter } from './lightware';
 import { AJAAdapter } from './aja';
 import { GenericAdapter } from './generic';
+import { NovastarAdapter } from './novastar';
+import { PanasonicAdapter } from './panasonic';
+import { SonyAdapter } from './sony';
+import { ChristieAdapter } from './christie';
+import { EpsonAdapter } from './epson';
+import { ShureAdapter } from './shure';
+import { QSCAdapter } from './qsc';
+import { DanteAdapter } from './dante';
+import { LuminexAdapter } from './luminex';
+import { CrestronAdapter } from './crestron';
+import { ExtronAdapter } from './extron';
 
 export type { DeviceAdapter, DeviceQueryResult } from './types';
 
@@ -15,6 +26,17 @@ const blackmagicAdapter = new BlackmagicAdapter();
 const lightwareAdapter = new LightwareAdapter();
 const ajaAdapter = new AJAAdapter();
 const genericAdapter = new GenericAdapter();
+const novastarAdapter = new NovastarAdapter();
+const panasonicAdapter = new PanasonicAdapter();
+const sonyAdapter = new SonyAdapter();
+const christieAdapter = new ChristieAdapter();
+const epsonAdapter = new EpsonAdapter();
+const shureAdapter = new ShureAdapter();
+const qscAdapter = new QSCAdapter();
+const danteAdapter = new DanteAdapter();
+const luminexAdapter = new LuminexAdapter();
+const crestronAdapter = new CrestronAdapter();
+const extronAdapter = new ExtronAdapter();
 
 const adapterMap: Record<DeviceManufacturer, DeviceAdapter> = {
   disguise: disguiseAdapter,
@@ -24,6 +46,17 @@ const adapterMap: Record<DeviceManufacturer, DeviceAdapter> = {
   aja: ajaAdapter,
   ross: genericAdapter,
   barco: genericAdapter,
+  novastar: novastarAdapter,
+  panasonic: panasonicAdapter,
+  sony: sonyAdapter,
+  christie: christieAdapter,
+  epson: epsonAdapter,
+  shure: shureAdapter,
+  qsc: qscAdapter,
+  audinate: danteAdapter,
+  luminex: luminexAdapter,
+  crestron: crestronAdapter,
+  extron: extronAdapter,
 };
 
 /**

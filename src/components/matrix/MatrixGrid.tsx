@@ -10,6 +10,9 @@ const MANUFACTURER_COLORS: Record<MatrixManufacturer, string> = {
   aja: '#ffc107',
   lightware: '#ff9800',
   blackmagic: '#607d8b',
+  ross: '#9c27b0',
+  crestron: '#263238',
+  extron: '#1565c0',
 };
 
 interface MatrixGridProps {

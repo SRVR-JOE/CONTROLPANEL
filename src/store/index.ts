@@ -766,6 +766,8 @@ interface AppStore {
   updateBromptonTiles: (deviceId: string, tiles: LEDTileInfo[]) => void;
 
   // Device actions
+  addDevice: (device: Omit<Device, 'id'>) => string;
+  removeDevice: (deviceId: string) => void;
   updateDeviceStatus: (deviceId: string, status: DeviceStatus) => void;
   updateDeviceHealth: (deviceId: string, health: DeviceHealth, status?: DeviceStatus) => void;
   assignDeviceToRack: (deviceId: string, rackId: string, startSlot: number) => void;
@@ -1439,6 +1441,48 @@ export const useStore = create<AppStore>((set, get) => ({
       bromptonStatuses: state.bromptonStatuses.map((s) =>
         s.deviceId === deviceId ? { ...s, tiles } : s
       ),
+    })),
+
+  addDevice: (device) => {
+    const id = uuidv4();
+    const newDevice: Device = { ...device, id };
+    set((state) => {
+      const updatedDevices = [...state.devices, newDevice];
+      // If a rack slot was specified, update rack slots
+      if (newDevice.rackId && newDevice.rackSlot) {
+        const updatedRacks = state.racks.map((rack) => {
+          if (rack.id !== newDevice.rackId) return rack;
+          return {
+            ...rack,
+            slots: rack.slots.map((slot) => {
+              if (slot.ru >= newDevice.rackSlot! && slot.ru < newDevice.rackSlot! + newDevice.rackUnits) {
+                return { ...slot, deviceId: id };
+              }
+              return slot;
+            }),
+          };
+        });
+        return { devices: updatedDevices, racks: updatedRacks };
+      }
+      return { devices: updatedDevices };
+    });
+    return id;
+  },
+
+  removeDevice: (deviceId) =>
+    set((state) => ({
+      devices: state.devices.filter((d) => d.id !== deviceId),
+      racks: state.racks.map((rack) => ({
+        ...rack,
+        slots: rack.slots.map((slot) =>
+          slot.deviceId === deviceId ? { ...slot, deviceId: undefined } : slot
+        ),
+      })),
+      pinBoards: state.pinBoards.map((board) => ({
+        ...board,
+        items: board.items.filter((item) => item.deviceId !== deviceId),
+      })),
+      routers: state.routers.filter((r) => r.deviceId !== deviceId),
     })),
 
   updateDeviceStatus: (deviceId, status) =>

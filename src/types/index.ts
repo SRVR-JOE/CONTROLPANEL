@@ -11,7 +11,18 @@ export type DeviceManufacturer =
   | 'lightware'
   | 'aja'
   | 'blackmagic'
-  | 'ross';
+  | 'ross'
+  | 'novastar'
+  | 'panasonic'
+  | 'sony'
+  | 'christie'
+  | 'epson'
+  | 'shure'
+  | 'qsc'
+  | 'audinate'
+  | 'luminex'
+  | 'crestron'
+  | 'extron';
 
 export type DeviceCategory =
   | 'media-server'
@@ -19,14 +30,43 @@ export type DeviceCategory =
   | 'matrix-switcher'
   | 'video-processor'
   | 'converter'
-  | 'production-switcher';
+  | 'production-switcher'
+  | 'ptz-camera'
+  | 'camera-controller'
+  | 'projector'
+  | 'wireless-microphone'
+  | 'audio-dsp'
+  | 'audio-interface'
+  | 'amplifier'
+  | 'network-switch'
+  | 'control-processor'
+  | 'streaming-processor'
+  | 'recorder'
+  | 'fiber-extender'
+  | 'encoder-decoder'
+  | 'graphics-processor';
 
 export type DeviceStatus = 'online' | 'warning' | 'error' | 'offline';
+
+export type PortSignalType =
+  | 'sdi'
+  | 'hdmi'
+  | 'displayport'
+  | 'ndi'
+  | 'dante'
+  | 'fiber'
+  | 'ethernet'
+  | 'dvi'
+  | 'usb'
+  | 'analog-audio'
+  | 'aes-ebu'
+  | 'hdbaset'
+  | 'sfp';
 
 export interface DevicePort {
   id: string;
   label: string;
-  type: 'sdi' | 'hdmi' | 'displayport' | 'ndi' | 'dante' | 'fiber' | 'ethernet';
+  type: PortSignalType;
   direction: 'input' | 'output';
   connectedTo?: string; // port id
   signal?: boolean;
@@ -140,7 +180,7 @@ export interface Rack {
 
 // --- Matrix Routing ---
 
-export type MatrixManufacturer = 'aja' | 'lightware' | 'blackmagic';
+export type MatrixManufacturer = 'aja' | 'lightware' | 'blackmagic' | 'ross' | 'crestron' | 'extron';
 
 export interface MatrixInput {
   id: string;
@@ -399,6 +439,46 @@ export interface DiscoveryScan {
   startedAt: string;
   completedAt?: string;
   error?: string;
+}
+
+// --- Device Catalog ---
+
+export type DeviceProtocol = 'rest' | 'json-rpc' | 'tcp' | 'cgi' | 'visca' | 'sis' | 'cip' | 'pjlink' | 'mdns' | 'https';
+
+export type FormFactor = 'rack' | 'desktop' | 'poe' | 'half-rack' | 'card' | 'portable';
+
+export interface CatalogPort {
+  label: string;
+  type: PortSignalType;
+  direction: 'input' | 'output';
+  count: number;
+}
+
+export interface ConnectionInfo {
+  protocol: DeviceProtocol;
+  defaultPort: number;
+  apiBasePath?: string;
+  notes?: string;
+}
+
+export interface CatalogProduct {
+  modelId: string;
+  modelName: string;
+  category: DeviceCategory;
+  rackUnits: number;
+  formFactor: FormFactor;
+  defaultPorts: CatalogPort[];
+  connectionInfo: ConnectionInfo;
+  features: string[];
+  description?: string;
+}
+
+export interface CatalogManufacturer {
+  id: DeviceManufacturer;
+  displayName: string;
+  brandColor: string;
+  website: string;
+  products: CatalogProduct[];
 }
 
 // --- Commands ---

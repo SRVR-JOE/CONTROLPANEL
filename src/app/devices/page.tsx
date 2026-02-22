@@ -3,23 +3,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/store';
-import { DeviceManufacturer, DeviceCategory, DeviceStatus } from '@/types';
+import { DeviceStatus } from '@/types';
+import { MANUFACTURER_COLORS, CATEGORY_LABELS, ALL_MANUFACTURERS, ALL_CATEGORIES } from '@/lib/constants';
+import AddDeviceDialog from '@/components/devices/AddDeviceDialog';
 import {
   HardDrive,
   Filter,
   Thermometer,
   Server,
+  Plus,
+  Trash2,
 } from 'lucide-react';
-
-const manufacturerColors: Record<DeviceManufacturer, string> = {
-  disguise: '#e91e63',
-  barco: '#00bcd4',
-  brompton: '#4caf50',
-  lightware: '#ff9800',
-  aja: '#ffc107',
-  blackmagic: '#607d8b',
-  ross: '#9c27b0',
-};
 
 const statusColors: Record<DeviceStatus, string> = {
   online: 'bg-success',
@@ -28,33 +22,19 @@ const statusColors: Record<DeviceStatus, string> = {
   offline: 'bg-muted',
 };
 
-const categoryLabels: Record<DeviceCategory, string> = {
-  'media-server': 'Media Server',
-  'led-processor': 'LED Processor',
-  'matrix-switcher': 'Matrix Switcher',
-  'video-processor': 'Video Processor',
-  converter: 'Converter',
-  'production-switcher': 'Production Switcher',
-};
-
-const allManufacturers: DeviceManufacturer[] = [
-  'disguise', 'barco', 'brompton', 'lightware', 'aja', 'blackmagic', 'ross',
-];
-
-const allCategories: DeviceCategory[] = [
-  'media-server', 'led-processor', 'matrix-switcher', 'video-processor', 'converter', 'production-switcher',
-];
-
 const allStatuses: DeviceStatus[] = ['online', 'warning', 'error', 'offline'];
 
 export default function DevicesPage() {
   const devices = useStore((s) => s.devices);
   const racks = useStore((s) => s.racks);
+  const removeDevice = useStore((s) => s.removeDevice);
   const router = useRouter();
 
   const [filterManufacturer, setFilterManufacturer] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const filteredDevices = devices.filter((d) => {
     if (filterManufacturer !== 'all' && d.manufacturer !== filterManufacturer) return false;
@@ -69,15 +49,36 @@ export default function DevicesPage() {
     return rack ? rack.name : '-';
   };
 
+  const handleDelete = (e: React.MouseEvent, deviceId: string) => {
+    e.stopPropagation();
+    if (deleteConfirmId === deviceId) {
+      removeDevice(deviceId);
+      setDeleteConfirmId(null);
+    } else {
+      setDeleteConfirmId(deviceId);
+      // Auto-reset confirmation after 3 seconds
+      setTimeout(() => setDeleteConfirmId((prev) => (prev === deviceId ? null : prev)), 3000);
+    }
+  };
+
   return (
     <div className="min-h-screen pl-16 pt-10">
       <div className="mx-auto max-w-7xl space-y-6 p-6">
         {/* Page header */}
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Devices</h1>
-          <p className="mt-1 text-sm text-muted">
-            {filteredDevices.length} of {devices.length} devices
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Devices</h1>
+            <p className="mt-1 text-sm text-muted">
+              {filteredDevices.length} of {devices.length} devices
+            </p>
+          </div>
+          <button
+            onClick={() => setAddDialogOpen(true)}
+            className="flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/80"
+          >
+            <Plus className="h-4 w-4" />
+            Add Device
+          </button>
         </div>
 
         {/* Filters */}
@@ -90,7 +91,7 @@ export default function DevicesPage() {
             className="rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-foreground outline-none transition-colors focus:border-accent"
           >
             <option value="all">All Manufacturers</option>
-            {allManufacturers.map((m) => (
+            {ALL_MANUFACTURERS.map((m) => (
               <option key={m} value={m}>
                 {m.charAt(0).toUpperCase() + m.slice(1)}
               </option>
@@ -103,9 +104,9 @@ export default function DevicesPage() {
             className="rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-foreground outline-none transition-colors focus:border-accent"
           >
             <option value="all">All Categories</option>
-            {allCategories.map((c) => (
+            {ALL_CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {categoryLabels[c]}
+                {CATEGORY_LABELS[c]}
               </option>
             ))}
           </select>
@@ -137,11 +138,12 @@ export default function DevicesPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted">IP Address</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted">Rack / Slot</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-muted">Temp</th>
+                  <th className="w-10 px-2 py-3"></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredDevices.map((device) => {
-                  const mfgColor = manufacturerColors[device.manufacturer];
+                  const mfgColor = MANUFACTURER_COLORS[device.manufacturer];
                   return (
                     <tr
                       key={device.id}
@@ -236,6 +238,21 @@ export default function DevicesPage() {
                           </span>
                         </div>
                       </td>
+
+                      {/* Delete */}
+                      <td className="px-2 py-3">
+                        <button
+                          onClick={(e) => handleDelete(e, device.id)}
+                          className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${
+                            deleteConfirmId === device.id
+                              ? 'bg-error/10 text-error hover:bg-error/20'
+                              : 'text-muted hover:bg-surface-2 hover:text-foreground'
+                          }`}
+                          title={deleteConfirmId === device.id ? 'Click again to confirm' : 'Delete device'}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -251,6 +268,9 @@ export default function DevicesPage() {
           )}
         </div>
       </div>
+
+      {/* Add Device Dialog */}
+      <AddDeviceDialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} />
     </div>
   );
 }
