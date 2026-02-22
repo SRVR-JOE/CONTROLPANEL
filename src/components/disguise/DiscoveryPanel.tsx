@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { D3NetRole, DiscoveredMachine } from '@/types';
+import { formatUptime } from '@/lib/utils';
 
 const roleIcons: Record<D3NetRole, typeof Crown> = {
   director: Crown,
@@ -31,14 +32,6 @@ const roleColors: Record<D3NetRole, string> = {
   actor: 'text-accent',
   understudy: 'text-muted',
 };
-
-function formatUptime(seconds: number): string {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  if (days > 0) return `${days}d ${hours}h`;
-  const mins = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${mins}m`;
-}
 
 export default function DiscoveryPanel() {
   const {

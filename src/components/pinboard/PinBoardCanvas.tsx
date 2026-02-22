@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from '@/store';
 import { PinBoardItem, Device } from '@/types';
 import {
@@ -9,7 +9,9 @@ import {
   X,
   Cable,
 } from 'lucide-react';
+import { formatUptime } from '@/lib/utils';
 
+// Tailwind class-based status colors (separate from hex STATUS_COLORS in constants.ts)
 const statusColors: Record<string, string> = {
   online: 'bg-success',
   warning: 'bg-warning',
@@ -17,19 +19,11 @@ const statusColors: Record<string, string> = {
   offline: 'bg-muted',
 };
 
-function formatUptime(seconds: number): string {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  if (days > 0) return `${days}d ${hours}h`;
-  const mins = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${mins}m`;
-}
-
 interface PinBoardCardProps {
   item: PinBoardItem;
   device: Device;
   boardId: string;
-  onDragStart: (itemId: string, offsetX: number, offsetY: number) => void;
+  onDragStart: (itemId: string, offsetX: number, offsetY: number, el: HTMLElement) => void;
 }
 
 function PinBoardCard({ item, device, boardId, onDragStart }: PinBoardCardProps) {
@@ -37,10 +31,11 @@ function PinBoardCard({ item, device, boardId, onDragStart }: PinBoardCardProps)
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const el = e.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
-    onDragStart(item.id, offsetX, offsetY);
+    onDragStart(item.id, offsetX, offsetY, el);
   };
 
   const handleRemove = (e: React.MouseEvent) => {
@@ -224,32 +219,71 @@ export default function PinBoardCanvas({ boardId }: PinBoardCanvasProps) {
   const board = pinBoards.find((b) => b.id === boardId);
 
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState<{
+
+  // dragging state drives cursor style only — not re-renders on every mousemove
+  const [dragging, setDragging] = useState(false);
+
+  // All drag state that changes on every mousemove is stored in refs to avoid
+  // triggering 60+ store writes per second during a drag operation.
+  // The final position is committed to the Zustand store only on mouseup.
+  const dragRef = useRef<{
     itemId: string;
     offsetX: number;
     offsetY: number;
+    currentX: number;
+    currentY: number;
   } | null>(null);
 
-  const handleDragStart = useCallback((itemId: string, offsetX: number, offsetY: number) => {
-    setDragging({ itemId, offsetX, offsetY });
-  }, []);
+  // Sync card visual position during drag via a direct DOM style update.
+  // This avoids React re-renders and Zustand store writes on every frame.
+  const activeCardRef = useRef<HTMLElement | null>(null);
+
+  const handleDragStart = useCallback(
+    (itemId: string, offsetX: number, offsetY: number, cardEl: HTMLElement) => {
+      dragRef.current = { itemId, offsetX, offsetY, currentX: 0, currentY: 0 };
+      activeCardRef.current = cardEl;
+      setDragging(true);
+    },
+    []
+  );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      if (!dragging || !canvasRef.current) return;
+      if (!dragRef.current || !canvasRef.current) return;
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = Math.max(0, e.clientX - rect.left - dragging.offsetX);
-      const y = Math.max(0, e.clientY - rect.top - dragging.offsetY);
-      updatePinBoardItem(boardId, dragging.itemId, {
-        position: { x, y },
-      });
+      const x = Math.max(0, e.clientX - rect.left - dragRef.current.offsetX);
+      const y = Math.max(0, e.clientY - rect.top - dragRef.current.offsetY);
+      // Store pending position in the ref — no store write yet
+      dragRef.current.currentX = x;
+      dragRef.current.currentY = y;
+      // Update the DOM element directly for zero-cost visual feedback
+      if (activeCardRef.current) {
+        activeCardRef.current.style.left = `${x}px`;
+        activeCardRef.current.style.top = `${y}px`;
+      }
     },
-    [dragging, boardId, updatePinBoardItem]
+    []
   );
 
-  const handleMouseUp = useCallback(() => {
-    setDragging(null);
-  }, []);
+  const commitDrag = useCallback(() => {
+    if (!dragRef.current) return;
+    // Commit final position to the Zustand store (one write per drag, not 60/s)
+    updatePinBoardItem(boardId, dragRef.current.itemId, {
+      position: { x: dragRef.current.currentX, y: dragRef.current.currentY },
+    });
+    dragRef.current = null;
+    activeCardRef.current = null;
+    setDragging(false);
+  }, [boardId, updatePinBoardItem]);
+
+  // Commit on mouseup even if pointer leaves the canvas
+  useEffect(() => {
+    const onMouseUp = () => {
+      if (dragRef.current) commitDrag();
+    };
+    window.addEventListener('mouseup', onMouseUp);
+    return () => window.removeEventListener('mouseup', onMouseUp);
+  }, [commitDrag]);
 
   if (!board) {
     return (
@@ -264,9 +298,12 @@ export default function PinBoardCanvas({ boardId }: PinBoardCanvasProps) {
       ref={canvasRef}
       className="relative h-full w-full overflow-auto bg-background"
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      style={{ minHeight: '100%', minWidth: '100%' }}
+      onMouseLeave={commitDrag}
+      style={{
+        minHeight: '100%',
+        minWidth: '100%',
+        cursor: dragging ? 'grabbing' : 'default',
+      }}
     >
       {/* Grid background */}
       <div

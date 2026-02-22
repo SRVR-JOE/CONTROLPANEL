@@ -1,7 +1,6 @@
 import { DeviceHealth } from '@/types';
 import { DeviceAdapter, DeviceQueryResult } from './types';
-
-const TIMEOUT_MS = 3000;
+import { fetchWithTimeout } from '@/lib/utils';
 
 interface D3HealthState {
   name: string;
@@ -26,17 +25,6 @@ interface D3Notification {
   summary?: string;
   severity?: string;
   timestamp?: string;
-}
-
-async function fetchWithTimeout(url: string): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    return response;
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 function parseSeverity(

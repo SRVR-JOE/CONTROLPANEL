@@ -1,7 +1,6 @@
 import { DeviceHealth } from '@/types';
 import { DeviceAdapter, DeviceQueryResult } from './types';
-
-const TIMEOUT_MS = 3000;
+import { fetchWithTimeout } from '@/lib/utils';
 
 function parseUptimeFromHeaders(headers: Headers): number {
   // Some devices expose uptime or age through response headers
@@ -32,27 +31,18 @@ export class GenericAdapter implements DeviceAdapter {
     const target = port ? `http://${ip}:${port}` : `http://${ip}`;
 
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
       let reachable = false;
       let uptime = 0;
 
       try {
         // Use HEAD request to minimise bandwidth — we only care about reachability
-        const res = await fetch(target, {
-          method: 'HEAD',
-          signal: controller.signal,
-        });
+        const res = await fetchWithTimeout(target);
         reachable = true;
         uptime = parseUptimeFromHeaders(res.headers);
       } catch {
         // Try GET as a fallback — some embedded devices reject HEAD
         try {
-          const res = await fetch(target, {
-            method: 'GET',
-            signal: controller.signal,
-          });
+          const res = await fetchWithTimeout(target);
           reachable = true;
           uptime = parseUptimeFromHeaders(res.headers);
           // Consume and discard body to free resources
@@ -60,8 +50,6 @@ export class GenericAdapter implements DeviceAdapter {
         } catch {
           reachable = false;
         }
-      } finally {
-        clearTimeout(timeout);
       }
 
       if (!reachable) {

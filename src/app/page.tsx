@@ -21,28 +21,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useMemo } from "react";
-import type { DeviceManufacturer, DeviceStatus } from "@/types";
-
-// ============================================================
-// Constants
-// ============================================================
-
-const MANUFACTURER_COLORS: Record<DeviceManufacturer, string> = {
-  disguise: "#e91e63",
-  barco: "#00bcd4",
-  brompton: "#4caf50",
-  lightware: "#ff9800",
-  aja: "#ffc107",
-  blackmagic: "#607d8b",
-  ross: "#9c27b0",
-};
-
-const STATUS_COLORS: Record<DeviceStatus, string> = {
-  online: "#22c55e",
-  warning: "#f59e0b",
-  error: "#ef4444",
-  offline: "#6b7280",
-};
+import type { DeviceStatus } from "@/types";
+import { MANUFACTURER_COLORS, STATUS_COLORS } from "@/lib/constants";
 
 const STATUS_LABELS: Record<DeviceStatus, string> = {
   online: "Online",

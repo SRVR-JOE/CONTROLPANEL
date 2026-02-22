@@ -6,22 +6,8 @@ import { useState } from 'react';
 import {
   ArrowLeft, Send, Thermometer, Cpu, HardDrive, Zap, Fan, Clock, Wifi, WifiOff,
 } from 'lucide-react';
-
-const MANUFACTURER_COLORS: Record<string, string> = {
-  disguise: '#e91e63', barco: '#00bcd4', brompton: '#4caf50',
-  lightware: '#ff9800', aja: '#ffc107', blackmagic: '#607d8b', ross: '#9c27b0',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  online: '#22c55e', warning: '#f59e0b', error: '#ef4444', offline: '#6b7280',
-};
-
-function formatUptime(seconds: number) {
-  const d = Math.floor(seconds / 86400);
-  const h = Math.floor((seconds % 86400) / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return `${d}d ${h}h ${m}m`;
-}
+import { MANUFACTURER_COLORS, STATUS_COLORS } from '@/lib/constants';
+import { formatUptime } from '@/lib/utils';
 
 function Bar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = Math.min((value / max) * 100, 100);

@@ -29,12 +29,6 @@ interface DeviceQueryInput {
   port?: number;
 }
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
-
 /**
  * Query a single device for its health status using the
  * manufacturer-specific adapter.
@@ -58,19 +52,10 @@ async function queryDevice(
 }
 
 /**
- * OPTIONS - handle CORS preflight for local network access.
- */
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: CORS_HEADERS,
-  });
-}
-
-/**
  * GET /api/health?ip={ip}&manufacturer={manufacturer}&port={port}
  *
  * Query a single device by IP and manufacturer.
+ * Same-origin only — no CORS headers are set.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -82,7 +67,7 @@ export async function GET(request: NextRequest) {
     if (!ip || !manufacturer) {
       return NextResponse.json(
         { error: 'Missing required query parameters: ip, manufacturer' },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400 }
       );
     }
 
@@ -93,7 +78,7 @@ export async function GET(request: NextRequest) {
     if (!validManufacturers.includes(manufacturer)) {
       return NextResponse.json(
         { error: `Invalid manufacturer: ${manufacturer}. Must be one of: ${validManufacturers.join(', ')}` },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400 }
       );
     }
 
@@ -102,17 +87,17 @@ export async function GET(request: NextRequest) {
     if (portParam && (isNaN(port!) || port! < 1 || port! > 65535)) {
       return NextResponse.json(
         { error: 'Invalid port number. Must be between 1 and 65535.' },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400 }
       );
     }
 
     const result = await queryDevice(ip, manufacturer, port);
 
-    return NextResponse.json(result, { headers: CORS_HEADERS });
+    return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json(
       { error: 'Internal server error', details: String(err) },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500 }
     );
   }
 }
@@ -124,6 +109,7 @@ export async function GET(request: NextRequest) {
  *
  * Query multiple devices in parallel. Returns a results map
  * keyed by device ID.
+ * Same-origin only — no CORS headers are set.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -132,7 +118,7 @@ export async function POST(request: NextRequest) {
     if (!body.devices || !Array.isArray(body.devices) || body.devices.length === 0) {
       return NextResponse.json(
         { error: 'Missing or empty devices array in request body' },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400 }
       );
     }
 
@@ -141,7 +127,7 @@ export async function POST(request: NextRequest) {
       if (!device.id || !device.ip || !device.manufacturer) {
         return NextResponse.json(
           { error: `Each device must include id, ip, and manufacturer. Invalid entry: ${JSON.stringify(device)}` },
-          { status: 400, headers: CORS_HEADERS }
+          { status: 400 }
         );
       }
     }
@@ -171,11 +157,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ results }, { headers: CORS_HEADERS });
+    return NextResponse.json({ results });
   } catch (err) {
     return NextResponse.json(
       { error: 'Internal server error', details: String(err) },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500 }
     );
   }
 }

@@ -900,8 +900,78 @@ export const useStore = create<AppStore>((set, get) => ({
   importSession: (json) => {
     try {
       const session = JSON.parse(json) as DisguiseSession;
-      if (!session.id || !session.name || !session.machines || !session.profiles) return false;
-      // Generate new IDs to avoid collisions
+
+      // Top-level structure check
+      if (!session.id || !session.name || !session.machines || !session.profiles) {
+        console.warn('[importSession] Invalid session: missing required top-level fields (id, name, machines, profiles)');
+        return false;
+      }
+
+      // machines must be a non-empty array
+      if (!Array.isArray(session.machines) || session.machines.length === 0) {
+        console.warn('[importSession] Invalid session: machines must be a non-empty array');
+        return false;
+      }
+
+      // profiles must be an array
+      if (!Array.isArray(session.profiles)) {
+        console.warn('[importSession] Invalid session: profiles must be an array');
+        return false;
+      }
+
+      // Validate each machine has required fields
+      for (const machine of session.machines) {
+        if (!machine.id || typeof machine.id !== 'string') {
+          console.warn('[importSession] Invalid machine: missing or non-string id', machine);
+          return false;
+        }
+        if (!machine.name || typeof machine.name !== 'string') {
+          console.warn('[importSession] Invalid machine: missing or non-string name', machine);
+          return false;
+        }
+        if (!machine.role || typeof machine.role !== 'string') {
+          console.warn('[importSession] Invalid machine: missing or non-string role', machine);
+          return false;
+        }
+        if (!machine.activeProfileId || typeof machine.activeProfileId !== 'string') {
+          console.warn('[importSession] Invalid machine: missing or non-string activeProfileId', machine);
+          return false;
+        }
+      }
+
+      // Validate each profile has required fields
+      for (const profile of session.profiles) {
+        if (!profile.id || typeof profile.id !== 'string') {
+          console.warn('[importSession] Invalid profile: missing or non-string id', profile);
+          return false;
+        }
+        if (!profile.name || typeof profile.name !== 'string') {
+          console.warn('[importSession] Invalid profile: missing or non-string name', profile);
+          return false;
+        }
+        if (!profile.machineIdentity || typeof profile.machineIdentity !== 'object') {
+          console.warn('[importSession] Invalid profile: missing or invalid machineIdentity', profile);
+          return false;
+        }
+        if (!Array.isArray(profile.networkAdapters)) {
+          console.warn('[importSession] Invalid profile: networkAdapters must be an array', profile);
+          return false;
+        }
+      }
+
+      // Validate each machine's activeProfileId references an existing profile
+      const profileIds = new Set(session.profiles.map((p) => p.id));
+      for (const machine of session.machines) {
+        if (!profileIds.has(machine.activeProfileId)) {
+          console.warn(
+            `[importSession] Machine "${machine.name}" references activeProfileId "${machine.activeProfileId}" ` +
+            'which does not exist in the session profiles array'
+          );
+          return false;
+        }
+      }
+
+      // Validation passed — generate new IDs to avoid collisions with existing data
       const newId = uuidv4();
       session.id = newId;
       session.name = `${session.name} (Imported)`;
@@ -913,7 +983,8 @@ export const useStore = create<AppStore>((set, get) => ({
         selectedMachineId: session.machines[0]?.id ?? null,
       }));
       return true;
-    } catch {
+    } catch (err) {
+      console.warn('[importSession] Failed to parse session JSON:', err);
       return false;
     }
   },

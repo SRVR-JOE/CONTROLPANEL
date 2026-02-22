@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Device, DeviceManufacturer } from '@/types';
+import { Device } from '@/types';
 import TemperatureGauge from './TemperatureGauge';
 import {
   Cpu,
@@ -13,33 +13,18 @@ import {
   AlertCircle,
   MonitorSpeaker,
 } from 'lucide-react';
-
-const manufacturerColors: Record<DeviceManufacturer, string> = {
-  disguise: '#ff3366',
-  barco: '#0099ff',
-  brompton: '#00cc88',
-  lightware: '#8855ff',
-  aja: '#ff8800',
-  blackmagic: '#888888',
-  ross: '#cc3333',
-};
+import { MANUFACTURER_COLORS, STATUS_COLORS } from '@/lib/constants';
+import { formatUptime } from '@/lib/utils';
 
 const statusConfig: Record<
   Device['status'],
-  { color: string; bg: string; label: string }
+  { bg: string; label: string }
 > = {
-  online: { color: '#22c55e', bg: 'bg-green-500/10', label: 'Online' },
-  warning: { color: '#f59e0b', bg: 'bg-yellow-500/10', label: 'Warning' },
-  error: { color: '#ef4444', bg: 'bg-red-500/10', label: 'Error' },
-  offline: { color: '#6b7280', bg: 'bg-gray-500/10', label: 'Offline' },
+  online: { bg: 'bg-green-500/10', label: 'Online' },
+  warning: { bg: 'bg-yellow-500/10', label: 'Warning' },
+  error: { bg: 'bg-red-500/10', label: 'Error' },
+  offline: { bg: 'bg-gray-500/10', label: 'Offline' },
 };
-
-function formatUptime(seconds: number): string {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return `${days}d ${hours}h ${minutes}m`;
-}
 
 interface ProgressBarProps {
   label: string;
@@ -82,7 +67,7 @@ interface DeviceHealthCardProps {
 
 export default function DeviceHealthCard({ device }: DeviceHealthCardProps) {
   const { health, status, manufacturer, name, model } = device;
-  const accentColor = manufacturerColors[manufacturer];
+  const accentColor = MANUFACTURER_COLORS[manufacturer];
   const statusInfo = statusConfig[status];
 
   return (
@@ -101,9 +86,9 @@ export default function DeviceHealthCard({ device }: DeviceHealthCardProps) {
         >
           <span
             className="w-1.5 h-1.5 rounded-full"
-            style={{ backgroundColor: statusInfo.color }}
+            style={{ backgroundColor: STATUS_COLORS[status] }}
           />
-          <span style={{ color: statusInfo.color }}>{statusInfo.label}</span>
+          <span style={{ color: STATUS_COLORS[status] }}>{statusInfo.label}</span>
         </div>
       </div>
 
