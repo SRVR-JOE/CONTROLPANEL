@@ -743,6 +743,7 @@ interface AppStore {
   startDeployment: (sessionId: string, machineIds: string[], sections: DeploymentSection[]) => string;
   updateMachineDeploymentState: (jobId: string, machineId: string, state: Partial<MachineDeploymentState>) => void;
   completeDeployment: (jobId: string) => void;
+  cancelDeployment: (jobId: string) => void;
 
   // Discovery
   discoveryScans: DiscoveryScan[];
@@ -792,6 +793,14 @@ interface AppStore {
   _isHydrated: boolean;
   _hydrate: (data: Partial<AppStore>) => void;
 }
+
+// ============================================================
+// Deployment timeout registry
+// Maps jobId -> all pending setTimeout IDs so cancelDeployment can
+// clear every timer before it fires.
+// ============================================================
+
+const deploymentTimeouts = new Map<string, ReturnType<typeof setTimeout>[]>();
 
 // ============================================================
 // Store implementation
@@ -1156,6 +1165,18 @@ export const useStore = create<AppStore>((set, get) => ({
     const session = state.disguiseSessions.find((s) => s.id === sessionId);
     if (!session) return jobId;
 
+    // Initialise the timeout registry so cancelDeployment can clear all timers
+    deploymentTimeouts.set(jobId, []);
+
+    /** Register a cancellable timeout for this job. */
+    const scheduleTimeout = (fn: () => void, ms: number) => {
+      const id = setTimeout(() => {
+        // Only fire if the job hasn't been cancelled
+        if (deploymentTimeouts.has(jobId)) fn();
+      }, ms);
+      deploymentTimeouts.get(jobId)!.push(id);
+    };
+
     machineIds.forEach((machineId, i) => {
       const machine = session.machines.find((m) => m.id === machineId);
       const profile = session.profiles.find((p) => p.id === machine?.activeProfileId);
@@ -1165,7 +1186,7 @@ export const useStore = create<AppStore>((set, get) => ({
       const delay = i * 800; // Stagger starts
 
       // Phase 1: Connecting
-      setTimeout(() => {
+      scheduleTimeout(() => {
         get().updateMachineDeploymentState(jobId, machineId, {
           status: 'deploying',
           progress: 10,
@@ -1175,7 +1196,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
       // Phase 2: Pushing config sections
       sections.forEach((section, si) => {
-        setTimeout(() => {
+        scheduleTimeout(() => {
           const pct = 10 + Math.round(((si + 1) / sections.length) * 70);
           get().updateMachineDeploymentState(jobId, machineId, {
             status: 'deploying',
@@ -1186,7 +1207,7 @@ export const useStore = create<AppStore>((set, get) => ({
       });
 
       // Phase 3: Verifying
-      setTimeout(() => {
+      scheduleTimeout(() => {
         get().updateMachineDeploymentState(jobId, machineId, {
           status: 'deploying',
           progress: 90,
@@ -1195,7 +1216,7 @@ export const useStore = create<AppStore>((set, get) => ({
       }, delay + 1000 + sections.length * 600 + 400);
 
       // Phase 4: Complete (simulate random success/failure)
-      setTimeout(() => {
+      scheduleTimeout(() => {
         const success = Math.random() > 0.1; // 90% success rate
         get().updateMachineDeploymentState(jobId, machineId, {
           status: success ? 'success' : 'failed',
@@ -1211,6 +1232,7 @@ export const useStore = create<AppStore>((set, get) => ({
             ms.status === 'success' || ms.status === 'failed'
           );
           if (allDone) {
+            deploymentTimeouts.delete(jobId); // clean up registry
             get().completeDeployment(jobId);
           }
         }
@@ -1248,6 +1270,32 @@ export const useStore = create<AppStore>((set, get) => ({
       }),
       activeDeploymentId: null,
     })),
+
+  cancelDeployment: (jobId) => {
+    // Clear every pending timer registered for this job
+    const ids = deploymentTimeouts.get(jobId);
+    if (ids) {
+      for (const id of ids) clearTimeout(id);
+      deploymentTimeouts.delete(jobId);
+    }
+    // Mark any still-in-progress machines as cancelled and close the job
+    set((state) => ({
+      deploymentJobs: state.deploymentJobs.map((j) => {
+        if (j.id !== jobId) return j;
+        return {
+          ...j,
+          status: 'failed',
+          completedAt: new Date().toISOString(),
+          machineStates: j.machineStates.map((ms) =>
+            ms.status === 'deploying' || ms.status === 'idle'
+              ? { ...ms, status: 'failed' as const, message: 'Cancelled by user' }
+              : ms
+          ),
+        };
+      }),
+      activeDeploymentId: state.activeDeploymentId === jobId ? null : state.activeDeploymentId,
+    }));
+  },
 
   // Discovery
   discoveryScans: [],
