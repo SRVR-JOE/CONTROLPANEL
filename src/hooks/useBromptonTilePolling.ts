@@ -31,23 +31,42 @@ export function useBromptonTilePolling(
   const bromptonStatuses = useStore((s) => s.bromptonStatuses);
   const updateBromptonTiles = useStore((s) => s.updateBromptonTiles);
 
-  const pollingRef = useRef(false);
+  // Guards against concurrent in-flight requests
+  const isPollingRef = useRef(false);
+  // Interval ID stored in a ref so cleanup is always accurate
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Keep the latest store values accessible inside the stable interval callback
+  // without adding them to the effect dependency array (which would re-create
+  // the interval on every store update).
+  const devicesRef = useRef(devices);
+  const bromptonStatusesRef = useRef(bromptonStatuses);
+  const updateBromptonTilesRef = useRef(updateBromptonTiles);
+
+  // Sync refs to latest values on every render — no effect needed
+  devicesRef.current = devices;
+  bromptonStatusesRef.current = bromptonStatuses;
+  updateBromptonTilesRef.current = updateBromptonTiles;
+
+  // Stable poll function — reads fresh data via refs, never changes identity
   const pollTiles = useCallback(async () => {
-    if (pollingRef.current) return; // guard against concurrent requests
-    pollingRef.current = true;
+    if (isPollingRef.current) return; // guard against concurrent requests
+    isPollingRef.current = true;
 
     try {
+      const currentDevices = devicesRef.current;
+      const currentStatuses = bromptonStatusesRef.current;
+
       // Build the list of Brompton processors to query
-      const bromptonDevices: TileQueryDevice[] = bromptonStatuses
+      const bromptonDevices: TileQueryDevice[] = currentStatuses
         .map((status) => {
-          const device = devices.find((d) => d.id === status.deviceId);
+          const device = currentDevices.find((d) => d.id === status.deviceId);
           return device ? { id: device.id, ip: device.ipAddress } : null;
         })
         .filter((d): d is TileQueryDevice => d !== null);
 
       if (bromptonDevices.length === 0) {
-        pollingRef.current = false;
+        isPollingRef.current = false;
         return;
       }
 
@@ -59,7 +78,7 @@ export function useBromptonTilePolling(
 
       if (!res.ok) {
         // Non-200 from API — stay with existing store data
-        pollingRef.current = false;
+        isPollingRef.current = false;
         return;
       }
 
@@ -68,16 +87,16 @@ export function useBromptonTilePolling(
       // Push updated tile data into the store for each processor
       for (const [deviceId, result] of Object.entries(data.results)) {
         if (result.tiles && Array.isArray(result.tiles)) {
-          updateBromptonTiles(deviceId, result.tiles);
+          updateBromptonTilesRef.current(deviceId, result.tiles);
         }
       }
     } catch (err) {
       // Network failure or fetch error — silently continue with store data
       console.warn('[BromptonTilePolling] Failed to reach /api/brompton-tiles:', err);
     } finally {
-      pollingRef.current = false;
+      isPollingRef.current = false;
     }
-  }, [devices, bromptonStatuses, updateBromptonTiles]);
+  }, []); // stable — reads fresh data via refs on every invocation
 
   useEffect(() => {
     if (!enabled) return;
@@ -85,8 +104,14 @@ export function useBromptonTilePolling(
     // Initial poll on mount
     pollTiles();
 
-    // Set up polling interval
-    const id = setInterval(pollTiles, intervalMs);
-    return () => clearInterval(id);
-  }, [enabled, intervalMs, pollTiles]);
+    // Create interval once; store ID in ref for reliable cleanup
+    intervalRef.current = setInterval(pollTiles, intervalMs);
+
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [enabled, intervalMs, pollTiles]); // pollTiles is now stable, so effect only re-runs when enabled/intervalMs change
 }

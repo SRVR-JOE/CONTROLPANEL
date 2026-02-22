@@ -36,18 +36,36 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
   const devices = useStore((s) => s.devices);
   const updateDeviceHealth = useStore((s) => s.updateDeviceHealth);
   const updateDeviceStatus = useStore((s) => s.updateDeviceStatus);
-  const offlineTimestamps = useRef<Record<string, number>>({});
-  const pollingRef = useRef(false);
 
+  const offlineTimestamps = useRef<Record<string, number>>({});
+  // Guards against concurrent in-flight requests
+  const isPollingRef = useRef(false);
+  // Interval ID stored in a ref so cleanup is always accurate
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Keep the latest store values accessible inside the stable interval callback
+  // without adding them to the effect dependency array (which would re-create
+  // the interval on every store update).
+  const devicesRef = useRef(devices);
+  const updateDeviceHealthRef = useRef(updateDeviceHealth);
+  const updateDeviceStatusRef = useRef(updateDeviceStatus);
+
+  // Sync refs to latest values on every render — no effect needed
+  devicesRef.current = devices;
+  updateDeviceHealthRef.current = updateDeviceHealth;
+  updateDeviceStatusRef.current = updateDeviceStatus;
+
+  // Stable poll function — reads fresh data via refs, never changes identity
   const pollDevices = useCallback(async () => {
-    if (pollingRef.current) return; // skip if previous poll still running
-    pollingRef.current = true;
+    if (isPollingRef.current) return; // skip if previous poll still running
+    isPollingRef.current = true;
 
     try {
       const now = Date.now();
+      const currentDevices = devicesRef.current;
 
       // Build list of devices to query (skip recently-failed offline devices)
-      const toQuery: HealthQueryDevice[] = devices
+      const toQuery: HealthQueryDevice[] = currentDevices
         .filter((d) => {
           if (!d.ipAddress) return false;
           const lastOffline = offlineTimestamps.current[d.id];
@@ -61,7 +79,7 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
         }));
 
       if (toQuery.length === 0) {
-        pollingRef.current = false;
+        isPollingRef.current = false;
         return;
       }
 
@@ -72,7 +90,7 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
       });
 
       if (!res.ok) {
-        pollingRef.current = false;
+        isPollingRef.current = false;
         return;
       }
 
@@ -88,29 +106,35 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
           } else if (result.health.warnings.length > 0) {
             status = 'warning';
           }
-          updateDeviceHealth(deviceId, result.health, status);
+          updateDeviceHealthRef.current(deviceId, result.health, status);
           delete offlineTimestamps.current[deviceId];
         } else {
           // Device unreachable
-          updateDeviceStatus(deviceId, 'offline');
+          updateDeviceStatusRef.current(deviceId, 'offline');
           offlineTimestamps.current[deviceId] = now;
         }
       }
     } catch (err) {
       console.warn('[DevicePolling] Failed to reach /api/health:', err);
     } finally {
-      pollingRef.current = false;
+      isPollingRef.current = false;
     }
-  }, [devices, updateDeviceHealth, updateDeviceStatus]);
+  }, []); // stable — reads fresh data via refs on every invocation
 
   useEffect(() => {
     if (!enabled) return;
 
-    // Initial poll
+    // Initial poll on mount
     pollDevices();
 
-    // Set up interval
-    const id = setInterval(pollDevices, intervalMs);
-    return () => clearInterval(id);
-  }, [enabled, intervalMs, pollDevices]);
+    // Create interval once; store ID in ref for reliable cleanup
+    intervalRef.current = setInterval(pollDevices, intervalMs);
+
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [enabled, intervalMs, pollDevices]); // pollDevices is now stable, so effect only re-runs when enabled/intervalMs change
 }
