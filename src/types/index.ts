@@ -81,7 +81,41 @@ export interface BromptonProcessorStatus {
   outputColorSpace: string;
   panelTemperatures: number[];
   chainLengths: number[];
+  tiles?: LEDTileInfo[];
 }
+
+// --- LED Tile Visualization ---
+
+export type LEDTileStatus = 'online' | 'warning' | 'error' | 'offline' | 'unknown';
+
+export type LEDTileErrorType =
+  | 'high-temperature'
+  | 'communication-lost'
+  | 'driver-fault'
+  | 'power-fault'
+  | 'color-calibration'
+  | 'pixel-failure';
+
+export interface LEDTileError {
+  type: LEDTileErrorType;
+  message: string;
+  severity: 'warning' | 'error';
+  timestamp: string;
+}
+
+export interface LEDTileInfo {
+  id: string;
+  chainIndex: number;
+  positionInChain: number;
+  status: LEDTileStatus;
+  temperature: number;
+  errors: LEDTileError[];
+  lastSeen: string;
+  serialNumber?: string;
+  firmwareVersion?: string;
+}
+
+export type TileViewMode = 'status' | 'temperature' | 'errors';
 
 // --- Rack Types ---
 

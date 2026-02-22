@@ -22,6 +22,9 @@ import {
   MachineDeploymentState,
   DiscoveredMachine,
   DiscoveryScan,
+  LEDTileInfo,
+  LEDTileErrorType,
+  TileViewMode,
 } from '@/types';
 
 // ============================================================
@@ -43,6 +46,116 @@ function createMockHealth(manufacturer: string) {
     return { ...base, gpuUsage: 15 + Math.random() * 70, gpuTemp: 40 + Math.random() * 30 };
   }
   return base;
+}
+
+function generateMockTiles(deviceId: string, chainLengths: number[], onlinePanels: number): LEDTileInfo[] {
+  const errorTypes: LEDTileErrorType[] = [
+    'high-temperature',
+    'communication-lost',
+    'driver-fault',
+    'power-fault',
+    'color-calibration',
+    'pixel-failure',
+  ];
+
+  const errorMessages: Record<LEDTileErrorType, { message: string; severity: 'warning' | 'error' }> = {
+    'high-temperature': { message: 'Panel temperature exceeds safe operating threshold', severity: 'warning' },
+    'communication-lost': { message: 'No response from panel over Ethernet link', severity: 'error' },
+    'driver-fault': { message: 'LED driver IC reporting fault condition', severity: 'error' },
+    'power-fault': { message: 'Power supply voltage out of tolerance', severity: 'error' },
+    'color-calibration': { message: 'Color calibration data mismatch detected', severity: 'warning' },
+    'pixel-failure': { message: 'One or more pixel sub-elements unresponsive', severity: 'warning' },
+  };
+
+  const tiles: LEDTileInfo[] = [];
+  let tileGlobalIndex = 0;
+
+  for (let chainIdx = 0; chainIdx < chainLengths.length; chainIdx++) {
+    const chainLength = chainLengths[chainIdx];
+
+    for (let pos = 0; pos < chainLength; pos++) {
+      const rng = Math.random();
+      const isOffline = rng < 0.08;
+      const isWarning = !isOffline && rng < 0.13; // next 5% after offline band
+
+      let status: LEDTileInfo['status'];
+      let temperature: number;
+      const tileErrors: LEDTileInfo['errors'] = [];
+
+      if (isOffline) {
+        status = 'offline';
+        temperature = 0;
+      } else if (isWarning) {
+        status = 'warning';
+        // Hotspot temperature: 48-55C
+        temperature = 48 + Math.random() * 7;
+        // Add a high-temperature or driver-fault error
+        const errType = Math.random() < 0.6 ? 'high-temperature' : 'driver-fault';
+        const errInfo = errorMessages[errType];
+        tileErrors.push({
+          type: errType,
+          message: errInfo.message,
+          severity: errInfo.severity,
+          timestamp: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+        });
+        // Sometimes add a second error
+        if (Math.random() < 0.3) {
+          const secondErrType = errorTypes.filter((t) => t !== errType)[Math.floor(Math.random() * 5)];
+          const secondErrInfo = errorMessages[secondErrType];
+          tileErrors.push({
+            type: secondErrType,
+            message: secondErrInfo.message,
+            severity: secondErrInfo.severity,
+            timestamp: new Date(Date.now() - Math.random() * 7200000).toISOString(),
+          });
+        }
+      } else if (tileGlobalIndex >= onlinePanels) {
+        // Excess panels beyond onlinePanels count go offline
+        status = 'offline';
+        temperature = 0;
+      } else {
+        // Determine if error (beyond the warning band)
+        const hasError = rng > 0.96;
+        if (hasError) {
+          status = 'error';
+          temperature = 52 + Math.random() * 5;
+          const errType = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+          const errInfo = errorMessages[errType];
+          tileErrors.push({
+            type: errType,
+            message: errInfo.message,
+            severity: 'error',
+            timestamp: new Date(Date.now() - Math.random() * 1800000).toISOString(),
+          });
+        } else {
+          status = 'online';
+          // Normal temperature: 30-45C, with occasional hotspot cluster
+          const isHotspot = Math.random() < 0.07;
+          temperature = isHotspot
+            ? 43 + Math.random() * 5
+            : 30 + Math.random() * 15;
+        }
+      }
+
+      tiles.push({
+        id: `${deviceId}-chain${chainIdx}-pos${pos}`,
+        chainIndex: chainIdx,
+        positionInChain: pos,
+        status,
+        temperature,
+        errors: tileErrors,
+        lastSeen: status === 'offline'
+          ? new Date(Date.now() - 60000 - Math.random() * 300000).toISOString()
+          : new Date(Date.now() - Math.random() * 5000).toISOString(),
+        serialNumber: status !== 'offline' ? `SN-${deviceId.slice(-3).toUpperCase()}-C${chainIdx + 1}P${String(pos + 1).padStart(2, '0')}` : undefined,
+        firmwareVersion: status !== 'offline' ? '2.4.1' : undefined,
+      });
+
+      tileGlobalIndex++;
+    }
+  }
+
+  return tiles;
 }
 
 function createSDIPorts(inputs: number, outputs: number): Device['ports'] {
@@ -390,6 +503,7 @@ const initialBromptonStatuses: BromptonProcessorStatus[] = [
     outputColorSpace: 'Rec. 709',
     panelTemperatures: Array.from({ length: 120 }, () => 30 + Math.random() * 15),
     chainLengths: [30, 30, 30, 30],
+    tiles: generateMockTiles('dev-brompton-1', [30, 30, 30, 30], 120),
   },
   {
     deviceId: 'dev-brompton-2',
@@ -408,6 +522,7 @@ const initialBromptonStatuses: BromptonProcessorStatus[] = [
     outputColorSpace: 'Rec. 709',
     panelTemperatures: Array.from({ length: 96 }, () => 32 + Math.random() * 20),
     chainLengths: [24, 24, 24, 22],
+    tiles: generateMockTiles('dev-brompton-2', [24, 24, 24, 22], 94),
   },
 ];
 
@@ -638,6 +753,17 @@ interface AppStore {
 
   // Selected state
   selectedRouterId: string | null;
+
+  // Brompton tile visualization
+  selectedBromptonProcessorId: string | null;
+  tileViewMode: TileViewMode;
+  selectedTileId: string | null;
+  tileErrorFilter: LEDTileErrorType | null;
+  setSelectedBromptonProcessor: (deviceId: string) => void;
+  setTileViewMode: (mode: TileViewMode) => void;
+  setSelectedTile: (tileId: string | null) => void;
+  setTileErrorFilter: (errorType: LEDTileErrorType | null) => void;
+  updateBromptonTiles: (deviceId: string, tiles: LEDTileInfo[]) => void;
 
   // Device actions
   updateDeviceStatus: (deviceId: string, status: DeviceStatus) => void;
@@ -1291,6 +1417,29 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   selectedRouterId: initialRouters[0]?.id ?? null,
+
+  // Brompton tile visualization state
+  selectedBromptonProcessorId: initialBromptonStatuses[0]?.deviceId ?? null,
+  tileViewMode: 'status' as TileViewMode,
+  selectedTileId: null,
+  tileErrorFilter: null,
+
+  setSelectedBromptonProcessor: (deviceId) =>
+    set({ selectedBromptonProcessorId: deviceId, selectedTileId: null }),
+
+  setTileViewMode: (mode) =>
+    set({ tileViewMode: mode, selectedTileId: null, tileErrorFilter: null }),
+
+  setSelectedTile: (tileId) => set({ selectedTileId: tileId }),
+
+  setTileErrorFilter: (errorType) => set({ tileErrorFilter: errorType }),
+
+  updateBromptonTiles: (deviceId, tiles) =>
+    set((state) => ({
+      bromptonStatuses: state.bromptonStatuses.map((s) =>
+        s.deviceId === deviceId ? { ...s, tiles } : s
+      ),
+    })),
 
   updateDeviceStatus: (deviceId, status) =>
     set((state) => ({
