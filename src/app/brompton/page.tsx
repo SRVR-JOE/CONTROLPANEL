@@ -3,6 +3,13 @@
 import React, { useMemo } from 'react';
 import { useStore } from '@/store';
 import BromptonStatusPanel from '@/components/health/BromptonStatusPanel';
+import ProcessorSelector from '@/components/brompton/ProcessorSelector';
+import TileViewModeToggle from '@/components/brompton/TileViewModeToggle';
+import TileStatusSummary from '@/components/brompton/TileStatusSummary';
+import TileErrorLegend from '@/components/brompton/TileErrorLegend';
+import LEDTileGrid from '@/components/brompton/LEDTileGrid';
+import TileDetailPanel from '@/components/brompton/TileDetailPanel';
+import { useBromptonTilePolling } from '@/hooks/useBromptonTilePolling';
 import {
   Layers,
   Monitor,
@@ -15,6 +22,11 @@ import {
 export default function BromptonPage() {
   const devices = useStore((state) => state.devices);
   const bromptonStatuses = useStore((state) => state.bromptonStatuses);
+  const tileViewMode = useStore((s) => s.tileViewMode);
+  const selectedTileId = useStore((s) => s.selectedTileId);
+
+  // Enable tile polling — graceful failure if API not available
+  useBromptonTilePolling();
 
   // Get Brompton devices with their statuses
   const bromptonProcessors = useMemo(() => {
@@ -207,8 +219,103 @@ export default function BromptonPage() {
         </div>
       </div>
 
-      {/* Processor Panels */}
-      <div className="max-w-[1400px] mx-auto px-6 py-6">
+      {/* Main content area */}
+      <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
+
+        {/* ===== LED Tile Visualization Section ===== */}
+        {bromptonProcessors.length > 0 && (
+          <div className="rounded-xl border border-[#2a2a3d] bg-[#14141f] overflow-hidden">
+            {/* Section header */}
+            <div className="px-5 py-3 border-b border-[#2a2a3d]">
+              <div className="flex items-center gap-2">
+                <Layers size={14} className="text-[#6b7280]" />
+                <span className="text-sm font-semibold text-[#e0e0e8]">
+                  Panel Tile Map
+                </span>
+                <span className="text-[10px] text-[#6b7280] ml-1">
+                  Real-time per-panel status
+                </span>
+              </div>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Processor selector */}
+              <ProcessorSelector />
+
+              {/* Toolbar: view mode toggle + status summary */}
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <TileViewModeToggle />
+                <TileStatusSummary />
+              </div>
+
+              {/* Error legend — only visible in errors view */}
+              {tileViewMode === 'errors' && (
+                <div className="rounded-lg bg-[#0c0c14] border border-[#2a2a3d] px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#6b7280] mb-2">
+                    Filter by Error Type
+                  </p>
+                  <TileErrorLegend />
+                </div>
+              )}
+
+              {/* Grid + optional detail panel side by side */}
+              <div className="flex gap-4 items-start">
+                <div className="flex-1 min-w-0">
+                  <LEDTileGrid />
+                </div>
+                {selectedTileId && <TileDetailPanel />}
+              </div>
+
+              {/* View mode legend */}
+              {tileViewMode === 'temperature' && (
+                <div className="flex items-center gap-3 text-[10px] text-[#6b7280]">
+                  <span className="font-medium">Temperature scale:</span>
+                  {[
+                    { color: '#3b82f6', label: '<32°C' },
+                    { color: '#22c55e', label: '32–38°C' },
+                    { color: '#84cc16', label: '38–44°C' },
+                    { color: '#eab308', label: '44–48°C' },
+                    { color: '#f59e0b', label: '48–52°C' },
+                    { color: '#ef4444', label: '>52°C' },
+                  ].map(({ color, label }) => (
+                    <span key={label} className="flex items-center gap-1">
+                      <span
+                        className="h-2.5 w-2.5 rounded-sm inline-block"
+                        style={{ backgroundColor: color }}
+                      />
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {tileViewMode === 'status' && (
+                <div className="flex items-center gap-3 text-[10px] text-[#6b7280]">
+                  <span className="font-medium">Status:</span>
+                  {[
+                    { color: '#22c55e', label: 'Online' },
+                    { color: '#f59e0b', label: 'Warning' },
+                    { color: '#ef4444', label: 'Error' },
+                    { color: '#1c1c2b', label: 'Offline', border: '#2a2a3d' },
+                  ].map(({ color, label, border }) => (
+                    <span key={label} className="flex items-center gap-1">
+                      <span
+                        className="h-2.5 w-2.5 rounded-sm inline-block"
+                        style={{
+                          backgroundColor: color,
+                          border: border ? `1px solid ${border}` : undefined,
+                        }}
+                      />
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ===== Existing Processor Cards ===== */}
         {bromptonProcessors.length === 0 ? (
           <div className="text-center py-16 text-muted">
             <Monitor size={40} className="mx-auto mb-3 opacity-30" />
