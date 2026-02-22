@@ -2,9 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function StatusBar() {
-  const devices = useStore((state) => state.devices);
+  // Compute status counts inside the selector so StatusBar only re-renders
+  // when a device's status field actually changes, not on any device mutation.
+  const { online, warning, error, offline, total } = useStore(
+    useShallow((state) => {
+      let online = 0, warning = 0, error = 0, offline = 0;
+      for (const d of state.devices) {
+        if (d.status === 'online') online++;
+        else if (d.status === 'warning') warning++;
+        else if (d.status === 'error') error++;
+        else if (d.status === 'offline') offline++;
+      }
+      return { online, warning, error, offline, total: state.devices.length };
+    })
+  );
+
   const [currentTime, setCurrentTime] = useState<string>('');
 
   useEffect(() => {
@@ -23,46 +38,39 @@ export default function StatusBar() {
     return () => clearInterval(interval);
   }, []);
 
-  const statusCounts = {
-    online: devices.filter((d) => d.status === 'online').length,
-    warning: devices.filter((d) => d.status === 'warning').length,
-    error: devices.filter((d) => d.status === 'error').length,
-    offline: devices.filter((d) => d.status === 'offline').length,
-  };
-
   return (
     <header className="fixed left-16 right-0 top-0 z-30 flex h-10 items-center justify-between border-b border-border bg-surface/80 px-4 backdrop-blur-xl">
       {/* System status */}
       <div className="flex items-center gap-4">
         <span className="text-xs font-medium text-muted">SYSTEM STATUS</span>
         <div className="flex items-center gap-3">
-          {statusCounts.online > 0 && (
+          {online > 0 && (
             <div className="flex items-center gap-1.5">
               <span className="inline-block h-2 w-2 rounded-full bg-success" />
-              <span className="text-xs text-foreground">{statusCounts.online}</span>
+              <span className="text-xs text-foreground">{online}</span>
             </div>
           )}
-          {statusCounts.warning > 0 && (
+          {warning > 0 && (
             <div className="flex items-center gap-1.5">
               <span className="inline-block h-2 w-2 rounded-full bg-warning" />
-              <span className="text-xs text-foreground">{statusCounts.warning}</span>
+              <span className="text-xs text-foreground">{warning}</span>
             </div>
           )}
-          {statusCounts.error > 0 && (
+          {error > 0 && (
             <div className="flex items-center gap-1.5">
               <span className="inline-block h-2 w-2 rounded-full bg-error" />
-              <span className="text-xs text-foreground">{statusCounts.error}</span>
+              <span className="text-xs text-foreground">{error}</span>
             </div>
           )}
-          {statusCounts.offline > 0 && (
+          {offline > 0 && (
             <div className="flex items-center gap-1.5">
               <span className="inline-block h-2 w-2 rounded-full bg-muted" />
-              <span className="text-xs text-foreground">{statusCounts.offline}</span>
+              <span className="text-xs text-foreground">{offline}</span>
             </div>
           )}
         </div>
         <span className="text-xs text-muted">
-          {devices.length} device{devices.length !== 1 ? 's' : ''}
+          {total} device{total !== 1 ? 's' : ''}
         </span>
       </div>
 
