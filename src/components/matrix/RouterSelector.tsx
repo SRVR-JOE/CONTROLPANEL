@@ -11,6 +11,7 @@ const MANUFACTURER_COLORS: Record<MatrixManufacturer, string> = {
   ross: '#9c27b0',
   crestron: '#263238',
   extron: '#1565c0',
+  netgear: '#4a90d9',
 };
 
 const MANUFACTURER_LABELS: Record<MatrixManufacturer, string> = {
@@ -20,6 +21,7 @@ const MANUFACTURER_LABELS: Record<MatrixManufacturer, string> = {
   ross: 'Ross',
   crestron: 'Crestron',
   extron: 'Extron',
+  netgear: 'Netgear',
 };
 
 export default function RouterSelector() {

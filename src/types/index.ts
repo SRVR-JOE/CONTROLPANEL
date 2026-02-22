@@ -22,7 +22,17 @@ export type DeviceManufacturer =
   | 'audinate'
   | 'luminex'
   | 'crestron'
-  | 'extron';
+  | 'extron'
+  | 'netgear'
+  | 'avitech'
+  | 'adder'
+  | 'sonifex'
+  | 'eaton'
+  | 'toshiba'
+  | 'gude'
+  | 'raritan'
+  | 'apc'
+  | 'cyberpower';
 
 export type DeviceCategory =
   | 'media-server'
@@ -44,7 +54,14 @@ export type DeviceCategory =
   | 'recorder'
   | 'fiber-extender'
   | 'encoder-decoder'
-  | 'graphics-processor';
+  | 'graphics-processor'
+  | 'ups'
+  | 'pdu'
+  | 'kvm-switch'
+  | 'kvm-extender'
+  | 'multiviewer'
+  | 'opengear-frame'
+  | 'audio-monitor';
 
 export type DeviceStatus = 'online' | 'warning' | 'error' | 'offline';
 
@@ -61,7 +78,9 @@ export type PortSignalType =
   | 'analog-audio'
   | 'aes-ebu'
   | 'hdbaset'
-  | 'sfp';
+  | 'sfp'
+  | 'rs232'
+  | 'power';
 
 export interface DevicePort {
   id: string;
@@ -180,7 +199,7 @@ export interface Rack {
 
 // --- Matrix Routing ---
 
-export type MatrixManufacturer = 'aja' | 'lightware' | 'blackmagic' | 'ross' | 'crestron' | 'extron';
+export type MatrixManufacturer = 'aja' | 'lightware' | 'blackmagic' | 'ross' | 'crestron' | 'extron' | 'netgear';
 
 export interface MatrixInput {
   id: string;
@@ -443,7 +462,7 @@ export interface DiscoveryScan {
 
 // --- Device Catalog ---
 
-export type DeviceProtocol = 'rest' | 'json-rpc' | 'tcp' | 'cgi' | 'visca' | 'sis' | 'cip' | 'pjlink' | 'mdns' | 'https';
+export type DeviceProtocol = 'rest' | 'json-rpc' | 'tcp' | 'cgi' | 'visca' | 'sis' | 'cip' | 'pjlink' | 'mdns' | 'https' | 'snmp' | 'dashboard';
 
 export type FormFactor = 'rack' | 'desktop' | 'poe' | 'half-rack' | 'card' | 'portable';
 

@@ -17,6 +17,16 @@ import { DanteAdapter } from './dante';
 import { LuminexAdapter } from './luminex';
 import { CrestronAdapter } from './crestron';
 import { ExtronAdapter } from './extron';
+import { NetgearAdapter } from './netgear';
+import { AvitechAdapter } from './avitech';
+import { AdderAdapter } from './adder';
+import { SonifexAdapter } from './sonifex';
+import { EatonAdapter } from './eaton';
+import { ToshibaUPSAdapter } from './toshiba-ups';
+import { GudeAdapter } from './gude';
+import { RaritanAdapter } from './raritan';
+import { APCAdapter } from './apc';
+import { CyberPowerAdapter } from './cyberpower';
 
 export type { DeviceAdapter, DeviceQueryResult } from './types';
 
@@ -37,6 +47,16 @@ const danteAdapter = new DanteAdapter();
 const luminexAdapter = new LuminexAdapter();
 const crestronAdapter = new CrestronAdapter();
 const extronAdapter = new ExtronAdapter();
+const netgearAdapter = new NetgearAdapter();
+const avitechAdapter = new AvitechAdapter();
+const adderAdapter = new AdderAdapter();
+const sonifexAdapter = new SonifexAdapter();
+const eatonAdapter = new EatonAdapter();
+const toshibaAdapter = new ToshibaUPSAdapter();
+const gudeAdapter = new GudeAdapter();
+const raritanAdapter = new RaritanAdapter();
+const apcAdapter = new APCAdapter();
+const cyberpowerAdapter = new CyberPowerAdapter();
 
 const adapterMap: Record<DeviceManufacturer, DeviceAdapter> = {
   disguise: disguiseAdapter,
@@ -57,6 +77,16 @@ const adapterMap: Record<DeviceManufacturer, DeviceAdapter> = {
   luminex: luminexAdapter,
   crestron: crestronAdapter,
   extron: extronAdapter,
+  netgear: netgearAdapter,
+  avitech: avitechAdapter,
+  adder: adderAdapter,
+  sonifex: sonifexAdapter,
+  eaton: eatonAdapter,
+  toshiba: toshibaAdapter,
+  gude: gudeAdapter,
+  raritan: raritanAdapter,
+  apc: apcAdapter,
+  cyberpower: cyberpowerAdapter,
 };
 
 /**
