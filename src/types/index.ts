@@ -114,6 +114,7 @@ export interface Device {
   ipAddress: string;
   rackId?: string;
   rackSlot?: number; // starting RU
+  rackColumn?: number; // column index within multi-wide rack (0-based)
   rackUnits: number; // how many RU this device takes
   ports: DevicePort[];
   health: DeviceHealth;
@@ -182,6 +183,7 @@ export type RackWidth = 1 | 2 | 3;
 
 export interface RackSlot {
   ru: number; // 1-26
+  column?: number; // column index within multi-wide rack (0-based)
   deviceId?: string;
 }
 
@@ -190,7 +192,7 @@ export interface Rack {
   name: string;
   location: string;
   width: RackWidth;
-  totalRU: 26;
+  totalRU: number;
   slots: RackSlot[];
   ambientTemp?: number;
   inletTemp?: number;

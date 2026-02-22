@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -8,17 +8,20 @@ import {
   DragOverEvent,
   DragEndEvent,
   PointerSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
+  Announcements,
 } from '@dnd-kit/core';
 import { Rack, Device } from '@/types';
 import { useStore } from '@/store';
-import { Thermometer } from 'lucide-react';
+import { Thermometer, Undo2, Redo2 } from 'lucide-react';
 import InteractiveRackColumn from './InteractiveRackColumn';
 import UnassignedDeviceTray, { UNASSIGNED_TRAY_ID } from './UnassignedDeviceTray';
 import DragOverlayContent from './DragOverlayContent';
 import type { DraggableDeviceData } from './DraggableDevice';
 import type { DroppableSlotData } from './DroppableSlot';
+import { useRackHistory } from '@/hooks/useRackHistory';
 
 const COLUMN_WIDTH = 280;
 
@@ -43,7 +46,7 @@ function TempBadge({ label, value }: { label: string; value?: number }) {
 }
 
 // ============================================================
-// Validation helpers
+// Validation helpers (inline — canPlace and getValidDropRUs)
 // ============================================================
 
 function canPlace(
@@ -82,6 +85,52 @@ function getValidDropRUs(
 }
 
 // ============================================================
+// Undo / Redo button
+// ============================================================
+
+interface IconButtonProps {
+  onClick: () => void;
+  disabled: boolean;
+  title: string;
+  children: React.ReactNode;
+}
+
+function IconButton({ onClick, disabled, title, children }: IconButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        padding: '4px 8px',
+        fontSize: '11px',
+        color: disabled ? 'var(--muted)' : 'var(--foreground)',
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid var(--border)',
+        borderRadius: '5px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.45 : 1,
+        transition: 'opacity 0.15s ease, background 0.15s ease',
+        userSelect: 'none',
+        fontFamily: 'inherit',
+      }}
+      onMouseEnter={(e) => {
+        if (!disabled) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)';
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ============================================================
 // InteractiveRackEditor
 // ============================================================
 
@@ -97,8 +146,11 @@ export default function InteractiveRackEditor({ rack }: InteractiveRackEditorPro
   const [activeDevice, setActiveDevice] = useState<Device | null>(null);
   const [overSlot, setOverSlot] = useState<DroppableSlotData | null>(null);
 
+  const { pushAction, undo, redo, canUndo, canRedo } = useRackHistory();
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
   );
 
   // Device lookup map
@@ -131,9 +183,8 @@ export default function InteractiveRackEditor({ rack }: InteractiveRackEditorPro
     if (!activeDevice || !overSlot) return {};
     const { column, ru } = overSlot;
     const deviceRU = activeDevice.rackUnits;
-    const isValid = canPlace(rack, deviceRU, ru, column, activeDevice.id);
     const result: Record<number, Set<number>> = {};
-    // Highlight the span regardless — red if invalid, blue if valid
+    // Highlight the span regardless — DroppableSlot receives isValidTarget for color differentiation
     const set = new Set<number>();
     for (let r = ru; r < ru + deviceRU && r <= rack.totalRU; r++) {
       set.add(r);
@@ -141,6 +192,79 @@ export default function InteractiveRackEditor({ rack }: InteractiveRackEditorPro
     result[column] = set;
     return result;
   }, [activeDevice, overSlot, rack]);
+
+  // ------- Keyboard shortcut: Cmd/Ctrl+Z / Cmd/Ctrl+Shift+Z -------
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const isMac = navigator.platform.toUpperCase().includes('MAC');
+      const metaKey = isMac ? e.metaKey : e.ctrlKey;
+
+      if (!metaKey) return;
+
+      if (e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
+
+  // ------- DnD accessibility announcements -------
+
+  const announcements: Announcements = useMemo(
+    () => ({
+      onDragStart({ active }) {
+        const data = active.data.current as DraggableDeviceData | undefined;
+        const device = data ? deviceMap[data.deviceId] : null;
+        if (!device) return 'Picked up a device.';
+        const location = device.rackId
+          ? `from slot ${device.rackSlot ?? 'unknown'}`
+          : 'from the unassigned tray';
+        return `Picked up ${device.name}, ${device.rackUnits}U ${location}. Use arrow keys to move, Space or Enter to drop, Escape to cancel.`;
+      },
+      onDragOver({ active, over }) {
+        if (!over) return 'Not over any drop target.';
+        const data = active.data.current as DraggableDeviceData | undefined;
+        const device = data ? deviceMap[data.deviceId] : null;
+        if (over.id === UNASSIGNED_TRAY_ID) {
+          return `${device?.name ?? 'Device'} is over the unassigned tray.`;
+        }
+        const slotData = over.data.current as DroppableSlotData | undefined;
+        if (slotData && 'ru' in slotData) {
+          const { ru, column } = slotData;
+          const colLabel = column > 0 ? `, bay ${column + 1}` : '';
+          const valid = canPlace(rack, device?.rackUnits ?? 1, ru, column, device?.id ?? '');
+          return `${device?.name ?? 'Device'} is over slot ${ru}${colLabel}. ${valid ? 'Drop target is valid.' : 'Drop target is invalid — slot occupied.'}`;
+        }
+        return `Over drop target.`;
+      },
+      onDragEnd({ active, over }) {
+        const data = active.data.current as DraggableDeviceData | undefined;
+        const device = data ? deviceMap[data.deviceId] : null;
+        if (!over) return `${device?.name ?? 'Device'} was dropped and returned to original position.`;
+        if (over.id === UNASSIGNED_TRAY_ID) {
+          return `${device?.name ?? 'Device'} was moved to the unassigned tray.`;
+        }
+        const slotData = over.data.current as DroppableSlotData | undefined;
+        if (slotData && 'ru' in slotData) {
+          return `${device?.name ?? 'Device'} was placed at slot ${slotData.ru}.`;
+        }
+        return `${device?.name ?? 'Device'} was dropped.`;
+      },
+      onDragCancel({ active }) {
+        const data = active.data.current as DraggableDeviceData | undefined;
+        const device = data ? deviceMap[data.deviceId] : null;
+        return `Drag cancelled. ${device?.name ?? 'Device'} returned to original position.`;
+      },
+    }),
+    [deviceMap, rack]
+  );
 
   // ------- DnD event handlers -------
 
@@ -188,6 +312,16 @@ export default function InteractiveRackEditor({ rack }: InteractiveRackEditorPro
       // Dropped on unassigned tray
       if (overId === UNASSIGNED_TRAY_ID) {
         if (device.rackId) {
+          // Record state before unassign for undo
+          pushAction({
+            type: 'unassign',
+            deviceId: device.id,
+            from: {
+              rackId: device.rackId,
+              slot: device.rackSlot ?? 1,
+              column: device.rackColumn ?? 0,
+            },
+          });
           removeDeviceFromRack(device.id);
         }
         return;
@@ -212,11 +346,26 @@ export default function InteractiveRackEditor({ rack }: InteractiveRackEditorPro
           return;
         }
 
+        // Record state before assign for undo
+        const hadPrevLocation = !!device.rackId;
+        pushAction({
+          type: hadPrevLocation ? 'move' : 'assign',
+          deviceId: device.id,
+          from: hadPrevLocation
+            ? {
+                rackId: device.rackId!,
+                slot: device.rackSlot ?? 1,
+                column: device.rackColumn ?? 0,
+              }
+            : undefined,
+          to: { rackId, slot: ru, column },
+        });
+
         // assignDeviceToRack already handles clearing old slots
         assignDeviceToRack(device.id, rackId, ru, column);
       }
     },
-    [deviceMap, rack, assignDeviceToRack, removeDeviceFromRack]
+    [deviceMap, rack, assignDeviceToRack, removeDeviceFromRack, pushAction]
   );
 
   // ------- Render -------
@@ -229,23 +378,45 @@ export default function InteractiveRackEditor({ rack }: InteractiveRackEditorPro
   return (
     <DndContext
       sensors={sensors}
+      accessibility={{ announcements }}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col gap-4">
-        {/* Rack label */}
-        <div
-          className="font-mono"
-          style={{
-            fontSize: '11px',
-            color: 'var(--muted)',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-          }}
-        >
-          Rack Layout — Drag to reposition
+        {/* Toolbar: label + undo/redo */}
+        <div className="flex items-center justify-between" style={{ minHeight: '28px' }}>
+          <div
+            className="font-mono"
+            style={{
+              fontSize: '11px',
+              color: 'var(--muted)',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Rack Layout — Drag to reposition
+          </div>
+
+          <div className="flex items-center gap-1">
+            <IconButton
+              onClick={undo}
+              disabled={!canUndo}
+              title="Undo last rack move (Ctrl+Z / Cmd+Z)"
+            >
+              <Undo2 size={12} />
+              Undo
+            </IconButton>
+            <IconButton
+              onClick={redo}
+              disabled={!canRedo}
+              title="Redo last rack move (Ctrl+Shift+Z / Cmd+Shift+Z)"
+            >
+              <Redo2 size={12} />
+              Redo
+            </IconButton>
+          </div>
         </div>
 
         {/* Rack visualization */}
@@ -319,6 +490,9 @@ export default function InteractiveRackEditor({ rack }: InteractiveRackEditorPro
 
           {/* Rack body */}
           <div
+            role="listbox"
+            aria-label={`${rack.name} rack slots`}
+            aria-multiselectable={false}
             className="flex"
             style={{
               background: 'linear-gradient(180deg, #18182a 0%, #0e0e1a 100%)',
@@ -359,6 +533,19 @@ export default function InteractiveRackEditor({ rack }: InteractiveRackEditorPro
 
         {/* Unassigned device tray */}
         <UnassignedDeviceTray devices={unassignedDevices} />
+
+        {/* Keyboard / interaction instructions */}
+        <p
+          style={{
+            fontSize: '11px',
+            color: 'var(--muted)',
+            opacity: 0.7,
+            margin: 0,
+            lineHeight: 1.5,
+          }}
+        >
+          Drag devices to reposition. Keyboard: Space or Enter to grab, Arrow keys to move, Escape to cancel. Undo: Ctrl+Z / Cmd+Z. Redo: Ctrl+Shift+Z / Cmd+Shift+Z.
+        </p>
       </div>
 
       {/* Drag overlay — floating preview that follows cursor */}
