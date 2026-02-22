@@ -2,10 +2,10 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useStore } from '@/store';
-import { useState } from 'react';
 import {
   ArrowLeft, Send, Thermometer, Cpu, HardDrive, Zap, Fan, Clock, Wifi, WifiOff,
 } from 'lucide-react';
+import CommandPalette from '@/components/commands/CommandPalette';
 
 const MANUFACTURER_COLORS: Record<string, string> = {
   disguise: '#e91e63', barco: '#00bcd4', brompton: '#4caf50',
@@ -45,7 +45,6 @@ export default function DeviceDetailPage() {
   const device = useStore((s) => s.devices.find((d) => d.id === deviceId));
   const commandHistory = useStore((s) => s.commandHistory.filter((c) => c.deviceId === deviceId));
   const sendCommand = useStore((s) => s.sendCommand);
-  const [cmdInput, setCmdInput] = useState('');
 
   if (!device) {
     return (
@@ -59,12 +58,6 @@ export default function DeviceDetailPage() {
   const mfgColor = MANUFACTURER_COLORS[device.manufacturer] || '#6b7280';
   const statusColor = STATUS_COLORS[device.status] || '#6b7280';
   const h = device.health;
-
-  const handleSend = () => {
-    if (!cmdInput.trim()) return;
-    sendCommand(device.id, cmdInput.trim());
-    setCmdInput('');
-  };
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
@@ -180,36 +173,52 @@ export default function DeviceDetailPage() {
       </div>
 
       {/* Command Console */}
-      <div className="bg-[#14141f] rounded-lg border border-[#2a2a3d] p-5">
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2"><Send size={18} /> Command Console</h2>
-        <div className="flex gap-2 mb-4">
-          <input
-            value={cmdInput}
-            onChange={(e) => setCmdInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={`Send command to ${device.name}...`}
-            className="flex-1 bg-[#0c0c14] border border-[#2a2a3d] rounded-lg px-4 py-2 text-sm font-mono focus:outline-none focus:border-blue-500"
-          />
-          <button onClick={handleSend} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition flex items-center gap-2">
-            <Send size={14} /> Send
-          </button>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Send size={18} className="text-gray-400" />
+          <h2 className="text-lg font-semibold">Command Console</h2>
         </div>
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {commandHistory.length === 0 && <p className="text-sm text-gray-500">No commands sent yet</p>}
-          {commandHistory.map((cmd) => (
-            <div key={cmd.id} className="font-mono text-xs bg-[#0c0c14] rounded px-3 py-2 flex items-start justify-between">
-              <div>
-                <span className="text-blue-400">$ </span>
-                <span>{cmd.command}</span>
-                {cmd.response && <div className="text-green-400 mt-1">{cmd.response}</div>}
+
+        {/* Structured command palette */}
+        <CommandPalette
+          deviceId={device.id}
+          manufacturer={device.manufacturer}
+          deviceName={device.name}
+          onSendCommand={sendCommand}
+        />
+
+        {/* Command history */}
+        <div className="bg-[#14141f] rounded-lg border border-[#2a2a3d] p-4">
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Command History</h3>
+          <div className="space-y-2 max-h-56 overflow-y-auto">
+            {commandHistory.length === 0 && (
+              <p className="text-sm text-gray-600">No commands sent yet</p>
+            )}
+            {commandHistory.map((cmd) => (
+              <div key={cmd.id} className="font-mono text-xs bg-[#0c0c14] rounded px-3 py-2 flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <span className="text-blue-400">$ </span>
+                  <span className="text-gray-200">{cmd.command}</span>
+                  {cmd.params && Object.keys(cmd.params).length > 0 && (
+                    <span className="text-gray-500 ml-1">{JSON.stringify(cmd.params)}</span>
+                  )}
+                  {cmd.response && (
+                    <div className={`mt-1 break-all ${cmd.status === 'error' ? 'text-red-400' : 'text-green-400'}`}>
+                      {cmd.response}
+                    </div>
+                  )}
+                  <div className="text-gray-600 text-[10px] mt-0.5">
+                    {new Date(cmd.sentAt).toLocaleTimeString()}
+                  </div>
+                </div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 mt-0.5 ${
+                  cmd.status === 'success' ? 'bg-green-900/50 text-green-300' :
+                  cmd.status === 'error' ? 'bg-red-900/50 text-red-300' :
+                  'bg-yellow-900/50 text-yellow-300'
+                }`}>{cmd.status}</span>
               </div>
-              <span className={`text-xs px-1.5 py-0.5 rounded ${
-                cmd.status === 'success' ? 'bg-green-900/50 text-green-300' :
-                cmd.status === 'error' ? 'bg-red-900/50 text-red-300' :
-                'bg-yellow-900/50 text-yellow-300'
-              }`}>{cmd.status}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

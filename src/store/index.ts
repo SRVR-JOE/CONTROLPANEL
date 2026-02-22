@@ -1272,6 +1272,8 @@ export const useStore = create<AppStore>((set, get) => ({
     })),
 
   sendCommand: (deviceId, command, params) => {
+    const device = get().devices.find((d) => d.id === deviceId);
+
     const cmd: DeviceCommand = {
       id: uuidv4(),
       deviceId,
@@ -1281,14 +1283,51 @@ export const useStore = create<AppStore>((set, get) => ({
       status: 'sent',
     };
     set((state) => ({ commandHistory: [cmd, ...state.commandHistory].slice(0, 100) }));
-    // Simulate response
-    setTimeout(() => {
+
+    if (!device) {
       set((state) => ({
         commandHistory: state.commandHistory.map((c) =>
-          c.id === cmd.id ? { ...c, status: 'success', response: `OK: ${command}` } : c
+          c.id === cmd.id ? { ...c, status: 'error', response: 'Device not found in store' } : c
         ),
       }));
-    }, 500 + Math.random() * 1000);
+      return;
+    }
+
+    fetch('/api/commands', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        deviceId,
+        manufacturer: device.manufacturer,
+        ip: device.ipAddress,
+        command,
+        params,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data: { success: boolean; response?: string; error?: string }) => {
+        set((state) => ({
+          commandHistory: state.commandHistory.map((c) =>
+            c.id === cmd.id
+              ? {
+                  ...c,
+                  status: data.success ? 'success' : 'error',
+                  response: data.success ? (data.response ?? 'OK') : (data.error ?? 'Unknown error'),
+                }
+              : c
+          ),
+        }));
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        set((state) => ({
+          commandHistory: state.commandHistory.map((c) =>
+            c.id === cmd.id
+              ? { ...c, status: 'error', response: `Network error: ${message}` }
+              : c
+          ),
+        }));
+      });
   },
 
   setSelectedRouter: (routerId) => set({ selectedRouterId: routerId }),
