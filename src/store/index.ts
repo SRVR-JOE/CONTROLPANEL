@@ -787,6 +787,10 @@ interface AppStore {
   recallMatrixPreset: (presetId: string) => void;
   saveMatrixPreset: (preset: Omit<MatrixPreset, 'id' | 'createdAt'>) => void;
   deletePreset: (presetId: string) => void;
+
+  // Hydration
+  _isHydrated: boolean;
+  _hydrate: (data: Partial<AppStore>) => void;
 }
 
 // ============================================================
@@ -802,6 +806,10 @@ export const useStore = create<AppStore>((set, get) => ({
   matrixPresets: initialMatrixPresets,
   systemPresets: initialSystemPresets,
   commandHistory: [],
+
+  // Hydration
+  _isHydrated: false,
+  _hydrate: (data) => set((state) => ({ ...state, ...data, _isHydrated: true })),
 
   // Disguise config
   disguiseSessions: initialDisguiseSessions,
@@ -1663,3 +1671,56 @@ export const useStore = create<AppStore>((set, get) => ({
       matrixPresets: state.matrixPresets.filter((p) => p.id !== presetId),
     })),
 }));
+
+// ============================================================
+// Persistence: debounced write-back to SQLite via API
+// ============================================================
+
+const PERSISTENT_KEYS: (keyof AppStore)[] = [
+  'devices', 'racks', 'routers', 'bromptonStatuses',
+  'pinBoards', 'matrixPresets', 'systemPresets', 'disguiseSessions',
+];
+
+let dirtyKeys = new Set<string>();
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+function flushToServer() {
+  if (dirtyKeys.size === 0) return;
+  const state = useStore.getState();
+  const payload: Record<string, unknown> = {};
+  dirtyKeys.forEach((key) => {
+    payload[key] = (state as unknown as Record<string, unknown>)[key];
+  });
+  dirtyKeys = new Set();
+
+  fetch('/api/store', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ collections: payload }),
+  }).catch((err) => {
+    console.warn('[Store] Failed to persist:', err);
+  });
+}
+
+if (typeof window !== 'undefined') {
+  let prevState = useStore.getState();
+  useStore.subscribe((newState) => {
+    // Skip persistence until hydration is complete (and skip the hydration event itself)
+    if (!prevState._isHydrated) {
+      prevState = newState;
+      return;
+    }
+
+    for (const key of PERSISTENT_KEYS) {
+      if (newState[key] !== prevState[key]) {
+        dirtyKeys.add(key);
+      }
+    }
+    prevState = newState;
+
+    if (dirtyKeys.size > 0) {
+      if (flushTimer) clearTimeout(flushTimer);
+      flushTimer = setTimeout(flushToServer, 300);
+    }
+  });
+}

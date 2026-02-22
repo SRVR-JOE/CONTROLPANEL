@@ -2,6 +2,7 @@
 
 import Sidebar from './Sidebar';
 import StatusBar from './StatusBar';
+import { StoreHydrator } from '@/components/StoreHydrator';
 import { useDevicePolling } from '@/hooks/useDevicePolling';
 
 interface AppShellProps {
@@ -14,6 +15,7 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <StoreHydrator />
       <Sidebar />
       <StatusBar />
       <main className="pl-16 pt-10">

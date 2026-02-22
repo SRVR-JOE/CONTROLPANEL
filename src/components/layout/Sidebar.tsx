@@ -11,6 +11,9 @@ import {
   HardDrive,
   Save,
   Sliders,
+  Camera,
+  Clock,
+  Circle,
 } from 'lucide-react';
 
 const navItems = [
@@ -18,10 +21,13 @@ const navItems = [
   { href: '/matrix', label: 'Matrix', icon: Grid3x3 },
   { href: '/health', label: 'Health', icon: Activity },
   { href: '/brompton', label: 'Brompton', icon: Monitor },
+  { href: '/robo', label: 'ROBO', icon: Camera },
   { href: '/disguise-config', label: 'Disguise', icon: Sliders },
   { href: '/pinboard', label: 'Pin Board', icon: Pin },
   { href: '/devices', label: 'Devices', icon: HardDrive },
   { href: '/presets', label: 'Presets', icon: Save },
+  { href: '/timecode', label: 'Timecode', icon: Clock },
+  { href: '/recording', label: 'Recording', icon: Circle },
 ];
 
 export default function Sidebar() {

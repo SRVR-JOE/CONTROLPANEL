@@ -83,6 +83,20 @@ if (fs.existsSync(publicSrc)) {
   copyRecursive(publicSrc, publicDest);
 }
 
+// Copy better-sqlite3 native addon (required at runtime)
+const nativeModules = ['better-sqlite3', 'bindings', 'file-uri-to-path'];
+for (const mod of nativeModules) {
+  const modSrc = path.join(ROOT, 'node_modules', mod);
+  const modDest = path.join(OUT, 'node_modules', mod);
+  if (fs.existsSync(modSrc)) {
+    copyRecursive(modSrc, modDest);
+  }
+}
+console.log('  Included: better-sqlite3 native module');
+
+// Create empty data directory in dist
+ensureDir(path.join(OUT, 'data'));
+
 // Rename Next.js standalone server.js to _server.js, then copy our launcher as server.js
 const nextServerPath = path.join(OUT, 'server.js');
 const renamedServerPath = path.join(OUT, '_server.js');

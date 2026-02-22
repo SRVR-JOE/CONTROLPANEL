@@ -60,9 +60,17 @@ const localIP = getLocalIP();
 const localUrl = `http://localhost:${port}`;
 const networkUrl = `http://${localIP}:${port}`;
 
+// Ensure data directory exists for SQLite
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+const dbPath = path.join(dataDir, 'controlpanel.db');
+
 console.log(`  Local:    ${localUrl}`);
 console.log(`  Network:  ${networkUrl}`);
 console.log(`  Config:   ${localUrl}/disguise-config`);
+console.log(`  Database: ${dbPath}`);
 console.log('');
 console.log('  Press Ctrl+C to stop');
 console.log('');
