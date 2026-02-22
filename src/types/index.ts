@@ -412,3 +412,39 @@ export interface DeviceCommand {
   response?: string;
   status: 'pending' | 'sent' | 'success' | 'error';
 }
+
+// --- Structured Command System ---
+
+export type BromptonCommandType =
+  | 'set-brightness' | 'set-color-temp' | 'blackout' | 'test-pattern'
+  | 'freeze' | 'toggle-darkmagic' | 'toggle-puretone' | 'select-input'
+  | 'identify-panel' | 'reload-panels';
+
+export type DisguiseCommandType =
+  | 'play' | 'stop' | 'goto-cue' | 'jump-timecode'
+  | 'restart-service' | 'understudy-takeover';
+
+export type MatrixCommandType =
+  | 'set-crosspoint' | 'lock-output' | 'unlock-output' | 'label-io';
+
+export type AJACommandType =
+  | 'set-crosspoint' | 'get-status' | 'label-input' | 'label-output';
+
+export type GenericCommandType = 'ping' | 'reboot' | 'get-info';
+
+export interface CommandDefinition {
+  type: string;
+  label: string;
+  description: string;
+  category: 'control' | 'config' | 'diagnostic';
+  params?: Record<string, {
+    type: 'number' | 'string' | 'boolean';
+    label: string;
+    min?: number;
+    max?: number;
+    options?: string[];
+  }>;
+  confirmRequired?: boolean;
+}
+
+export type CommandRegistry = Record<string, CommandDefinition[]>;
