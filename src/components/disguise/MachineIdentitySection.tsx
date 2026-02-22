@@ -1,11 +1,19 @@
 'use client';
 
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 import { Server } from 'lucide-react';
 import type { D3NetRole, MachineIdentity } from '@/types';
 
 export default function MachineIdentitySection() {
-  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore();
+  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore(
+    useShallow((s) => ({
+      disguiseSessions: s.disguiseSessions,
+      selectedSessionId: s.selectedSessionId,
+      selectedMachineId: s.selectedMachineId,
+      updateProfile: s.updateProfile,
+    }))
+  );
 
   const session = disguiseSessions.find((s) => s.id === selectedSessionId);
   const machine = session?.machines.find((m) => m.id === selectedMachineId);

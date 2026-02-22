@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 import { Network, Wifi, WifiOff } from 'lucide-react';
 import { useState } from 'react';
 import type { NetworkAdapterConfig, NetworkAdapterRole, LinkSpeed } from '@/types';
@@ -47,7 +48,15 @@ function IPInput({ value, onChange, disabled }: { value: string; onChange: (v: s
 }
 
 export default function NetworkAdaptersSection() {
-  const { disguiseSessions, selectedSessionId, selectedMachineId, setSelectedMachine, updateProfile } = useStore();
+  const { disguiseSessions, selectedSessionId, selectedMachineId, setSelectedMachine, updateProfile } = useStore(
+    useShallow((s) => ({
+      disguiseSessions: s.disguiseSessions,
+      selectedSessionId: s.selectedSessionId,
+      selectedMachineId: s.selectedMachineId,
+      setSelectedMachine: s.setSelectedMachine,
+      updateProfile: s.updateProfile,
+    }))
+  );
   const [activeTab, setActiveTab] = useState<NetworkAdapterRole>('d3net');
 
   const session = disguiseSessions.find((s) => s.id === selectedSessionId);

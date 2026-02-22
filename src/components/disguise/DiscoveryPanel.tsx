@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 import {
   Radar,
   ChevronDown,
@@ -41,7 +42,16 @@ export default function DiscoveryPanel() {
     activeDiscoveryId,
     startDiscovery,
     addDiscoveredToSession,
-  } = useStore();
+  } = useStore(
+    useShallow((s) => ({
+      disguiseSessions: s.disguiseSessions,
+      selectedSessionId: s.selectedSessionId,
+      discoveryScans: s.discoveryScans,
+      activeDiscoveryId: s.activeDiscoveryId,
+      startDiscovery: s.startDiscovery,
+      addDiscoveredToSession: s.addDiscoveredToSession,
+    }))
+  );
 
   const [expanded, setExpanded] = useState(false);
   const [subnet, setSubnet] = useState('10.0.0');

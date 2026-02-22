@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 import {
   Monitor,
   Plus,
@@ -98,7 +99,20 @@ export default function SessionBar() {
     removeMachineFromSession,
     renameSession,
     updateSessionSettings,
-  } = useStore();
+  } = useStore(
+    useShallow((s) => ({
+      disguiseSessions: s.disguiseSessions,
+      selectedSessionId: s.selectedSessionId,
+      selectedMachineId: s.selectedMachineId,
+      setSelectedSession: s.setSelectedSession,
+      setSelectedMachine: s.setSelectedMachine,
+      addSession: s.addSession,
+      addMachineToSession: s.addMachineToSession,
+      removeMachineFromSession: s.removeMachineFromSession,
+      renameSession: s.renameSession,
+      updateSessionSettings: s.updateSessionSettings,
+    }))
+  );
 
   const [showSessionDropdown, setShowSessionDropdown] = useState(false);
   const [showNewSessionInput, setShowNewSessionInput] = useState(false);

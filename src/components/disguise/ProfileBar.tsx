@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 import { Copy, Trash2, Zap, ArrowDownToLine, Pencil, Check, X, Download, Upload, ClipboardCopy } from 'lucide-react';
 import { useState, useRef } from 'react';
 import type { DeploymentSection } from '@/types';
@@ -27,7 +28,21 @@ export default function ProfileBar() {
     exportSession,
     importSession,
     copySettingsToMachines,
-  } = useStore();
+  } = useStore(
+    useShallow((s) => ({
+      disguiseSessions: s.disguiseSessions,
+      selectedSessionId: s.selectedSessionId,
+      selectedMachineId: s.selectedMachineId,
+      duplicateProfile: s.duplicateProfile,
+      deleteProfile: s.deleteProfile,
+      setMachineActiveProfile: s.setMachineActiveProfile,
+      autoIncrementIPs: s.autoIncrementIPs,
+      renameProfile: s.renameProfile,
+      exportSession: s.exportSession,
+      importSession: s.importSession,
+      copySettingsToMachines: s.copySettingsToMachines,
+    }))
+  );
 
   const [showAutoIncrement, setShowAutoIncrement] = useState(false);
   const [baseOctet, setBaseOctet] = useState(11);

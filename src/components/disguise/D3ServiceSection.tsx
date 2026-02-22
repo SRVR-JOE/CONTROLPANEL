@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 import { Cog } from 'lucide-react';
 import type { D3ServiceSettings, D3ServiceStartup } from '@/types';
 
@@ -29,7 +30,14 @@ const startupLabels: Record<D3ServiceStartup, string> = {
 };
 
 export default function D3ServiceSection() {
-  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore();
+  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore(
+    useShallow((s) => ({
+      disguiseSessions: s.disguiseSessions,
+      selectedSessionId: s.selectedSessionId,
+      selectedMachineId: s.selectedMachineId,
+      updateProfile: s.updateProfile,
+    }))
+  );
 
   const session = disguiseSessions.find((s) => s.id === selectedSessionId);
   const machine = session?.machines.find((m) => m.id === selectedMachineId);

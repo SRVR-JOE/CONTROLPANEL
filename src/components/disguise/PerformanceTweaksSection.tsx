@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 import { Gauge, AlertTriangle } from 'lucide-react';
 import type { PerformanceTweaks, CodecPreference, ActorGUIMode } from '@/types';
 
@@ -46,7 +47,14 @@ const guiModeLabels: Record<ActorGUIMode, string> = {
 };
 
 export default function PerformanceTweaksSection() {
-  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore();
+  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore(
+    useShallow((s) => ({
+      disguiseSessions: s.disguiseSessions,
+      selectedSessionId: s.selectedSessionId,
+      selectedMachineId: s.selectedMachineId,
+      updateProfile: s.updateProfile,
+    }))
+  );
 
   const session = disguiseSessions.find((s) => s.id === selectedSessionId);
   const machine = session?.machines.find((m) => m.id === selectedMachineId);

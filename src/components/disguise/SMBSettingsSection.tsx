@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 import { FolderOpen } from 'lucide-react';
 import type { SMBSettings, SMBVersion } from '@/types';
 
@@ -23,7 +24,14 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
 }
 
 export default function SMBSettingsSection() {
-  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore();
+  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore(
+    useShallow((s) => ({
+      disguiseSessions: s.disguiseSessions,
+      selectedSessionId: s.selectedSessionId,
+      selectedMachineId: s.selectedMachineId,
+      updateProfile: s.updateProfile,
+    }))
+  );
 
   const session = disguiseSessions.find((s) => s.id === selectedSessionId);
   const machine = session?.machines.find((m) => m.id === selectedMachineId);

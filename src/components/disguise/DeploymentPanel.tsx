@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 import {
   Send,
   Wifi,
@@ -54,7 +55,14 @@ export default function DeploymentPanel() {
     selectedSessionId,
     deploymentJobs,
     startDeployment,
-  } = useStore();
+  } = useStore(
+    useShallow((s) => ({
+      disguiseSessions: s.disguiseSessions,
+      selectedSessionId: s.selectedSessionId,
+      deploymentJobs: s.deploymentJobs,
+      startDeployment: s.startDeployment,
+    }))
+  );
 
   const [expanded, setExpanded] = useState(false);
   const [selectedMachines, setSelectedMachines] = useState<string[]>([]);
