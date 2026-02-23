@@ -47,9 +47,19 @@ export default function DroppableSlot({
     }
   }
 
+  const slotLabel = `Rack slot ${ru}${column > 0 ? `, bay ${column + 1}` : ''}`;
+  const dropHint = isValidTarget === true
+    ? '. Valid drop target.'
+    : isValidTarget === false
+    ? '. Cannot drop here — slot occupied or invalid.'
+    : '';
+
   return (
     <div
       ref={setNodeRef}
+      role="option"
+      aria-label={`${slotLabel}${dropHint}`}
+      aria-selected={isOver}
       style={{
         height: `${RU_HEIGHT}px`,
         borderStyle: 'dashed',

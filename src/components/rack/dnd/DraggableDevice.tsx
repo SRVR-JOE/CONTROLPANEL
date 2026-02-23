@@ -43,12 +43,20 @@ export default function DraggableDevice({
   const color = MANUFACTURER_COLORS[device.manufacturer];
   const statusColor = STATUS_COLORS[device.status];
 
+  const locationLabel = device.rackId
+    ? `at rack slot ${device.rackSlot ?? 'unknown'}`
+    : 'in unassigned tray';
+
+  const ariaLabel = `${device.name}, ${device.rackUnits}U device, ${device.status}, ${locationLabel}. Press Space or Enter to pick up.`;
+
   if (inRack) {
     return (
       <div
         ref={setNodeRef}
         {...listeners}
         {...attributes}
+        aria-label={ariaLabel}
+        aria-roledescription="draggable device"
         style={{
           transform: CSS.Translate.toString(transform),
           opacity: isDragging ? 0.3 : 1,
@@ -141,6 +149,8 @@ export default function DraggableDevice({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      aria-label={ariaLabel}
+      aria-roledescription="draggable device"
       style={{
         transform: CSS.Translate.toString(transform),
         opacity: isDragging ? 0.3 : 1,
