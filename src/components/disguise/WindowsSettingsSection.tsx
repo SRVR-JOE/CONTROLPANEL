@@ -1,6 +1,7 @@
 'use client';
 
 import { useStore } from '@/store';
+import { useShallow } from 'zustand/react/shallow';
 import { Settings, AlertTriangle } from 'lucide-react';
 import type { WindowsSettings, PowerPlan, WindowsUpdatePolicy } from '@/types';
 
@@ -45,7 +46,14 @@ const updatePolicyLabels: Record<WindowsUpdatePolicy, string> = {
 };
 
 export default function WindowsSettingsSection() {
-  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore();
+  const { disguiseSessions, selectedSessionId, selectedMachineId, updateProfile } = useStore(
+    useShallow((s) => ({
+      disguiseSessions: s.disguiseSessions,
+      selectedSessionId: s.selectedSessionId,
+      selectedMachineId: s.selectedMachineId,
+      updateProfile: s.updateProfile,
+    }))
+  );
 
   const session = disguiseSessions.find((s) => s.id === selectedSessionId);
   const machine = session?.machines.find((m) => m.id === selectedMachineId);

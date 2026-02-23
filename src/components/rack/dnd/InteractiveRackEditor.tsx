@@ -13,7 +13,7 @@ import {
   useSensors,
   Announcements,
 } from '@dnd-kit/core';
-import { Rack, Device } from '@/types';
+import { Rack, Device } from '@/types'; // Device still needed for activeDevice state typing
 import { useStore } from '@/store';
 import { Thermometer, Undo2, Redo2 } from 'lucide-react';
 import InteractiveRackColumn from './InteractiveRackColumn';
@@ -22,6 +22,7 @@ import DragOverlayContent from './DragOverlayContent';
 import type { DraggableDeviceData } from './DraggableDevice';
 import type { DroppableSlotData } from './DroppableSlot';
 import { useRackHistory } from '@/hooks/useRackHistory';
+import { canPlace, getValidDropRUs } from './placement';
 
 const COLUMN_WIDTH = 280;
 
@@ -43,45 +44,6 @@ function TempBadge({ label, value }: { label: string; value?: number }) {
       </span>
     </div>
   );
-}
-
-// ============================================================
-// Validation helpers
-// ============================================================
-
-function canPlace(
-  rack: Rack,
-  deviceRU: number,
-  targetRU: number,
-  targetColumn: number,
-  draggedDeviceId: string
-): boolean {
-  for (let ru = targetRU; ru < targetRU + deviceRU; ru++) {
-    if (ru > rack.totalRU) return false;
-    const slot = rack.slots.find((s) => s.ru === ru && (s.column ?? 0) === targetColumn);
-    if (!slot) return false;
-    if (slot.deviceId && slot.deviceId !== draggedDeviceId) return false;
-  }
-  return true;
-}
-
-/** Return the set of RU numbers that would be valid drop targets for the given device in the given column */
-function getValidDropRUs(
-  rack: Rack,
-  device: Device,
-  column: number,
-  draggedDeviceId: string
-): Set<number> {
-  const valid = new Set<number>();
-  for (let ru = 1; ru <= rack.totalRU - device.rackUnits + 1; ru++) {
-    if (canPlace(rack, device.rackUnits, ru, column, draggedDeviceId)) {
-      // All RUs in this span are valid
-      for (let r = ru; r < ru + device.rackUnits; r++) {
-        valid.add(r);
-      }
-    }
-  }
-  return valid;
 }
 
 // ============================================================
