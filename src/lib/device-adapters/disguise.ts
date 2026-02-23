@@ -137,9 +137,11 @@ export class DisguiseAdapter implements DeviceAdapter {
 
       // Always try service API for system info
       let firmware: string | undefined;
+      let serviceAvailable = false;
       try {
         const sysRes = await fetchWithTimeout(`${base}/api/service/system/detectsystems`);
         if (sysRes.ok) {
+          serviceAvailable = true;
           const data = await sysRes.json();
           const systems = Array.isArray(data) ? data : (data?.result ?? data?.systems ?? [data]);
           const sys: D3DetectedSystem | undefined = systems.find(
@@ -150,11 +152,12 @@ export class DisguiseAdapter implements DeviceAdapter {
           }
         }
       } catch {
-        // Service API not available
-        if (!sessionAvailable) {
-          // Neither API is reachable
-          return { reachable: false, health: null };
-        }
+        // Service API not available (network-level failure)
+      }
+
+      // If neither API is reachable (session unavailable AND service unavailable), report offline
+      if (!sessionAvailable && !serviceAvailable) {
+        return { reachable: false, health: null };
       }
 
       // If we got here, at least one API responded
