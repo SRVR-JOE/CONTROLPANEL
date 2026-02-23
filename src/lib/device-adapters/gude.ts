@@ -13,11 +13,19 @@ async function fetchWithTimeout(url: string): Promise<Response> {
   }
 }
 
-async function fetchJson<T>(url: string): Promise<T | null> {
+/**
+ * Gude /statusjson.js may return a JavaScript variable assignment rather than
+ * pure JSON, e.g.:  var json_data = {...};
+ * Strip any leading variable assignment before parsing so both formats work.
+ */
+async function fetchGudeJson<T>(url: string): Promise<T | null> {
   try {
     const res = await fetchWithTimeout(url);
     if (!res.ok) return null;
-    return (await res.json()) as T;
+    const text = await res.text();
+    // Strip JS assignment prefix: "var <identifier> = " … ";"
+    const stripped = text.replace(/^\s*var\s+\w+\s*=\s*/, '').replace(/;\s*$/, '').trim();
+    return JSON.parse(stripped) as T;
   } catch {
     return null;
   }
@@ -52,7 +60,7 @@ export class GudeAdapter implements DeviceAdapter {
     const base = `http://${ip}:${port}`;
 
     try {
-      const status = await fetchJson<GudeStatus>(`${base}/statusjson.js`);
+      const status = await fetchGudeJson<GudeStatus>(`${base}/statusjson.js`);
 
       if (!status) {
         return { reachable: false, health: null };
