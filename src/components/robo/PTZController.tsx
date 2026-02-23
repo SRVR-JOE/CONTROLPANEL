@@ -56,8 +56,7 @@ function buildZoomCommand(zoom: number): string {
  * Zoom velocity. 00-99, 50=stopped, <50=wide, >50=tele.
  * Reserved for future continuous-zoom joystick implementation.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function buildZoomVelocityCommand(speed: number): string {
+function _buildZoomVelocityCommand(speed: number): string {
   const s = String(Math.max(0, Math.min(99, speed))).padStart(2, '0');
   return `aw_ptz?cmd=%23APC${s}&res=1`;
 }
