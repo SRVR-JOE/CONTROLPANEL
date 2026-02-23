@@ -55,6 +55,9 @@ export class CyberPowerAdapter implements DeviceAdapter {
       if (status.battery_charge !== undefined && status.battery_charge < 50) {
         warnings.push(`Battery charge: ${status.battery_charge}%`);
       }
+      if (status.battery_charge !== undefined && status.battery_charge < 20) {
+        errors.push(`Battery critically low: ${status.battery_charge}%`);
+      }
       if (status.output_load !== undefined && status.output_load > 80) {
         warnings.push(`Output load: ${status.output_load}%`);
       }

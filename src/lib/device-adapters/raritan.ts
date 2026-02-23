@@ -41,6 +41,12 @@ interface RaritanStatus {
  * Status: GET /api/v1/status
  * Outlets: GET /api/v1/outlets
  * Also supports SNMP (UDP :161) for monitoring.
+ *
+ * NOTE: Raritan PDUs use self-signed TLS certificates. When running server-side
+ * in Node.js, fetch() will reject self-signed certs by default. Set the
+ * environment variable NODE_TLS_REJECT_UNAUTHORIZED=0 in production deployments
+ * to allow connections to devices with self-signed certificates.
+ * Never set this in browser/client contexts.
  */
 export class RaritanAdapter implements DeviceAdapter {
   manufacturer = 'raritan' as const;
