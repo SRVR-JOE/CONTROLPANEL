@@ -34,7 +34,10 @@ export function isAllowedTarget(ip: string): boolean {
   const addr = ipv4ToUint32(ip.trim());
   if (isNaN(addr)) return false;
   for (const range of BLOCKED_RANGES) {
-    if ((addr & range.mask) === range.network) return false;
+    // Use >>> 0 on both sides to force unsigned 32-bit comparison.
+    // Without this, bitwise & returns a signed 32-bit int (e.g. -1 for 0xffffffff),
+    // which will never equal the unsigned constant 0xffffffff (4294967295).
+    if (((addr & range.mask) >>> 0) === (range.network >>> 0)) return false;
   }
   return true;
 }
