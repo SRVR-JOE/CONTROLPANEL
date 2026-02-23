@@ -4,12 +4,12 @@
  * by user-supplied input in API routes that make outbound connections.
  */
 
+// NOTE: This app controls AV devices on local/private networks.
+// Only block truly dangerous targets (loopback, broadcast, zero-address).
+// Private ranges (10.x, 172.16.x, 192.168.x) are intentionally ALLOWED
+// because that's where AV rack equipment lives.
 const BLOCKED_RANGES: Array<{ network: number; mask: number }> = [
   { network: 0x7f000000, mask: 0xff000000 }, // 127.0.0.0/8  loopback
-  { network: 0x0a000000, mask: 0xff000000 }, // 10.0.0.0/8   private
-  { network: 0xac100000, mask: 0xfff00000 }, // 172.16.0.0/12 private
-  { network: 0xc0a80000, mask: 0xffff0000 }, // 192.168.0.0/16 private
-  { network: 0xa9fe0000, mask: 0xffff0000 }, // 169.254.0.0/16 link-local
   { network: 0x00000000, mask: 0xffffffff }, // 0.0.0.0
   { network: 0xffffffff, mask: 0xffffffff }, // 255.255.255.255
 ];
