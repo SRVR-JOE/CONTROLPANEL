@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useStore } from '@/store';
 import { useShallow } from 'zustand/react/shallow';
+import { Bell } from 'lucide-react';
+import NotificationDropdown from '@/components/notifications/NotificationDropdown';
 
 export default function StatusBar() {
-  // Compute status counts inside the selector so StatusBar only re-renders
-  // when a device's status field actually changes, not on any device mutation.
   const { online, warning, error, offline, total } = useStore(
     useShallow((state) => {
       let online = 0, warning = 0, error = 0, offline = 0;
@@ -20,7 +20,11 @@ export default function StatusBar() {
     })
   );
 
+  const unreadCount = useStore((s) => s.unreadNotificationCount);
+
   const [currentTime, setCurrentTime] = useState<string>('');
+  const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -37,6 +41,18 @@ export default function StatusBar() {
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!bellOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
+        setBellOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [bellOpen]);
 
   return (
     <header className="fixed left-16 right-0 top-0 z-30 flex h-10 items-center justify-between border-b border-border bg-surface/80 px-4 backdrop-blur-xl">
@@ -74,8 +90,38 @@ export default function StatusBar() {
         </span>
       </div>
 
-      {/* Current time */}
-      <div className="font-mono text-xs text-muted">{currentTime}</div>
+      {/* Right side: notification bell + clock */}
+      <div className="flex items-center gap-4">
+        {/* Notification bell */}
+        <div ref={bellRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setBellOpen((o) => !o)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '4px', display: 'flex', alignItems: 'center', position: 'relative',
+              color: unreadCount > 0 ? 'var(--accent)' : 'var(--muted)',
+            }}
+          >
+            <Bell size={16} />
+            {unreadCount > 0 && (
+              <span style={{
+                position: 'absolute', top: '0px', right: '0px',
+                minWidth: '14px', height: '14px',
+                background: '#ef4444', borderRadius: '7px',
+                fontSize: '9px', fontWeight: 700, color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '0 3px', lineHeight: 1,
+              }}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+          {bellOpen && <NotificationDropdown onClose={() => setBellOpen(false)} />}
+        </div>
+
+        {/* Current time */}
+        <div className="font-mono text-xs text-muted">{currentTime}</div>
+      </div>
     </header>
   );
 }

@@ -27,6 +27,7 @@ import {
   LEDTileInfo,
   LEDTileErrorType,
   TileViewMode,
+  InAppNotification,
 } from '@/types';
 
 // ============================================================
@@ -811,6 +812,14 @@ interface AppStore {
   removeRack: (rackId: string) => void;
   updateRack: (rackId: string, updates: Partial<Pick<Rack, 'name' | 'location' | 'totalRU' | 'width'>>) => void;
   updateRackWidth: (rackId: string, width: 1 | 2 | 3) => void;
+
+  // Notifications (in-app, transient, not persisted)
+  notifications: InAppNotification[];
+  unreadNotificationCount: number;
+  addNotification: (notification: InAppNotification) => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  dismissNotification: (id: string) => void;
 
   // Hydration
   _isHydrated: boolean;
@@ -1821,6 +1830,45 @@ export const useStore = create<AppStore>((set, get) => ({
     set((state) => ({
       matrixPresets: state.matrixPresets.filter((p) => p.id !== presetId),
     })),
+
+  // Notifications (session-only, not persisted)
+  notifications: [],
+  unreadNotificationCount: 0,
+
+  addNotification: (notification) =>
+    set((state) => {
+      const notifications = [notification, ...state.notifications].slice(0, 200);
+      return {
+        notifications,
+        unreadNotificationCount: notifications.filter((n) => !n.read).length,
+      };
+    }),
+
+  markNotificationRead: (id) =>
+    set((state) => {
+      const notifications = state.notifications.map((n) =>
+        n.id === id ? { ...n, read: true } : n
+      );
+      return {
+        notifications,
+        unreadNotificationCount: notifications.filter((n) => !n.read).length,
+      };
+    }),
+
+  markAllNotificationsRead: () =>
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({ ...n, read: true })),
+      unreadNotificationCount: 0,
+    })),
+
+  dismissNotification: (id) =>
+    set((state) => {
+      const notifications = state.notifications.filter((n) => n.id !== id);
+      return {
+        notifications,
+        unreadNotificationCount: notifications.filter((n) => !n.read).length,
+      };
+    }),
 
 }));
 

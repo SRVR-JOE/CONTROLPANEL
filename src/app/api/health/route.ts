@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdapter } from '@/lib/device-adapters';
 import { isAllowedTarget } from '@/lib/validateIp';
-import type { DeviceHealth, DeviceManufacturer } from '@/types';
+import type { DeviceHealth, DeviceManufacturer, DeviceStatus } from '@/types';
 import { ALL_MANUFACTURERS } from '@/lib/constants';
+import { detectEvents } from '@/lib/events/detector';
+import { insertEvent, getEventSettings } from '@/lib/db';
+import { dispatchAll } from '@/lib/events/dispatcher';
+
 interface DeviceQueryResult { reachable: boolean; health: DeviceHealth | null; firmware?: string; errors?: string[]; }
-interface DeviceQueryInput { id: string; ip: string; manufacturer: DeviceManufacturer; port?: number; }
-async function queryDevice(ip: string, manufacturer: DeviceManufacturer, port?: number): Promise<DeviceQueryResult> { try { const adapter = getAdapter(manufacturer); return await adapter.queryHealth(ip, port); } catch (err) { return { reachable: false, health: null, errors: [err instanceof Error ? err.message : String(err)] }; } }
+interface DeviceQueryInput { id: string; ip: string; manufacturer: DeviceManufacturer; port?: number; name?: string; previousStatus?: DeviceStatus; }
+
+async function queryDevice(ip: string, manufacturer: DeviceManufacturer, port?: number): Promise<DeviceQueryResult> {
+  try {
+    const adapter = getAdapter(manufacturer);
+    return await adapter.queryHealth(ip, port);
+  } catch (err) {
+    return { reachable: false, health: null, errors: [err instanceof Error ? err.message : String(err)] };
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
@@ -20,6 +33,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(await queryDevice(ip, manufacturer, port));
   } catch (err) { return NextResponse.json({ error: 'Internal server error', details: String(err) }, { status: 500 }); }
 }
+
 export async function POST(request: NextRequest) {
   try {
     const body: { devices: DeviceQueryInput[] } = await request.json();
@@ -28,9 +42,54 @@ export async function POST(request: NextRequest) {
       if (!device.id || !device.ip || !device.manufacturer) return NextResponse.json({ error: `Each device must include id, ip, and manufacturer. Invalid entry: ${JSON.stringify(device)}` }, { status: 400 });
       if (!isAllowedTarget(device.ip)) return NextResponse.json({ error: `Invalid or disallowed target IP address for device: ${device.id}` }, { status: 400 });
     }
+
     const settledResults = await Promise.allSettled(body.devices.map((device) => queryDevice(device.ip, device.manufacturer, device.port)));
     const results: Record<string, DeviceQueryResult> = {};
-    for (let i = 0; i < body.devices.length; i++) { const device = body.devices[i]; const settled = settledResults[i]; results[device.id] = settled.status === 'fulfilled' ? settled.value : { reachable: false, health: null, errors: [settled.reason instanceof Error ? settled.reason.message : String(settled.reason)] }; }
+    const allNewEvents: import('@/types').SystemEvent[] = [];
+
+    let settings;
+    try { settings = getEventSettings(); } catch { settings = null; }
+
+    for (let i = 0; i < body.devices.length; i++) {
+      const device = body.devices[i];
+      const settled = settledResults[i];
+      const result: DeviceQueryResult = settled.status === 'fulfilled'
+        ? settled.value
+        : { reachable: false, health: null, errors: [settled.reason instanceof Error ? settled.reason.message : String(settled.reason)] };
+      results[device.id] = result;
+
+      // Event detection
+      if (settings) {
+        try {
+          const currentStatus: DeviceStatus = result.reachable
+            ? (result.health?.errors?.length ? 'error' : result.health?.warnings?.length ? 'warning' : 'online')
+            : 'offline';
+
+          const events = detectEvents(
+            device.id,
+            device.name || device.id,
+            currentStatus,
+            result.health,
+            settings
+          );
+
+          for (const event of events) {
+            try { insertEvent(event); } catch (e) { console.error('[Health] Failed to insert event:', e); }
+          }
+          allNewEvents.push(...events);
+        } catch (e) {
+          console.error('[Health] Event detection error:', e);
+        }
+      }
+    }
+
+    // Dispatch notifications (best-effort, async, non-blocking)
+    if (allNewEvents.length > 0 && settings) {
+      dispatchAll(allNewEvents, settings.flappingCooldownMs).catch((e) =>
+        console.error('[Health] Notification dispatch error:', e)
+      );
+    }
+
     return NextResponse.json({ results });
   } catch (err) { return NextResponse.json({ error: 'Internal server error', details: String(err) }, { status: 500 }); }
 }

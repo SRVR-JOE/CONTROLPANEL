@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useStore } from '@/store';
-import { Settings, Plus, Trash2, Server, AlertTriangle } from 'lucide-react';
+import { Settings, Plus, Trash2, Server, AlertTriangle, Bell, Mail, MessageSquare, Smartphone, Send, ToggleLeft, ToggleRight } from 'lucide-react';
 import InteractiveRackEditor from '@/components/rack/dnd/InteractiveRackEditor';
-import type { RackWidth } from '@/types';
+import type { RackWidth, EventSettings, NotificationChannelConfig, EventType, EventSeverity, NotificationChannel } from '@/types';
 
 // ============================================================
 // Settings Page
@@ -512,7 +512,350 @@ export default function SettingsPage() {
             </div>
           )}
         </section>
+
+        {/* Notifications & Alerts Section */}
+        <NotificationsSection />
       </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Notifications & Alerts Settings Section
+// ============================================================
+
+const ALL_EVENT_TYPES: EventType[] = ['status_change', 'temperature_alert', 'signal_loss', 'power_event'];
+const ALL_SEVERITIES: EventSeverity[] = ['info', 'warning', 'error', 'critical'];
+
+const channelMeta: Record<NotificationChannel, { label: string; icon: typeof Mail; fields: { key: string; label: string; placeholder: string; type?: string }[] }> = {
+  email: { label: 'Email', icon: Mail, fields: [{ key: 'recipients', label: 'Recipients (comma-separated)', placeholder: 'user@example.com, admin@example.com' }] },
+  sms: { label: 'SMS', icon: Smartphone, fields: [{ key: 'recipients', label: 'Phone Numbers (comma-separated)', placeholder: '+1234567890' }] },
+  slack: { label: 'Slack', icon: MessageSquare, fields: [{ key: 'webhookUrl', label: 'Webhook URL', placeholder: 'https://hooks.slack.com/services/...' }] },
+  discord: { label: 'Discord', icon: MessageSquare, fields: [{ key: 'webhookUrl', label: 'Webhook URL', placeholder: 'https://discord.com/api/webhooks/...' }] },
+  in_app: { label: 'In-App', icon: Bell, fields: [] },
+};
+
+function NotificationsSection() {
+  const [eventSettings, setEventSettings] = useState<EventSettings>({
+    retentionDays: 30,
+    temperatureThresholds: { warning: 55, critical: 70 },
+    gpuTemperatureThresholds: { warning: 75, critical: 90 },
+    flappingCooldownMs: 60000,
+  });
+  const [configs, setConfigs] = useState<NotificationChannelConfig[]>([]);
+  const [testResults, setTestResults] = useState<Record<string, { success: boolean; error?: string }>>({});
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/events/settings');
+      if (res.ok) setEventSettings(await res.json());
+    } catch { /* ignore */ }
+  }, []);
+
+  const fetchConfigs = useCallback(async () => {
+    try {
+      const res = await fetch('/api/notifications/config');
+      if (res.ok) setConfigs(await res.json());
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { fetchSettings(); fetchConfigs(); }, [fetchSettings, fetchConfigs]);
+
+  const saveSettings = async (updates: Partial<EventSettings>) => {
+    const updated = { ...eventSettings, ...updates };
+    setEventSettings(updated);
+    await fetch('/api/events/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated),
+    });
+  };
+
+  const saveConfig = async (cfg: NotificationChannelConfig) => {
+    await fetch('/api/notifications/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cfg),
+    });
+    fetchConfigs();
+  };
+
+  const deleteConfig = async (id: string) => {
+    await fetch(`/api/notifications/config?id=${id}`, { method: 'DELETE' });
+    fetchConfigs();
+  };
+
+  const sendTest = async (channelId: string) => {
+    setTestResults((r) => ({ ...r, [channelId]: { success: false, error: 'Sending...' } }));
+    try {
+      const res = await fetch('/api/notifications/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channelId }),
+      });
+      const result = await res.json();
+      setTestResults((r) => ({ ...r, [channelId]: result }));
+    } catch (e) {
+      setTestResults((r) => ({ ...r, [channelId]: { success: false, error: String(e) } }));
+    }
+  };
+
+  const addChannel = (channel: NotificationChannel) => {
+    const id = `cfg-${Date.now()}`;
+    const newCfg: NotificationChannelConfig = {
+      id,
+      channel,
+      enabled: true,
+      config: channel === 'email' || channel === 'sms' ? { recipients: [] } : {},
+      eventTypes: [...ALL_EVENT_TYPES],
+      severities: ['warning', 'error', 'critical'],
+      rateLimitMs: 300000,
+    };
+    saveConfig(newCfg);
+  };
+
+  return (
+    <section>
+      <h2
+        className="font-mono"
+        style={{ fontSize: '12px', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}
+      >
+        Notifications & Alerts
+      </h2>
+
+      {/* Event Settings */}
+      <div className="glass-card p-5 mb-4" style={{ maxWidth: '600px' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--foreground)', marginBottom: '16px' }}>Event Settings</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <SettingsField
+              label="Retention (days)"
+              value={eventSettings.retentionDays}
+              onChange={(v) => saveSettings({ retentionDays: Number(v) })}
+              type="number"
+            />
+            <SettingsField
+              label="Flapping Cooldown (sec)"
+              value={eventSettings.flappingCooldownMs / 1000}
+              onChange={(v) => saveSettings({ flappingCooldownMs: Number(v) * 1000 })}
+              type="number"
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <SettingsField
+              label="Temp Warning (°C)"
+              value={eventSettings.temperatureThresholds.warning}
+              onChange={(v) => saveSettings({ temperatureThresholds: { ...eventSettings.temperatureThresholds, warning: Number(v) } })}
+              type="number"
+            />
+            <SettingsField
+              label="Temp Critical (°C)"
+              value={eventSettings.temperatureThresholds.critical}
+              onChange={(v) => saveSettings({ temperatureThresholds: { ...eventSettings.temperatureThresholds, critical: Number(v) } })}
+              type="number"
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <SettingsField
+              label="GPU Temp Warning (°C)"
+              value={eventSettings.gpuTemperatureThresholds.warning}
+              onChange={(v) => saveSettings({ gpuTemperatureThresholds: { ...eventSettings.gpuTemperatureThresholds, warning: Number(v) } })}
+              type="number"
+            />
+            <SettingsField
+              label="GPU Temp Critical (°C)"
+              value={eventSettings.gpuTemperatureThresholds.critical}
+              onChange={(v) => saveSettings({ gpuTemperatureThresholds: { ...eventSettings.gpuTemperatureThresholds, critical: Number(v) } })}
+              type="number"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Notification Channels */}
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+        {(Object.keys(channelMeta) as NotificationChannel[]).map((ch) => {
+          const hasExisting = configs.some((c) => c.channel === ch);
+          if (hasExisting) return null;
+          const meta = channelMeta[ch];
+          const Icon = meta.icon;
+          return (
+            <button
+              key={ch}
+              onClick={() => addChannel(ch)}
+              className="glass-card flex items-center gap-2"
+              style={{
+                padding: '8px 14px', cursor: 'pointer',
+                border: '1px dashed var(--border)', color: 'var(--muted)',
+                fontSize: '12px', fontWeight: 600,
+              }}
+            >
+              <Plus size={12} />
+              <Icon size={14} />
+              Add {meta.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Channel config cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {configs.map((cfg) => {
+          const meta = channelMeta[cfg.channel];
+          const Icon = meta.icon;
+          const testResult = testResults[cfg.id];
+          return (
+            <div key={cfg.id} className="glass-card p-4" style={{ maxWidth: '600px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Icon size={16} style={{ color: 'var(--accent)' }} />
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)' }}>{meta.label}</span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    onClick={() => saveConfig({ ...cfg, enabled: !cfg.enabled })}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: cfg.enabled ? 'var(--accent)' : 'var(--muted)' }}
+                  >
+                    {cfg.enabled ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
+                  </button>
+                  <button
+                    onClick={() => deleteConfig(cfg.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Channel-specific fields */}
+              {meta.fields.map((field) => (
+                <div key={field.key} style={{ marginBottom: '8px' }}>
+                  <label className="font-mono" style={{ fontSize: '10px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                    {field.label}
+                  </label>
+                  <input
+                    type={field.type || 'text'}
+                    value={
+                      field.key === 'recipients'
+                        ? (cfg.config.recipients as string[] || []).join(', ')
+                        : (cfg.config[field.key] as string) || ''
+                    }
+                    onChange={(e) => {
+                      const val = field.key === 'recipients'
+                        ? { recipients: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) }
+                        : { [field.key]: e.target.value };
+                      saveConfig({ ...cfg, config: { ...cfg.config, ...val } });
+                    }}
+                    placeholder={field.placeholder}
+                    style={{
+                      width: '100%', padding: '6px 10px',
+                      background: 'var(--surface)', border: '1px solid var(--border)',
+                      borderRadius: '6px', color: 'var(--foreground)', fontSize: '12px', outline: 'none',
+                    }}
+                  />
+                </div>
+              ))}
+
+              {/* Event types and severities */}
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                <div>
+                  <label className="font-mono" style={{ fontSize: '10px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Event Types</label>
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    {ALL_EVENT_TYPES.map((t) => {
+                      const active = cfg.eventTypes.includes(t);
+                      return (
+                        <button
+                          key={t}
+                          onClick={() => {
+                            const types = active ? cfg.eventTypes.filter((x) => x !== t) : [...cfg.eventTypes, t];
+                            saveConfig({ ...cfg, eventTypes: types });
+                          }}
+                          style={{
+                            padding: '2px 8px', fontSize: '10px', borderRadius: '4px', cursor: 'pointer',
+                            border: active ? '1px solid var(--accent)' : '1px solid var(--border)',
+                            background: active ? 'rgba(59,130,246,0.1)' : 'transparent',
+                            color: active ? 'var(--accent)' : 'var(--muted)',
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {t.replace('_', ' ')}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className="font-mono" style={{ fontSize: '10px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Severities</label>
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    {ALL_SEVERITIES.map((s) => {
+                      const active = cfg.severities.includes(s);
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => {
+                            const sevs = active ? cfg.severities.filter((x) => x !== s) : [...cfg.severities, s];
+                            saveConfig({ ...cfg, severities: sevs });
+                          }}
+                          style={{
+                            padding: '2px 8px', fontSize: '10px', borderRadius: '4px', cursor: 'pointer',
+                            border: active ? '1px solid var(--accent)' : '1px solid var(--border)',
+                            background: active ? 'rgba(59,130,246,0.1)' : 'transparent',
+                            color: active ? 'var(--accent)' : 'var(--muted)',
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Test button */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                <button
+                  onClick={() => sendTest(cfg.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '6px 14px', background: 'var(--surface-2)',
+                    border: '1px solid var(--border)', borderRadius: '6px',
+                    color: 'var(--foreground)', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                  }}
+                >
+                  <Send size={12} />
+                  Send Test
+                </button>
+                {testResult && (
+                  <span style={{ fontSize: '11px', color: testResult.success ? '#22c55e' : '#ef4444' }}>
+                    {testResult.success ? 'Sent!' : testResult.error}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function SettingsField({ label, value, onChange, type = 'text' }: { label: string; value: string | number; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <label className="font-mono" style={{ fontSize: '10px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: '100px', padding: '6px 10px',
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: '6px', color: 'var(--foreground)', fontSize: '12px', outline: 'none',
+        }}
+      />
     </div>
   );
 }

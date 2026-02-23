@@ -9,6 +9,7 @@ interface HealthQueryDevice {
   ip: string;
   manufacturer: string;
   port?: number;
+  name?: string;
 }
 
 interface DeviceQueryResult {
@@ -76,6 +77,7 @@ export function useDevicePolling(intervalMs = DEFAULT_INTERVAL, enabled = true) 
           id: d.id,
           ip: d.ipAddress,
           manufacturer: d.manufacturer,
+          name: d.name,
         }));
 
       if (toQuery.length === 0) {

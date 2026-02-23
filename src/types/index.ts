@@ -549,3 +549,70 @@ export interface CommandDefinition {
 }
 
 export type CommandRegistry = Record<string, CommandDefinition[]>;
+
+// --- Event & Notification Types ---
+
+export type EventType = 'status_change' | 'temperature_alert' | 'signal_loss' | 'power_event';
+export type EventSeverity = 'info' | 'warning' | 'error' | 'critical';
+export type NotificationChannel = 'email' | 'sms' | 'slack' | 'discord' | 'in_app';
+
+export interface SystemEvent {
+  id: string;
+  deviceId: string;
+  deviceName: string;
+  eventType: EventType;
+  severity: EventSeverity;
+  title: string;
+  message: string;
+  metadata: Record<string, unknown>;
+  acknowledged: boolean;
+  createdAt: string;
+}
+
+export interface NotificationChannelConfig {
+  id: string;
+  channel: NotificationChannel;
+  enabled: boolean;
+  config: Record<string, unknown>;
+  eventTypes: EventType[];
+  severities: EventSeverity[];
+  rateLimitMs: number;
+}
+
+export interface InAppNotification {
+  id: string;
+  eventId: string;
+  title: string;
+  message: string;
+  severity: EventSeverity;
+  deviceId: string;
+  deviceName: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface EventSettings {
+  retentionDays: number;
+  temperatureThresholds: { warning: number; critical: number };
+  gpuTemperatureThresholds: { warning: number; critical: number };
+  flappingCooldownMs: number;
+}
+
+export interface EventQueryParams {
+  page?: number;
+  pageSize?: number;
+  eventTypes?: EventType[];
+  severities?: EventSeverity[];
+  deviceIds?: string[];
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface EventQueryResult {
+  events: SystemEvent[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}

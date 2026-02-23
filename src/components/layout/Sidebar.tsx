@@ -14,12 +14,14 @@ import {
   Camera,
   Clock,
   Circle,
+  History,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: 'Racks', icon: Server },
   { href: '/matrix', label: 'Matrix', icon: Grid3x3 },
   { href: '/health', label: 'Health', icon: Activity },
+  { href: '/events', label: 'Events', icon: History },
   { href: '/brompton', label: 'Brompton', icon: Monitor },
   { href: '/robo', label: 'ROBO', icon: Camera },
   { href: '/disguise-config', label: 'Disguise', icon: Sliders },
