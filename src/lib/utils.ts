@@ -26,17 +26,19 @@ export function formatUptime(seconds: number): string {
  * Throws if the request times out or if the network request fails.
  * Callers are responsible for catching errors.
  *
- * @param url     - Full URL to fetch
+ * @param url       - Full URL to fetch
  * @param timeoutMs - Abort timeout in milliseconds (default: 3000)
+ * @param init      - Optional RequestInit options (method, headers, body, etc.)
  */
 export async function fetchWithTimeout(
   url: string,
-  timeoutMs: number = 3000
+  timeoutMs: number = 3000,
+  init: Omit<RequestInit, 'signal'> = {}
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, { ...init, signal: controller.signal });
     return response;
   } finally {
     clearTimeout(timer);

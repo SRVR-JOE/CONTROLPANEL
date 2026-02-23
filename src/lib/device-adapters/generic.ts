@@ -25,7 +25,10 @@ function parseUptimeFromHeaders(headers: Headers): number {
 }
 
 export class GenericAdapter implements DeviceAdapter {
-  manufacturer = 'aja' as const; // Default; overridden at runtime via getAdapter
+  // Note: the manufacturer field is set to 'aja' here as a placeholder required by
+  // the DeviceAdapter interface. The adapter map in index.ts maps 'ross' and 'barco'
+  // to this same GenericAdapter instance; the field does not affect routing logic.
+  manufacturer = 'aja' as const;
 
   async queryHealth(ip: string, port?: number): Promise<DeviceQueryResult> {
     const target = port ? `http://${ip}:${port}` : `http://${ip}`;
@@ -35,14 +38,16 @@ export class GenericAdapter implements DeviceAdapter {
       let uptime = 0;
 
       try {
-        // Use HEAD request to minimise bandwidth — we only care about reachability
-        const res = await fetchWithTimeout(target);
+        // Use HEAD request to minimise bandwidth — we only care about reachability.
+        // Any HTTP response (including 4xx) means the device is reachable;
+        // only network-level errors (connection refused, timeout) indicate unreachable.
+        const res = await fetchWithTimeout(target, 3000, { method: 'HEAD' });
         reachable = true;
         uptime = parseUptimeFromHeaders(res.headers);
       } catch {
-        // Try GET as a fallback — some embedded devices reject HEAD
+        // HEAD failed — try GET as a fallback; some embedded devices reject HEAD requests
         try {
-          const res = await fetchWithTimeout(target);
+          const res = await fetchWithTimeout(target, 3000, { method: 'GET' });
           reachable = true;
           uptime = parseUptimeFromHeaders(res.headers);
           // Consume and discard body to free resources
