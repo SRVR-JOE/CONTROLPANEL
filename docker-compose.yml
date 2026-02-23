@@ -1,0 +1,77 @@
+# ============================================================
+# CONTROLPANEL - Docker Compose
+#
+# Usage:
+#   docker compose up -d          # start in background
+#   docker compose logs -f        # stream logs
+#   docker compose down           # stop and remove containers
+#   docker compose down -v        # also remove volumes
+# ============================================================
+
+services:
+  controlpanel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Target the production runner stage
+      target: runner
+
+    container_name: controlpanel
+
+    # Map host port 3000 → container port 3000
+    ports:
+      - "3000:3000"
+
+    # Persist the SQLite database across container restarts.
+    # The named volume 'controlpanel-data' is managed by Docker.
+    # The container writes to /app/data/controlpanel.db.
+    volumes:
+      - controlpanel-data:/app/data
+
+    environment:
+      # Next.js runtime settings
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+
+      # Disable Next.js anonymous telemetry
+      - NEXT_TELEMETRY_DISABLED=1
+
+      # Suppress the development-oriented browser-open banner
+      - NO_BROWSER=1
+
+      # SQLite database path (inside the container).
+      # The server.js reads this to locate the DB file.
+      - DB_PATH=/app/data/controlpanel.db
+
+    # Restart policy: automatically restart unless explicitly stopped
+    restart: unless-stopped
+
+    # Health check mirrors the Dockerfile HEALTHCHECK instruction.
+    # Docker Compose uses this to gate dependent services.
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+    # Resource limits — adjust to match your host hardware.
+    # better-sqlite3 is CPU-bound during writes; 512MB RAM is
+    # comfortable for the SQLite WAL journal + Next.js runtime.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+# Named volume for SQLite database persistence.
+# Data survives container restarts and rebuilds.
+# To back up: docker run --rm -v controlpanel-data:/data -v $(pwd):/backup
+#             alpine tar czf /backup/controlpanel-data.tar.gz -C /data .
+volumes:
+  controlpanel-data:
+    name: controlpanel-data
