@@ -33,7 +33,6 @@
 import {
   type FrameRate,
   type Timecode,
-  advanceOneFrame,
   isDropFrame,
   samplesPerFrame,
   timecodeToFrameNumber,

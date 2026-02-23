@@ -766,12 +766,17 @@ interface AppStore {
   setTileErrorFilter: (errorType: LEDTileErrorType | null) => void;
   updateBromptonTiles: (deviceId: string, tiles: LEDTileInfo[]) => void;
 
+  // Rack actions
+  addRack: (rack: Omit<Rack, 'id' | 'slots'>) => string;
+  removeRack: (rackId: string) => void;
+  updateRack: (rackId: string, updates: Partial<Omit<Rack, 'id' | 'slots'>>) => void;
+
   // Device actions
   addDevice: (device: Omit<Device, 'id'>) => string;
   removeDevice: (deviceId: string) => void;
   updateDeviceStatus: (deviceId: string, status: DeviceStatus) => void;
   updateDeviceHealth: (deviceId: string, health: DeviceHealth, status?: DeviceStatus) => void;
-  assignDeviceToRack: (deviceId: string, rackId: string, startSlot: number) => void;
+  assignDeviceToRack: (deviceId: string, rackId: string, startSlot: number, column?: number) => void;
   removeDeviceFromRack: (deviceId: string) => void;
   sendCommand: (deviceId: string, command: string, params?: Record<string, unknown>) => void;
 
@@ -1555,23 +1560,32 @@ export const useStore = create<AppStore>((set, get) => ({
       ),
     })),
 
-  assignDeviceToRack: (deviceId, rackId, startSlot) =>
+  assignDeviceToRack: (deviceId, rackId, startSlot, column = 0) =>
     set((state) => {
       const device = state.devices.find((d) => d.id === deviceId);
       if (!device) return state;
 
       const updatedDevices = state.devices.map((d) =>
-        d.id === deviceId ? { ...d, rackId, rackSlot: startSlot } : d
+        d.id === deviceId ? { ...d, rackId, rackSlot: startSlot, rackColumn: column } : d
       );
 
+      // Clear device from old rack slots, then assign to new ones in correct column
       const updatedRacks = state.racks.map((rack) => {
-        if (rack.id !== rackId) return rack;
-        const newSlots = rack.slots.map((slot) => {
-          if (slot.ru >= startSlot && slot.ru < startSlot + device.rackUnits) {
-            return { ...slot, deviceId };
-          }
-          return slot.deviceId === deviceId ? { ...slot, deviceId: undefined } : slot;
-        });
+        let newSlots = rack.slots.map((slot) =>
+          slot.deviceId === deviceId ? { ...slot, deviceId: undefined } : slot
+        );
+        if (rack.id === rackId) {
+          newSlots = newSlots.map((slot) => {
+            if (
+              (slot.column ?? 0) === column &&
+              slot.ru >= startSlot &&
+              slot.ru < startSlot + device.rackUnits
+            ) {
+              return { ...slot, deviceId };
+            }
+            return slot;
+          });
+        }
         return { ...rack, slots: newSlots };
       });
 
@@ -1581,7 +1595,7 @@ export const useStore = create<AppStore>((set, get) => ({
   removeDeviceFromRack: (deviceId) =>
     set((state) => ({
       devices: state.devices.map((d) =>
-        d.id === deviceId ? { ...d, rackId: undefined, rackSlot: undefined } : d
+        d.id === deviceId ? { ...d, rackId: undefined, rackSlot: undefined, rackColumn: undefined } : d
       ),
       racks: state.racks.map((rack) => ({
         ...rack,
@@ -1717,6 +1731,36 @@ export const useStore = create<AppStore>((set, get) => ({
   deletePreset: (presetId) =>
     set((state) => ({
       matrixPresets: state.matrixPresets.filter((p) => p.id !== presetId),
+    })),
+
+  // Rack CRUD actions
+  addRack: (rack) => {
+    const id = uuidv4();
+    const slots: { ru: number; column: number; deviceId?: string }[] = [];
+    for (let col = 0; col < (rack.width ?? 1); col++) {
+      for (let ru = 1; ru <= (rack.totalRU ?? 26); ru++) {
+        slots.push({ ru, column: col });
+      }
+    }
+    set((state) => ({
+      racks: [...state.racks, { ...rack, id, slots }],
+    }));
+    return id;
+  },
+
+  removeRack: (rackId) =>
+    set((state) => ({
+      racks: state.racks.filter((r) => r.id !== rackId),
+      devices: state.devices.map((d) =>
+        d.rackId === rackId
+          ? { ...d, rackId: undefined, rackSlot: undefined, rackColumn: undefined }
+          : d
+      ),
+    })),
+
+  updateRack: (rackId, updates) =>
+    set((state) => ({
+      racks: state.racks.map((r) => (r.id === rackId ? { ...r, ...updates } : r)),
     })),
 }));
 

@@ -1,0 +1,56 @@
+# Dependencies — reinstalled inside the Docker image
+node_modules
+
+# Next.js build output — rebuilt inside the Docker image
+.next
+out
+
+# Git metadata
+.git
+.gitignore
+
+# CI/CD and editor configs
+.github
+.vscode
+.idea
+
+# Docker files themselves (avoid recursive copy)
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Development and test artifacts
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__
+coverage
+.nyc_output
+
+# Local environment files — never bake secrets into the image
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production.local
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
+# TypeScript build cache
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Build scripts not needed at runtime
+scripts/
+
+# Log files
+*.log
+npm-debug.log*
+
+# Local SQLite database — mounted as a volume at runtime
+data/
