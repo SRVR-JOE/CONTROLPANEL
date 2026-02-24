@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { useDroppable } from '@dnd-kit/core';
 import { Device } from '@/types';
 import DraggableDevice from './DraggableDevice';

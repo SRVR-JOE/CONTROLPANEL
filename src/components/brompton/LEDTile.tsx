@@ -92,15 +92,21 @@ function LEDTileInner({ tile, viewMode, errorFilter, isSelected, onSelect }: LED
 
 // Custom memo comparator — only re-render if these props actually change
 function areEqual(prev: LEDTileProps, next: LEDTileProps): boolean {
-  return (
-    prev.tile.id === next.tile.id &&
-    prev.tile.status === next.tile.status &&
-    prev.tile.temperature === next.tile.temperature &&
-    prev.tile.errors.length === next.tile.errors.length &&
-    prev.viewMode === next.viewMode &&
-    prev.errorFilter === next.errorFilter &&
-    prev.isSelected === next.isSelected
-  );
+  if (
+    prev.tile.id !== next.tile.id ||
+    prev.tile.status !== next.tile.status ||
+    prev.tile.temperature !== next.tile.temperature ||
+    prev.tile.errors.length !== next.tile.errors.length ||
+    prev.viewMode !== next.viewMode ||
+    prev.errorFilter !== next.errorFilter ||
+    prev.isSelected !== next.isSelected
+  ) return false;
+  // Compare error content (type + message) when length matches
+  for (let i = 0; i < prev.tile.errors.length; i++) {
+    if (prev.tile.errors[i].type !== next.tile.errors[i].type ||
+        prev.tile.errors[i].message !== next.tile.errors[i].message) return false;
+  }
+  return true;
 }
 
 export const LEDTile = memo(LEDTileInner, areEqual);

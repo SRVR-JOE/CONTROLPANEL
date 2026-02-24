@@ -14,7 +14,10 @@ export function StoreHydrator() {
     attempted.current = true;
 
     fetch('/api/store')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Store fetch failed: ${res.status}`);
+        return res.json();
+      })
       .then((body) => {
         if (body.hydrated && body.data) {
           // Migration: add column field to slots and rackColumn to devices

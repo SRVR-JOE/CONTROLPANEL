@@ -382,8 +382,13 @@ export default function RecordingPage() {
   };
 
   const removeRecorder = (id: string) => {
-    setRecorders((prev) => prev.filter((r) => r.id !== id));
-    if (selectedId === id) setSelectedId(recorders.find((r) => r.id !== id)?.id ?? null);
+    setRecorders((prev) => {
+      const remaining = prev.filter((r) => r.id !== id);
+      if (selectedId === id) {
+        setSelectedId(remaining[0]?.id ?? null);
+      }
+      return remaining;
+    });
   };
 
   // ---------------------------------------------------------------------------

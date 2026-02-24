@@ -119,7 +119,7 @@ export function detectEvents(
     const prevErrors = prev.errorSet;
     const signalPattern = /signal|no signal|no routed source|no input|link lost/i;
 
-    // FIX 8: defensive guard — errors may be undefined/null
+    // Defensive guard — errors may be undefined/null
     for (const err of currentHealth.errors ?? []) {
       if (signalPattern.test(err) && !prevErrors.has(err)) {
         events.push({
@@ -140,7 +140,7 @@ export function detectEvents(
     const prevWarnings = prev.warningSet;
     const powerPattern = /battery|power|overload|ups|surge|output load|current|inlet/i;
 
-    // FIX 8: defensive guard — errors may be undefined/null
+    // Defensive guard — errors may be undefined/null
     for (const err of currentHealth.errors ?? []) {
       if (powerPattern.test(err) && !prevErrors.has(err)) {
         events.push({
@@ -153,7 +153,7 @@ export function detectEvents(
         });
       }
     }
-    // FIX 8: defensive guard — warnings may be undefined/null
+    // Defensive guard — warnings may be undefined/null
     for (const warn of currentHealth.warnings ?? []) {
       if (powerPattern.test(warn) && !prevWarnings.has(warn)) {
         events.push({

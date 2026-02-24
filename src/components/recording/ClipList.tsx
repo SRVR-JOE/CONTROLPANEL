@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { Film, Play } from 'lucide-react';
 
 interface ClipInfo {

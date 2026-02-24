@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Invalid or missing channel. Must be one of: ${VALID_CHANNELS.join(', ')}` }, { status: 400 });
     }
 
-    // SSRF protection: validate webhook URLs for slack and discord via hostname check
+    // Validate webhook URLs to only allow known Slack/Discord hostnames
     const channelConfig: Record<string, unknown> = body.config || {};
     if (body.channel === 'slack' || body.channel === 'discord') {
       const webhookUrl = channelConfig.webhookUrl as string | undefined;

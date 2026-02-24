@@ -1,4 +1,5 @@
 import type { SystemEvent } from '@/types';
+import { SEVERITY_COLORS } from '@/lib/constants';
 
 export async function send(event: SystemEvent, config: Record<string, unknown>): Promise<void> {
   const webhookUrl = config.webhookUrl as string | undefined;
@@ -13,19 +14,12 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
     info: ':information_source:',
   };
 
-  const severityColors: Record<string, string> = {
-    critical: '#dc2626',
-    error: '#ef4444',
-    warning: '#f59e0b',
-    info: '#3b82f6',
-  };
-
   const payload = {
-    // FIX 10: top-level text is a brief fallback for notifications; detail lives in the attachment
+    // Top-level text is a brief fallback for notifications; detail lives in the attachment
     text: `[${event.severity.toUpperCase()}] ${event.title}`,
     attachments: [
       {
-        color: severityColors[event.severity] || '#6b7280',
+        color: SEVERITY_COLORS[event.severity] || '#6b7280',
         fallback: `[${event.severity.toUpperCase()}] ${event.title}`,
         text: `${severityEmoji[event.severity] || ''} *${event.title}*\n${event.message}`,
         mrkdwn_in: ['text'],

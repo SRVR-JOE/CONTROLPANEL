@@ -12,12 +12,12 @@ export async function dispatchAll(events: SystemEvent[], flappingCooldownMs: num
   let configs;
   try {
     configs = getNotificationConfigs();
-  } catch {
-    return; // DB not ready or no configs
+  } catch (e) {
+    console.warn('[Dispatcher] Failed to load notification configs:', e);
+    return;
   }
 
   for (const event of events) {
-    // FIX 2: shouldNotify called once per event, not per channel
     if (!shouldNotify(event.deviceId, event.eventType, flappingCooldownMs)) continue;
 
     for (const cfg of configs) {
@@ -31,7 +31,6 @@ export async function dispatchAll(events: SystemEvent[], flappingCooldownMs: num
       const now = Date.now();
       if (lastSent && now - lastSent < cfg.rateLimitMs) continue;
 
-      // FIX 3: null-check sender before use
       const sender = getChannelSender(cfg.channel);
       if (!sender) {
         console.warn(`[Dispatcher] No sender found for channel: ${cfg.channel}`);
@@ -40,7 +39,7 @@ export async function dispatchAll(events: SystemEvent[], flappingCooldownMs: num
 
       try {
         await sender.send(event, cfg.config);
-        // FIX 1: stamp rate-limit AFTER successful send only
+        // Stamp rate-limit after successful send only
         lastSentTime.set(rateKey, now);
       } catch (err) {
         console.error(`[Dispatcher] Failed to send ${cfg.channel} notification:`, err);

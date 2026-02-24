@@ -17,8 +17,8 @@ const channelRegistry: Record<NotificationChannel, ChannelSender> = {
   in_app: inApp,
 };
 
-export function getChannelSender(channel: NotificationChannel): ChannelSender {
-  return channelRegistry[channel];
+export function getChannelSender(channel: string): ChannelSender | undefined {
+  return (channelRegistry as Record<string, ChannelSender>)[channel];
 }
 
 export { inApp };

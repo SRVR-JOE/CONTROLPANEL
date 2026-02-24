@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { RefreshCw, Volume2, Speaker, ChevronDown, AlertCircle } from 'lucide-react';
 
 interface AudioOutputSelectorProps {

@@ -1,4 +1,5 @@
 import type { SystemEvent } from '@/types';
+import { SEVERITY_COLORS } from '@/lib/constants';
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -30,20 +31,13 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
     auth: { user, pass },
   });
 
-  const severityColors: Record<string, string> = {
-    critical: '#dc2626',
-    error: '#ef4444',
-    warning: '#f59e0b',
-    info: '#3b82f6',
-  };
-
   await transporter.sendMail({
     from,
     to: recipients.join(', '),
     subject: `[AV CTRL] [${event.severity.toUpperCase()}] ${event.title}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px;">
-        <div style="background: ${severityColors[event.severity] || '#6b7280'}; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">
+        <div style="background: ${SEVERITY_COLORS[event.severity] || '#6b7280'}; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">
           <strong>${escapeHtml(event.severity.toUpperCase())}</strong> — ${escapeHtml(event.eventType.replace(/_/g, ' '))}
         </div>
         <div style="border: 1px solid #e5e7eb; border-top: none; padding: 16px; border-radius: 0 0 8px 8px;">

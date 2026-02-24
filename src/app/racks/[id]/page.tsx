@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useStore } from '@/store';
 import { useParams, useRouter } from 'next/navigation';
 import {

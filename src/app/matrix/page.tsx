@@ -6,17 +6,7 @@ import RouterSelector from '@/components/matrix/RouterSelector';
 import MatrixGrid from '@/components/matrix/MatrixGrid';
 import QuickRoute from '@/components/matrix/QuickRoute';
 import { Grid3x3, Cpu, Network } from 'lucide-react';
-import type { MatrixManufacturer } from '@/types';
-
-const MANUFACTURER_COLORS: Record<MatrixManufacturer, string> = {
-  aja: '#ffc107',
-  lightware: '#ff9800',
-  blackmagic: '#607d8b',
-  ross: '#9c27b0',
-  crestron: '#263238',
-  extron: '#1565c0',
-  netgear: '#4a90d9',
-};
+import { MANUFACTURER_COLORS } from '@/lib/constants';
 
 export default function MatrixPage() {
   const routers = useStore((s) => s.routers);

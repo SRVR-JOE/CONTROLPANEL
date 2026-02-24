@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { Device } from '@/types';
 import { MANUFACTURER_COLORS, STATUS_COLORS } from '@/lib/constants';
 import { RU_HEIGHT } from '../RackUnit';

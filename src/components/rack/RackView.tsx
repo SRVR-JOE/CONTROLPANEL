@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { useMemo } from 'react';
 import { Rack, Device, RackWidth } from '@/types';
 import { Thermometer } from 'lucide-react';
 import { useStore } from '@/store';
@@ -75,7 +75,6 @@ function RailMarks({ totalRU }: { totalRU: number }) {
 
 interface RackViewProps {
   rack: Rack;
-  compact?: boolean;
   onDeviceClick?: (deviceId: string) => void;
 }
 
@@ -88,7 +87,7 @@ export default function RackView({ rack, onDeviceClick }: RackViewProps) {
   const rackWidth = RACK_WIDTHS[rack.width];
 
   // Build a lookup: deviceId -> Device
-  const deviceMap = React.useMemo(() => {
+  const deviceMap = useMemo(() => {
     const map: Record<string, Device> = {};
     for (const d of devices) {
       map[d.id] = d;
@@ -97,7 +96,7 @@ export default function RackView({ rack, onDeviceClick }: RackViewProps) {
   }, [devices]);
 
   // Build render data: for each RU, determine if it's empty, first-of-device, or merged
-  const ruData = React.useMemo(() => {
+  const ruData = useMemo(() => {
     const result: Array<{
       ru: number;
       device?: Device;

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { type FrameRate, FRAME_RATE_LABELS } from '@/lib/timecode/types';
 
 const FRAME_RATES: FrameRate[] = ['23.976', '24', '25', '29.97df', '29.97ndf', '30'];

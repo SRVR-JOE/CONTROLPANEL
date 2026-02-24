@@ -2,19 +2,10 @@
 
 import { useCallback, useMemo, useRef } from 'react';
 import { useStore } from '@/store';
-import type { MatrixRouter, MatrixManufacturer } from '@/types';
+import type { MatrixRouter } from '@/types';
+import { MANUFACTURER_COLORS } from '@/lib/constants';
 
 const CELL_SIZE = 24;
-
-const MANUFACTURER_COLORS: Record<MatrixManufacturer, string> = {
-  aja: '#ffc107',
-  lightware: '#ff9800',
-  blackmagic: '#607d8b',
-  ross: '#9c27b0',
-  crestron: '#263238',
-  extron: '#1565c0',
-  netgear: '#4a90d9',
-};
 
 interface MatrixGridProps {
   router: MatrixRouter;

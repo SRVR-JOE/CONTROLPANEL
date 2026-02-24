@@ -55,6 +55,18 @@ export const STATUS_COLORS: Record<DeviceStatus, string> = {
   offline: '#6b7280',
 };
 
+/**
+ * Severity level colors for system events and notifications.
+ * Used across UI components, email, Slack, and Discord notification channels.
+ * Discord requires integer colors — see channels/discord.ts for the conversion.
+ */
+export const SEVERITY_COLORS: Record<string, string> = {
+  info: '#3b82f6',
+  warning: '#f59e0b',
+  error: '#ef4444',
+  critical: '#dc2626',
+};
+
 export const CATEGORY_LABELS: Record<DeviceCategory, string> = {
   'media-server': 'Media Server',
   'led-processor': 'LED Processor',

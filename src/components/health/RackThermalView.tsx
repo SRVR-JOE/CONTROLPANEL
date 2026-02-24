@@ -27,17 +27,6 @@ function temperatureToOpacity(temp: number): number {
 }
 
 export default function RackThermalView({ rack, devices }: RackThermalViewProps) {
-  // Build a map of slot -> device
-  const slotDeviceMap = new Map<number, Device>();
-  for (const slot of rack.slots) {
-    if (slot.deviceId) {
-      const device = devices.find((d) => d.id === slot.deviceId);
-      if (device) {
-        slotDeviceMap.set(slot.ru, device);
-      }
-    }
-  }
-
   // Figure out which RUs are occupied and by which device
   const ruInfo: {
     ru: number;

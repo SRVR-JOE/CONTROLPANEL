@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { Device } from '@/types';
 import { MANUFACTURER_COLORS, STATUS_COLORS } from '@/lib/constants';
 
@@ -189,4 +189,4 @@ export default function RackUnit({
   return <EmptySlot ru={ru} />;
 }
 
-export { MANUFACTURER_COLORS, STATUS_COLORS, RU_HEIGHT };
+export { RU_HEIGHT };

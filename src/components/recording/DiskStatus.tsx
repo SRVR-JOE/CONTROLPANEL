@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { HardDrive } from 'lucide-react';
 
 interface SlotInfo {

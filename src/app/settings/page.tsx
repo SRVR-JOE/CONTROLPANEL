@@ -564,24 +564,27 @@ function NotificationsSection() {
   const saveSettings = async (updates: Partial<EventSettings>) => {
     const updated = { ...eventSettings, ...updates };
     setEventSettings(updated);
-    await fetch('/api/events/settings', {
+    const res = await fetch('/api/events/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updated),
     });
+    if (!res.ok) console.error('Failed to save event settings:', res.status);
   };
 
   const saveConfig = async (cfg: NotificationChannelConfig) => {
-    await fetch('/api/notifications/config', {
+    const res = await fetch('/api/notifications/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cfg),
     });
+    if (!res.ok) console.error('Failed to save notification config:', res.status);
     fetchConfigs();
   };
 
   const deleteConfig = async (id: string) => {
-    await fetch(`/api/notifications/config?id=${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/notifications/config?id=${id}`, { method: 'DELETE' });
+    if (!res.ok) console.error('Failed to delete notification config:', res.status);
     fetchConfigs();
   };
 
@@ -593,6 +596,10 @@ function NotificationsSection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ channelId }),
       });
+      if (!res.ok) {
+        setTestResults((r) => ({ ...r, [channelId]: { success: false, error: `Server returned ${res.status}` } }));
+        return;
+      }
       const result = await res.json();
       setTestResults((r) => ({ ...r, [channelId]: result }));
     } catch (e) {

@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'All events acknowledged' });
     }
 
-    if (body.eventIds && Array.isArray(body.eventIds) && body.eventIds.length > 0) {
+    if (Array.isArray(body.eventIds)) {
       const ids: string[] = body.eventIds
         .filter((x: unknown) => typeof x === 'string')
         .slice(0, 500);

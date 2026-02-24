@@ -1,6 +1,6 @@
 'use client';
 
-import { DeviceCategory, DeviceManufacturer } from '@/types';
+import { DeviceCategory } from '@/types';
 import { CATEGORY_LABELS } from '@/lib/constants';
 import { Server } from 'lucide-react';
 
@@ -16,7 +16,6 @@ interface CatalogCardProduct {
 
 interface DeviceCatalogCardProps {
   product: CatalogCardProduct;
-  manufacturer: DeviceManufacturer;
   brandColor: string;
   displayName: string;
   selected: boolean;

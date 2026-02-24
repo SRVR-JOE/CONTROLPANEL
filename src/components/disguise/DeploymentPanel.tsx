@@ -138,6 +138,7 @@ export default function DeploymentPanel() {
             ),
           }),
         });
+        if (!res.ok) return { machineId, success: false, error: `Server returned ${res.status}` };
         return await res.json();
       } catch {
         return { machineId, success: false, error: `Network error reaching ${targetIp}` };

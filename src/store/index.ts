@@ -1430,7 +1430,10 @@ export const useStore = create<AppStore>((set, get) => ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ subnet, rangeStart, rangeEnd, port }),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Discovery failed: ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         if (data.machines) {
           get().updateDiscoveryScan(scanId, {
@@ -1736,7 +1739,10 @@ export const useStore = create<AppStore>((set, get) => ({
         params,
       }),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Command failed: ${res.status}`);
+        return res.json();
+      })
       .then((data: { success: boolean; response?: string; error?: string }) => {
         set((state) => ({
           commandHistory: state.commandHistory.map((c) =>

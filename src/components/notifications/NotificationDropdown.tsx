@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { Bell, CheckCheck, AlertTriangle, AlertCircle, Info, Flame, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import type { EventSeverity } from '@/types';
+import { SEVERITY_COLORS } from '@/lib/constants';
 
 const severityIcons: Record<EventSeverity, typeof Info> = {
   info: Info,
@@ -13,12 +14,7 @@ const severityIcons: Record<EventSeverity, typeof Info> = {
   critical: Flame,
 };
 
-const severityColors: Record<EventSeverity, string> = {
-  info: '#3b82f6',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  critical: '#dc2626',
-};
+const severityColors: Record<EventSeverity, string> = SEVERITY_COLORS as Record<EventSeverity, string>;
 
 interface NotificationDropdownProps {
   onClose: () => void;

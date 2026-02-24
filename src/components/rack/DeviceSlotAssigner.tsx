@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useStore } from '@/store';
 import { X, Plus, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
 

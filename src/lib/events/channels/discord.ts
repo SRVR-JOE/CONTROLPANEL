@@ -1,4 +1,5 @@
 import type { SystemEvent } from '@/types';
+import { SEVERITY_COLORS } from '@/lib/constants';
 
 export async function send(event: SystemEvent, config: Record<string, unknown>): Promise<void> {
   const webhookUrl = config.webhookUrl as string | undefined;
@@ -6,11 +7,13 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
     throw new Error('Discord webhook URL not configured');
   }
 
+  // Discord embeds require integer colors. Values are derived from SEVERITY_COLORS
+  // (the canonical hex source) via parseInt so they stay in sync automatically.
   const severityColors: Record<string, number> = {
-    critical: 0xdc2626,
-    error: 0xef4444,
-    warning: 0xf59e0b,
-    info: 0x3b82f6,
+    critical: parseInt(SEVERITY_COLORS.critical.slice(1), 16),
+    error:    parseInt(SEVERITY_COLORS.error.slice(1),    16),
+    warning:  parseInt(SEVERITY_COLORS.warning.slice(1),  16),
+    info:     parseInt(SEVERITY_COLORS.info.slice(1),     16),
   };
 
   const payload = {
@@ -18,7 +21,7 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
       {
         title: event.title,
         description: event.message,
-        color: severityColors[event.severity] || 0x6b7280,
+        color: severityColors[event.severity] ?? 0x6b7280,
         fields: [
           { name: 'Device', value: event.deviceName, inline: true },
           { name: 'Type', value: event.eventType.replace(/_/g, ' '), inline: true },

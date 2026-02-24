@@ -257,7 +257,6 @@ export default function AddDeviceDialog({ open, onClose }: AddDeviceDialogProps)
                     <DeviceCatalogCard
                       key={p.modelId}
                       product={p}
-                      manufacturer={p.manufacturer as DeviceManufacturer}
                       brandColor={p.brandColor}
                       displayName={p.displayName}
                       selected={selectedProductId === p.modelId}

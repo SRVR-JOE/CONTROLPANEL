@@ -87,6 +87,7 @@ async function sendCgiCommand(ip: string, command: string): Promise<string | nul
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ip, command }),
     });
+    if (!res.ok) return null;
     const data = (await res.json()) as { success: boolean; response?: string; error?: string };
     if (!data.success) return null;
     return data.response ?? 'OK';

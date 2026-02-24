@@ -17,7 +17,7 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
   const twilio = await import('twilio');
   const client = twilio.default(accountSid, authToken);
 
-  // FIX 9: truncate body to 1550 chars to stay within SMS limits
+  // Truncate to stay within SMS segment limits
   const MAX_SMS_BODY = 1550;
   const rawBody = `[AV CTRL] ${event.severity.toUpperCase()}: ${event.title}\n${event.message}`;
   const body = rawBody.length > MAX_SMS_BODY ? rawBody.slice(0, MAX_SMS_BODY) + '...' : rawBody;
@@ -28,7 +28,7 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
     )
   );
 
-  // FIX 6: throw when ALL deliveries fail; warn on partial failures
+  // Throw when all deliveries fail; warn on partial failures
   const failures = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
   if (failures.length === recipients.length) {
     throw new Error(`All SMS deliveries failed: ${failures.map(f => String(f.reason)).join('; ')}`);

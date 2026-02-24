@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdapter } from '@/lib/device-adapters';
 import { isAllowedTarget } from '@/lib/validateIp';
-import type { DeviceHealth, DeviceManufacturer, DeviceStatus } from '@/types';
+import type { DeviceHealth, DeviceManufacturer, DeviceStatus, SystemEvent } from '@/types';
 import { ALL_MANUFACTURERS } from '@/lib/constants';
 import { detectEvents } from '@/lib/events/detector';
 import { insertEvent, getEventSettings } from '@/lib/db';
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const settledResults = await Promise.allSettled(body.devices.map((device) => queryDevice(device.ip, device.manufacturer, device.port)));
     const results: Record<string, DeviceQueryResult> = {};
-    const allNewEvents: import('@/types').SystemEvent[] = [];
+    const allNewEvents: SystemEvent[] = [];
 
     let settings;
     try { settings = getEventSettings(); } catch (e) { console.error('[Health] Failed to load event settings:', e); settings = null; }
@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
       // Event detection
       if (settings) {
         try {
-          // FIX 5: reachable:true + health:null maps to 'warning', not 'offline'
           let currentStatus: DeviceStatus;
           if (!result.reachable) {
             currentStatus = 'offline';

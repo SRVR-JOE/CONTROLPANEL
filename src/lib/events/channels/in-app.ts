@@ -5,6 +5,7 @@ import type { SystemEvent, InAppNotification } from '@/types';
 const inAppQueue: InAppNotification[] = [];
 const MAX_QUEUE_SIZE = 200;
 
+// Sync — async signature satisfies ChannelSender interface
 export async function send(event: SystemEvent, _config?: Record<string, unknown>): Promise<void> {
   const notification: InAppNotification = {
     id: uuidv4(),

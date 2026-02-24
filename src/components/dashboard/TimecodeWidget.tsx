@@ -136,7 +136,7 @@ export default function TimecodeWidget() {
           <span
             style={{
               fontSize: '10px',
-              fontFamily: 'monospace',
+              fontFamily: 'var(--font-mono, monospace)',
               letterSpacing: '0.15em',
               textTransform: 'uppercase',
               color: ACCENT,
@@ -165,7 +165,7 @@ export default function TimecodeWidget() {
           <span
             style={{
               fontSize: '10px',
-              fontFamily: 'monospace',
+              fontFamily: 'var(--font-mono, monospace)',
               color: '#5a5a6e',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
@@ -180,7 +180,7 @@ export default function TimecodeWidget() {
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
         <span
           style={{
-            fontFamily: 'monospace',
+            fontFamily: 'var(--font-mono, monospace)',
             fontSize: '28px',
             fontWeight: 700,
             letterSpacing: '0.05em',
@@ -194,7 +194,7 @@ export default function TimecodeWidget() {
         <span
           style={{
             fontSize: '10px',
-            fontFamily: 'monospace',
+            fontFamily: 'var(--font-mono, monospace)',
             color: ACCENT,
             background: `${ACCENT}18`,
             border: `1px solid ${ACCENT}30`,
@@ -225,7 +225,7 @@ export default function TimecodeWidget() {
             borderRadius: '6px',
             color: devices.length === 0 ? '#4a4a5e' : '#c0c0d0',
             fontSize: '11px',
-            fontFamily: 'monospace',
+            fontFamily: 'var(--font-mono, monospace)',
             padding: '4px 8px',
             cursor: isRunning ? 'not-allowed' : 'pointer',
             opacity: isRunning ? 0.5 : 1,
@@ -266,7 +266,7 @@ export default function TimecodeWidget() {
             disabled={isRunning || !hasDevice}
             style={{
               fontSize: '11px',
-              fontFamily: 'monospace',
+              fontFamily: 'var(--font-mono, monospace)',
               fontWeight: 600,
               padding: '5px 12px',
               borderRadius: '6px',
@@ -289,7 +289,7 @@ export default function TimecodeWidget() {
             disabled={!isRunning}
             style={{
               fontSize: '11px',
-              fontFamily: 'monospace',
+              fontFamily: 'var(--font-mono, monospace)',
               fontWeight: 600,
               padding: '5px 12px',
               borderRadius: '6px',
@@ -313,7 +313,7 @@ export default function TimecodeWidget() {
             alignItems: 'center',
             gap: '3px',
             fontSize: '10px',
-            fontFamily: 'monospace',
+            fontFamily: 'var(--font-mono, monospace)',
             color: '#4a4a5e',
             textDecoration: 'none',
             whiteSpace: 'nowrap',
@@ -332,14 +332,6 @@ export default function TimecodeWidget() {
         </Link>
       </div>
 
-      {/* ── Keyframe for status-dot pulse (injected once) ── */}
-      <style>{`
-        @keyframes tc-pulse {
-          0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
-          70%  { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
-          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-        }
-      `}</style>
     </div>
   );
 }

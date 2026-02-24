@@ -7,7 +7,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = params;
-    if (!id || typeof id !== 'string' || id.length > 100) {
+    if (!id || id.length > 100) {
       return NextResponse.json({ error: 'Invalid event id' }, { status: 400 });
     }
 

@@ -3,6 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { queryEvents, insertEvent, deleteOldEvents, getEventSettings } from '@/lib/db';
 import type { EventQueryParams, SystemEvent } from '@/types';
 
+const VALID_EVENT_TYPES = ['status_change', 'temperature_alert', 'signal_loss', 'power_event'];
+const VALID_SEVERITIES = ['info', 'warning', 'error', 'critical'];
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
@@ -16,10 +19,10 @@ export async function GET(request: NextRequest) {
     };
 
     const eventTypes = searchParams.get('eventTypes');
-    if (eventTypes) params.eventTypes = eventTypes.split(',') as EventQueryParams['eventTypes'];
+    if (eventTypes) params.eventTypes = eventTypes.split(',').filter(v => VALID_EVENT_TYPES.includes(v)) as EventQueryParams['eventTypes'];
 
     const severities = searchParams.get('severities');
-    if (severities) params.severities = severities.split(',') as EventQueryParams['severities'];
+    if (severities) params.severities = severities.split(',').filter(v => VALID_SEVERITIES.includes(v)) as EventQueryParams['severities'];
 
     const deviceIds = searchParams.get('deviceIds');
     if (deviceIds) params.deviceIds = deviceIds.split(',').slice(0, 100);
@@ -48,20 +51,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const validEventTypes = ['status_change', 'temperature_alert', 'signal_loss', 'power_event'];
-    const validSeverities = ['info', 'warning', 'error', 'critical'];
 
-    if (!body.deviceId || !body.eventType || !body.severity || !body.title || !body.message) {
-      return NextResponse.json({ error: 'Missing required fields: deviceId, eventType, severity, title, message' }, { status: 400 });
+    if (!VALID_EVENT_TYPES.includes(body.eventType)) {
+      return NextResponse.json({ error: `Invalid eventType. Must be one of: ${VALID_EVENT_TYPES.join(', ')}` }, { status: 400 });
     }
-    if (!validEventTypes.includes(body.eventType)) {
-      return NextResponse.json({ error: `Invalid eventType. Must be one of: ${validEventTypes.join(', ')}` }, { status: 400 });
-    }
-    if (!validSeverities.includes(body.severity)) {
-      return NextResponse.json({ error: `Invalid severity. Must be one of: ${validSeverities.join(', ')}` }, { status: 400 });
+    if (!VALID_SEVERITIES.includes(body.severity)) {
+      return NextResponse.json({ error: `Invalid severity. Must be one of: ${VALID_SEVERITIES.join(', ')}` }, { status: 400 });
     }
 
-    // FIX 5: Input validation on string fields
     if (typeof body.deviceId !== 'string' || body.deviceId.length === 0 || body.deviceId.length > 500) {
       return NextResponse.json({ error: 'deviceId must be a string with length between 1 and 500' }, { status: 400 });
     }

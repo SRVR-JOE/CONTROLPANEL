@@ -6,26 +6,10 @@ import { Layers, Play } from "lucide-react";
 import { useStore } from "@/store";
 import { useShallow } from "zustand/react/shallow";
 import type { MatrixPreset, MatrixRouter } from "@/types";
-
-// ============================================================
-// MANUFACTURER_COLORS only covers DeviceManufacturer — MatrixManufacturer
-// is a strict subset. We define a local fallback-safe lookup so that
-// any manufacturer value that happens to be missing (e.g. future additions)
-// gracefully falls back to the accent color.
-// ============================================================
-
-const MATRIX_MFG_COLORS: Record<string, string> = {
-  aja: "#ffc107",
-  lightware: "#ff9800",
-  blackmagic: "#607d8b",
-  ross: "#9c27b0",
-  crestron: "#4a7ac7",
-  extron: "#1565c0",
-  netgear: "#4a90d9",
-};
+import { MANUFACTURER_COLORS } from "@/lib/constants";
 
 function routerAccentColor(manufacturer: string): string {
-  return MATRIX_MFG_COLORS[manufacturer] ?? "#6366f1";
+  return (MANUFACTURER_COLORS as Record<string, string>)[manufacturer] ?? "#6366f1";
 }
 
 // ============================================================
@@ -250,7 +234,6 @@ function RouterGroup({
           display: "flex",
           flexWrap: "wrap",
           gap: "8px",
-          rowGap: "8px",
         }}
       >
         {presets.map((preset) => (

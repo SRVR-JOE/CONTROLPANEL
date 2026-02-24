@@ -40,6 +40,7 @@ export default function ConnectionTester({
         body: JSON.stringify({ ip, manufacturer, port }),
       });
 
+      if (!res.ok) throw new Error(`Test endpoint returned ${res.status}`);
       const data: ConnectionTestResult = await res.json();
       setResult(data);
       setState(data.reachable ? 'success' : 'failed');

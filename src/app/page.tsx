@@ -220,7 +220,7 @@ export default function DashboardPage() {
             <StatCard
               label="Power Draw"
               value={`${stats.totalPower.toFixed(0)}W`}
-              borderColor="#8b5cf6"
+              borderColor="#8b5cf6" // violet-500 — power accent
               icon={<Zap className="w-4 h-4" />}
             />
           </div>
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-mono truncate" style={{ color: "#c8c8d8" }}>
-                            <span style={{ color: device ? MANUFACTURER_COLORS[device.manufacturer] : "#888" }}>
+                            <span style={{ color: device ? MANUFACTURER_COLORS[device.manufacturer] : STATUS_COLORS.offline }}>
                               {device?.name ?? cmd.deviceId}
                             </span>
                             <span style={{ color: "#4a4a5e" }}> &gt; </span>
@@ -291,7 +291,7 @@ export default function DashboardPage() {
                                 ? STATUS_COLORS.online
                                 : cmd.status === "error"
                                 ? STATUS_COLORS.error
-                                : "#888",
+                                : STATUS_COLORS.offline,
                             background:
                               cmd.status === "success"
                                 ? "rgba(34,197,94,0.1)"

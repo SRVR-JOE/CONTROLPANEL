@@ -160,7 +160,7 @@ function RackCard({
   return (
     <Link
       href={`/racks/${rack.id}`}
-      style={{ display: "block", textDecoration: "none" }}
+      style={{ display: "block" }}
     >
       <div
         style={{
@@ -168,7 +168,6 @@ function RackCard({
           border: "1px solid rgba(255,255,255,0.06)",
           borderRadius: "12px",
           padding: "16px",
-          cursor: "pointer",
           transition: "border-color 0.2s, background 0.2s",
         }}
         onMouseEnter={(e) => {
@@ -305,16 +304,16 @@ function RackCard({
               fontFamily: "var(--font-mono, monospace)",
               fontWeight: 600,
               color:
-                utilizationPct >= 80
-                  ? STATUS_COLORS.warning
-                  : utilizationPct >= 95
+                utilizationPct >= 95
                   ? STATUS_COLORS.error
+                  : utilizationPct >= 80
+                  ? STATUS_COLORS.warning
                   : "#6366f1",
               background:
-                utilizationPct >= 80
-                  ? "rgba(245,158,11,0.1)"
-                  : utilizationPct >= 95
+                utilizationPct >= 95
                   ? "rgba(239,68,68,0.1)"
+                  : utilizationPct >= 80
+                  ? "rgba(245,158,11,0.1)"
                   : "rgba(99,102,241,0.1)",
               padding: "1px 6px",
               borderRadius: "10px",

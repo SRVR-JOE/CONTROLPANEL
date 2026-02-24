@@ -4,12 +4,7 @@ import { useState } from 'react';
 import { useStore } from '@/store';
 import { MatrixPreset } from '@/types';
 import { Play, Trash2, Clock, Route, AlertTriangle } from 'lucide-react';
-
-const routerColorMap: Record<string, string> = {
-  lightware: '#ff9800',
-  aja: '#ffc107',
-  blackmagic: '#607d8b',
-};
+import { MANUFACTURER_COLORS } from '@/lib/constants';
 
 function formatDate(iso: string): string {
   const date = new Date(iso);
@@ -35,7 +30,7 @@ export default function PresetCard({ preset }: PresetCardProps) {
 
   const router = routers.find((r) => r.id === preset.routerId);
   const routerColor = router
-    ? routerColorMap[router.manufacturer] || '#3b82f6'
+    ? MANUFACTURER_COLORS[router.manufacturer] || '#3b82f6'
     : '#6b7280';
 
   const handleRecall = () => {

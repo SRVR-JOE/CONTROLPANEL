@@ -6,6 +6,7 @@ import {
   ChevronLeft, ChevronRight, Check, RefreshCw, Filter,
 } from 'lucide-react';
 import type { EventType, EventSeverity, EventQueryResult } from '@/types';
+import { SEVERITY_COLORS } from '@/lib/constants';
 
 const severityIcons: Record<EventSeverity, typeof Info> = {
   info: Info,
@@ -14,12 +15,7 @@ const severityIcons: Record<EventSeverity, typeof Info> = {
   critical: Flame,
 };
 
-const severityColors: Record<EventSeverity, string> = {
-  info: '#3b82f6',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  critical: '#dc2626',
-};
+const severityColors: Record<EventSeverity, string> = SEVERITY_COLORS as Record<EventSeverity, string>;
 
 const eventTypeLabels: Record<EventType, string> = {
   status_change: 'Status Change',

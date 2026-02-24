@@ -284,7 +284,7 @@ export function getEventSettings(): EventSettings {
     | undefined;
   if (!row) return DEFAULT_EVENT_SETTINGS;
   const stored = JSON.parse(row.value) as Partial<EventSettings>;
-  // FIX 4: deep-merge nested threshold objects instead of shallow spread
+  // Deep-merge nested threshold objects instead of shallow spread
   return {
     ...DEFAULT_EVENT_SETTINGS,
     ...stored,

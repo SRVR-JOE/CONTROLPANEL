@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, AlertTriangle, AlertCircle, Info, Flame } from 'lucide-react';
 import type { EventSeverity } from '@/types';
+import { SEVERITY_COLORS } from '@/lib/constants';
 
 interface ToastProps {
   id: string;
@@ -13,11 +14,12 @@ interface ToastProps {
   autoDismissMs?: number;
 }
 
+// bg and border are derived from SEVERITY_COLORS with opacity suffixes
 const severityConfig: Record<EventSeverity, { bg: string; border: string; icon: typeof Info; color: string }> = {
-  info: { bg: 'rgba(59, 130, 246, 0.1)', border: 'rgba(59, 130, 246, 0.3)', icon: Info, color: '#3b82f6' },
-  warning: { bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)', icon: AlertTriangle, color: '#f59e0b' },
-  error: { bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.3)', icon: AlertCircle, color: '#ef4444' },
-  critical: { bg: 'rgba(220, 38, 38, 0.15)', border: 'rgba(220, 38, 38, 0.4)', icon: Flame, color: '#dc2626' },
+  info:     { bg: 'rgba(59, 130, 246, 0.1)',  border: 'rgba(59, 130, 246, 0.3)',  icon: Info,          color: SEVERITY_COLORS.info },
+  warning:  { bg: 'rgba(245, 158, 11, 0.1)',  border: 'rgba(245, 158, 11, 0.3)',  icon: AlertTriangle, color: SEVERITY_COLORS.warning },
+  error:    { bg: 'rgba(239, 68, 68, 0.1)',   border: 'rgba(239, 68, 68, 0.3)',   icon: AlertCircle,   color: SEVERITY_COLORS.error },
+  critical: { bg: 'rgba(220, 38, 38, 0.15)',  border: 'rgba(220, 38, 38, 0.4)',   icon: Flame,         color: SEVERITY_COLORS.critical },
 };
 
 export default function Toast({ id, title, message, severity, onDismiss, autoDismissMs = 5000 }: ToastProps) {
@@ -79,7 +81,8 @@ export default function Toast({ id, title, message, severity, onDismiss, autoDis
           setExiting(true);
           innerTimerRef.current = setTimeout(() => onDismiss(id), 300);
         }}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: 'var(--muted)', flexShrink: 0 }}
+        className="hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 rounded transition-colors"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', flexShrink: 0 }}
       >
         <X size={14} />
       </button>

@@ -92,3 +92,8 @@ body {
 .temp-cool { background: linear-gradient(135deg, #1e3a5f, #14141f); }
 .temp-warm { background: linear-gradient(135deg, #5f3a1e, #14141f); }
 .temp-hot { background: linear-gradient(135deg, #5f1e1e, #14141f); }
+
+@keyframes tc-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
