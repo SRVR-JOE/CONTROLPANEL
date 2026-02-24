@@ -31,13 +31,14 @@ export async function GET(request: NextRequest) {
     const port = portParam ? parseInt(portParam, 10) : undefined;
     if (portParam && (isNaN(port!) || port! < 1 || port! > 65535)) return NextResponse.json({ error: 'Invalid port number. Must be between 1 and 65535.' }, { status: 400 });
     return NextResponse.json(await queryDevice(ip, manufacturer, port));
-  } catch (err) { return NextResponse.json({ error: 'Internal server error', details: String(err) }, { status: 500 }); }
+  } catch (err) { console.error('[Health]', err); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: { devices: DeviceQueryInput[] } = await request.json();
     if (!body.devices || !Array.isArray(body.devices) || body.devices.length === 0) return NextResponse.json({ error: 'Missing or empty devices array in request body' }, { status: 400 });
+    if (body.devices.length > 100) return NextResponse.json({ error: 'Too many devices. Maximum is 100 per request.' }, { status: 400 });
     for (const device of body.devices) {
       if (!device.id || !device.ip || !device.manufacturer) return NextResponse.json({ error: `Each device must include id, ip, and manufacturer. Invalid entry: ${JSON.stringify(device)}` }, { status: 400 });
       if (!isAllowedTarget(device.ip)) return NextResponse.json({ error: `Invalid or disallowed target IP address for device: ${device.id}` }, { status: 400 });
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     const allNewEvents: import('@/types').SystemEvent[] = [];
 
     let settings;
-    try { settings = getEventSettings(); } catch { settings = null; }
+    try { settings = getEventSettings(); } catch (e) { console.error('[Health] Failed to load event settings:', e); settings = null; }
 
     for (let i = 0; i < body.devices.length; i++) {
       const device = body.devices[i];
@@ -61,9 +62,19 @@ export async function POST(request: NextRequest) {
       // Event detection
       if (settings) {
         try {
-          const currentStatus: DeviceStatus = result.reachable
-            ? (result.health?.errors?.length ? 'error' : result.health?.warnings?.length ? 'warning' : 'online')
-            : 'offline';
+          // FIX 5: reachable:true + health:null maps to 'warning', not 'offline'
+          let currentStatus: DeviceStatus;
+          if (!result.reachable) {
+            currentStatus = 'offline';
+          } else if (!result.health) {
+            currentStatus = 'warning';
+          } else if (result.health.errors.length) {
+            currentStatus = 'error';
+          } else if (result.health.warnings.length) {
+            currentStatus = 'warning';
+          } else {
+            currentStatus = 'online';
+          }
 
           const events = detectEvents(
             device.id,
@@ -91,5 +102,5 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ results });
-  } catch (err) { return NextResponse.json({ error: 'Internal server error', details: String(err) }, { status: 500 }); }
+  } catch (err) { console.error('[Health]', err); return NextResponse.json({ error: 'Internal server error' }, { status: 500 }); }
 }

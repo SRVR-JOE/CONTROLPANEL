@@ -35,6 +35,8 @@ export default function NotificationDropdown({ onClose }: NotificationDropdownPr
 
   return (
     <div
+      role="region"
+      aria-label="Notifications"
       style={{
         position: 'absolute',
         top: '100%',
@@ -65,6 +67,7 @@ export default function NotificationDropdown({ onClose }: NotificationDropdownPr
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)' }}>Notifications</span>
         </div>
         <button
+          aria-label="Mark all notifications as read"
           onClick={markAllNotificationsRead}
           style={{
             display: 'flex', alignItems: 'center', gap: '4px',
@@ -117,7 +120,7 @@ export default function NotificationDropdown({ onClose }: NotificationDropdownPr
                     {n.message}
                   </div>
                   <div style={{ fontSize: '10px', color: 'var(--muted)', marginTop: '4px', fontFamily: 'var(--font-mono, monospace)' }}>
-                    {n.deviceName} &middot; {new Date(n.createdAt).toLocaleTimeString()}
+                    {n.deviceName ?? '\u2014'} &middot; {new Date(n.createdAt).toLocaleTimeString()}
                   </div>
                 </div>
                 {!n.read && (

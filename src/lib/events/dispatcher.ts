@@ -17,24 +17,31 @@ export async function dispatchAll(events: SystemEvent[], flappingCooldownMs: num
   }
 
   for (const event of events) {
+    // FIX 2: shouldNotify called once per event, not per channel
+    if (!shouldNotify(event.deviceId, event.eventType, flappingCooldownMs)) continue;
+
     for (const cfg of configs) {
       if (!cfg.enabled) continue;
       if (!cfg.eventTypes.includes(event.eventType)) continue;
       if (!cfg.severities.includes(event.severity)) continue;
-
-      // Flapping cooldown check (event always recorded in DB, but notifications suppressed)
-      if (!shouldNotify(event.deviceId, event.eventType, flappingCooldownMs)) continue;
 
       // Per-channel rate limit
       const rateKey = cfg.id;
       const lastSent = lastSentTime.get(rateKey);
       const now = Date.now();
       if (lastSent && now - lastSent < cfg.rateLimitMs) continue;
-      lastSentTime.set(rateKey, now);
+
+      // FIX 3: null-check sender before use
+      const sender = getChannelSender(cfg.channel);
+      if (!sender) {
+        console.warn(`[Dispatcher] No sender found for channel: ${cfg.channel}`);
+        continue;
+      }
 
       try {
-        const sender = getChannelSender(cfg.channel);
         await sender.send(event, cfg.config);
+        // FIX 1: stamp rate-limit AFTER successful send only
+        lastSentTime.set(rateKey, now);
       } catch (err) {
         console.error(`[Dispatcher] Failed to send ${cfg.channel} notification:`, err);
         // Notifications are best-effort — never throw
@@ -69,6 +76,9 @@ export async function sendTestNotification(channelId: string): Promise<{ success
 
   try {
     const sender = getChannelSender(cfg.channel);
+    if (!sender) {
+      return { success: false, error: `Unknown channel: ${cfg.channel}` };
+    }
     await sender.send(testEvent, cfg.config);
     return { success: true };
   } catch (err) {

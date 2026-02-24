@@ -7,13 +7,14 @@ export async function PATCH(
 ) {
   try {
     const { id } = params;
-    if (!id) {
-      return NextResponse.json({ error: 'Missing event id' }, { status: 400 });
+    if (!id || typeof id !== 'string' || id.length > 100) {
+      return NextResponse.json({ error: 'Invalid event id' }, { status: 400 });
     }
 
     acknowledgeEvents([id]);
     return NextResponse.json({ success: true, id });
   } catch (err) {
-    return NextResponse.json({ error: 'Internal server error', details: String(err) }, { status: 500 });
+    console.error('PATCH /api/events/[id] error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

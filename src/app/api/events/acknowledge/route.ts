@@ -11,12 +11,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.eventIds && Array.isArray(body.eventIds) && body.eventIds.length > 0) {
-      acknowledgeEvents(body.eventIds);
-      return NextResponse.json({ success: true, acknowledged: body.eventIds.length });
+      const ids: string[] = body.eventIds
+        .filter((x: unknown) => typeof x === 'string')
+        .slice(0, 500);
+      if (ids.length === 0) {
+        return NextResponse.json({ error: 'eventIds must contain valid string IDs' }, { status: 400 });
+      }
+      acknowledgeEvents(ids);
+      return NextResponse.json({ success: true, acknowledged: ids.length });
     }
 
     return NextResponse.json({ error: 'Provide eventIds array or { all: true }' }, { status: 400 });
   } catch (err) {
-    return NextResponse.json({ error: 'Internal server error', details: String(err) }, { status: 500 });
+    console.error('POST /api/events/acknowledge error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

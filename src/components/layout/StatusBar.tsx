@@ -54,6 +54,16 @@ export default function StatusBar() {
     return () => document.removeEventListener('mousedown', handler);
   }, [bellOpen]);
 
+  // Close dropdown on Escape key
+  useEffect(() => {
+    if (!bellOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setBellOpen(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [bellOpen]);
+
   return (
     <header className="fixed left-16 right-0 top-0 z-30 flex h-10 items-center justify-between border-b border-border bg-surface/80 px-4 backdrop-blur-xl">
       {/* System status */}
@@ -95,6 +105,9 @@ export default function StatusBar() {
         {/* Notification bell */}
         <div ref={bellRef} style={{ position: 'relative' }}>
           <button
+            aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+            aria-expanded={bellOpen}
+            aria-haspopup="true"
             onClick={() => setBellOpen((o) => !o)}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',

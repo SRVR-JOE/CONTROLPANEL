@@ -117,9 +117,10 @@ export function detectEvents(
   // --- Signal loss detection ---
   if (currentHealth && prev) {
     const prevErrors = prev.errorSet;
-    const signalPattern = /signal|no signal/i;
+    const signalPattern = /signal|no signal|no routed source|no input|link lost/i;
 
-    for (const err of currentHealth.errors) {
+    // FIX 8: defensive guard — errors may be undefined/null
+    for (const err of currentHealth.errors ?? []) {
       if (signalPattern.test(err) && !prevErrors.has(err)) {
         events.push({
           id: uuidv4(), deviceId, deviceName,
@@ -137,9 +138,10 @@ export function detectEvents(
   if (currentHealth && prev) {
     const prevErrors = prev.errorSet;
     const prevWarnings = prev.warningSet;
-    const powerPattern = /battery|power|overload|ups|surge/i;
+    const powerPattern = /battery|power|overload|ups|surge|output load|current|inlet/i;
 
-    for (const err of currentHealth.errors) {
+    // FIX 8: defensive guard — errors may be undefined/null
+    for (const err of currentHealth.errors ?? []) {
       if (powerPattern.test(err) && !prevErrors.has(err)) {
         events.push({
           id: uuidv4(), deviceId, deviceName,
@@ -151,7 +153,8 @@ export function detectEvents(
         });
       }
     }
-    for (const warn of currentHealth.warnings) {
+    // FIX 8: defensive guard — warnings may be undefined/null
+    for (const warn of currentHealth.warnings ?? []) {
       if (powerPattern.test(warn) && !prevWarnings.has(warn)) {
         events.push({
           id: uuidv4(), deviceId, deviceName,
@@ -166,11 +169,12 @@ export function detectEvents(
   }
 
   // Update cache
+  const prevSnapshot = previousStates.get(deviceId);
   previousStates.set(deviceId, {
     status: currentStatus,
     health: currentHealth,
-    errorSet: new Set(currentHealth?.errors ?? []),
-    warningSet: new Set(currentHealth?.warnings ?? []),
+    errorSet: currentHealth ? new Set(currentHealth.errors) : (prevSnapshot?.errorSet ?? new Set()),
+    warningSet: currentHealth ? new Set(currentHealth.warnings) : (prevSnapshot?.warningSet ?? new Set()),
   });
 
   return events;
@@ -179,4 +183,8 @@ export function detectEvents(
 /** Clear state for a device (e.g. when removed) */
 export function clearDeviceState(deviceId: string): void {
   previousStates.delete(deviceId);
+  // Clean up lastNotificationTime entries to prevent memory leak
+  Array.from(lastNotificationTime.keys()).forEach((key) => {
+    if (key.startsWith(`${deviceId}:`)) lastNotificationTime.delete(key);
+  });
 }

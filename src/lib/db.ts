@@ -109,6 +109,9 @@ export function setCollections(data: Record<string, unknown>): void {
 // Event CRUD
 // ============================================================
 
+let _lastRetentionCleanup = 0;
+const RETENTION_CLEANUP_INTERVAL = 60000; // 1 minute
+
 export function insertEvent(event: SystemEvent): void {
   const db = getDb();
   db.prepare(`
@@ -160,16 +163,16 @@ export function queryEvents(params: EventQueryParams): EventQueryResult {
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  const page = params.page ?? 1;
-  const pageSize = params.pageSize ?? 50;
+  const page = Math.max(1, params.page ?? 1);
+  const pageSize = Math.min(200, Math.max(1, params.pageSize ?? 50));
   const offset = (page - 1) * pageSize;
 
-  const countRow = db.prepare(`SELECT COUNT(*) as cnt FROM events ${where}`).get(...values) as { cnt: number };
+  const countRow = db.prepare(`SELECT COUNT(*) as cnt FROM events ${where}`).get(values) as { cnt: number };
   const total = countRow.cnt;
 
   const rows = db.prepare(
     `SELECT * FROM events ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
-  ).all(...values, pageSize, offset) as Array<{
+  ).all([...values, pageSize, offset]) as Array<{
     id: string; device_id: string; device_name: string; event_type: string;
     severity: string; title: string; message: string; metadata: string;
     acknowledged: number; created_at: string;
@@ -204,10 +207,12 @@ export function acknowledgeAllEvents(): void {
 }
 
 export function deleteOldEvents(retentionDays: number): number {
+  const now = Date.now();
+  if (now - _lastRetentionCleanup < RETENTION_CLEANUP_INTERVAL) return 0;
+  _lastRetentionCleanup = now;
   const db = getDb();
-  const result = db.prepare(
-    `DELETE FROM events WHERE created_at < datetime('now', ? || ' days')`
-  ).run(`-${retentionDays}`);
+  const cutoff = new Date(Date.now() - retentionDays * 86400 * 1000).toISOString();
+  const result = db.prepare('DELETE FROM events WHERE created_at < ?').run(cutoff);
   return result.changes;
 }
 
@@ -279,7 +284,13 @@ export function getEventSettings(): EventSettings {
     | undefined;
   if (!row) return DEFAULT_EVENT_SETTINGS;
   const stored = JSON.parse(row.value) as Partial<EventSettings>;
-  return { ...DEFAULT_EVENT_SETTINGS, ...stored };
+  // FIX 4: deep-merge nested threshold objects instead of shallow spread
+  return {
+    ...DEFAULT_EVENT_SETTINGS,
+    ...stored,
+    temperatureThresholds: { ...DEFAULT_EVENT_SETTINGS.temperatureThresholds, ...(stored?.temperatureThresholds || {}) },
+    gpuTemperatureThresholds: { ...DEFAULT_EVENT_SETTINGS.gpuTemperatureThresholds, ...(stored?.gpuTemperatureThresholds || {}) },
+  };
 }
 
 export function setEventSettings(settings: EventSettings): void {

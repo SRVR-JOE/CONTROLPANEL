@@ -21,7 +21,7 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
         color: severityColors[event.severity] || 0x6b7280,
         fields: [
           { name: 'Device', value: event.deviceName, inline: true },
-          { name: 'Type', value: event.eventType.replace('_', ' '), inline: true },
+          { name: 'Type', value: event.eventType.replace(/_/g, ' '), inline: true },
           { name: 'Severity', value: event.severity.toUpperCase(), inline: true },
         ],
         timestamp: event.createdAt,

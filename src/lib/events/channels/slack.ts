@@ -21,25 +21,18 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
   };
 
   const payload = {
+    // FIX 10: top-level text is a brief fallback for notifications; detail lives in the attachment
+    text: `[${event.severity.toUpperCase()}] ${event.title}`,
     attachments: [
       {
         color: severityColors[event.severity] || '#6b7280',
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `${severityEmoji[event.severity] || ''} *${event.title}*\n${event.message}`,
-            },
-          },
-          {
-            type: 'context',
-            elements: [
-              { type: 'mrkdwn', text: `*Device:* ${event.deviceName}` },
-              { type: 'mrkdwn', text: `*Type:* ${event.eventType.replace('_', ' ')}` },
-              { type: 'mrkdwn', text: `*Time:* ${new Date(event.createdAt).toLocaleString()}` },
-            ],
-          },
+        fallback: `[${event.severity.toUpperCase()}] ${event.title}`,
+        text: `${severityEmoji[event.severity] || ''} *${event.title}*\n${event.message}`,
+        mrkdwn_in: ['text'],
+        fields: [
+          { title: 'Device', value: event.deviceName, short: true },
+          { title: 'Type', value: event.eventType.replace(/_/g, ' '), short: true },
+          { title: 'Time', value: new Date(event.createdAt).toLocaleString(), short: true },
         ],
       },
     ],

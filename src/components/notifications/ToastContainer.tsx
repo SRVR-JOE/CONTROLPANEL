@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Toast from './Toast';
 import type { EventSeverity } from '@/types';
 
@@ -28,8 +28,11 @@ export default function ToastContainer() {
     setToasts((prev) => [...prev, { ...toast, id }].slice(-MAX_VISIBLE));
   }, []);
 
-  // Register the singleton
-  _addToastFn = addToast;
+  // Register the singleton inside an effect so it never runs during render
+  useEffect(() => {
+    _addToastFn = addToast;
+    return () => { _addToastFn = null; };
+  }, [addToast]);
 
   const handleDismiss = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));

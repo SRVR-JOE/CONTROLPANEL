@@ -7,9 +7,12 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
 
+    const rawPage = parseInt(searchParams.get('page') || '1', 10);
+    const rawPageSize = parseInt(searchParams.get('pageSize') || '50', 10);
+
     const params: EventQueryParams = {
-      page: parseInt(searchParams.get('page') || '1', 10),
-      pageSize: parseInt(searchParams.get('pageSize') || '50', 10),
+      page: Math.max(1, isNaN(rawPage) ? 1 : rawPage),
+      pageSize: Math.min(200, Math.max(1, isNaN(rawPageSize) ? 50 : rawPageSize)),
     };
 
     const eventTypes = searchParams.get('eventTypes');
@@ -19,10 +22,10 @@ export async function GET(request: NextRequest) {
     if (severities) params.severities = severities.split(',') as EventQueryParams['severities'];
 
     const deviceIds = searchParams.get('deviceIds');
-    if (deviceIds) params.deviceIds = deviceIds.split(',');
+    if (deviceIds) params.deviceIds = deviceIds.split(',').slice(0, 100);
 
     const search = searchParams.get('search');
-    if (search) params.search = search;
+    if (search) params.search = search.slice(0, 200);
 
     const startDate = searchParams.get('startDate');
     if (startDate) params.startDate = startDate;
@@ -37,33 +40,68 @@ export async function GET(request: NextRequest) {
     const result = queryEvents(params);
     return NextResponse.json(result);
   } catch (err) {
-    return NextResponse.json({ error: 'Internal server error', details: String(err) }, { status: 500 });
+    console.error('GET /api/events error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const validEventTypes = ['status_change', 'temperature_alert', 'signal_loss', 'power_event'];
+    const validSeverities = ['info', 'warning', 'error', 'critical'];
+
+    if (!body.deviceId || !body.eventType || !body.severity || !body.title || !body.message) {
+      return NextResponse.json({ error: 'Missing required fields: deviceId, eventType, severity, title, message' }, { status: 400 });
+    }
+    if (!validEventTypes.includes(body.eventType)) {
+      return NextResponse.json({ error: `Invalid eventType. Must be one of: ${validEventTypes.join(', ')}` }, { status: 400 });
+    }
+    if (!validSeverities.includes(body.severity)) {
+      return NextResponse.json({ error: `Invalid severity. Must be one of: ${validSeverities.join(', ')}` }, { status: 400 });
+    }
+
+    // FIX 5: Input validation on string fields
+    if (typeof body.deviceId !== 'string' || body.deviceId.length === 0 || body.deviceId.length > 500) {
+      return NextResponse.json({ error: 'deviceId must be a string with length between 1 and 500' }, { status: 400 });
+    }
+    if (typeof body.title !== 'string' || body.title.length === 0 || body.title.length > 500) {
+      return NextResponse.json({ error: 'title must be a string with length between 1 and 500' }, { status: 400 });
+    }
+    if (typeof body.message !== 'string' || body.message.length === 0 || body.message.length > 500) {
+      return NextResponse.json({ error: 'message must be a string with length between 1 and 500' }, { status: 400 });
+    }
+    if (body.deviceName !== undefined) {
+      if (typeof body.deviceName !== 'string' || body.deviceName.length > 200) {
+        return NextResponse.json({ error: 'deviceName must be a string with length <= 200' }, { status: 400 });
+      }
+    }
+    if (body.metadata !== undefined) {
+      if (typeof body.metadata !== 'object' || body.metadata === null || Array.isArray(body.metadata)) {
+        return NextResponse.json({ error: 'metadata must be an object' }, { status: 400 });
+      }
+      if (JSON.stringify(body.metadata).length > 10000) {
+        return NextResponse.json({ error: 'metadata exceeds maximum allowed size of 10000 characters' }, { status: 400 });
+      }
+    }
+
     const event: SystemEvent = {
-      id: body.id || uuidv4(),
+      id: uuidv4(),
       deviceId: body.deviceId,
-      deviceName: body.deviceName,
+      deviceName: body.deviceName || body.deviceId,
       eventType: body.eventType,
       severity: body.severity,
       title: body.title,
       message: body.message,
       metadata: body.metadata || {},
       acknowledged: false,
-      createdAt: body.createdAt || new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
-
-    if (!event.deviceId || !event.eventType || !event.severity || !event.title) {
-      return NextResponse.json({ error: 'Missing required fields: deviceId, eventType, severity, title' }, { status: 400 });
-    }
 
     insertEvent(event);
     return NextResponse.json(event, { status: 201 });
   } catch (err) {
-    return NextResponse.json({ error: 'Internal server error', details: String(err) }, { status: 500 });
+    console.error('POST /api/events error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

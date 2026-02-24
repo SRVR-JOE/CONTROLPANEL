@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   History, AlertTriangle, AlertCircle, Info, Flame, Search,
   ChevronLeft, ChevronRight, Check, RefreshCw, Filter,
@@ -41,6 +41,7 @@ export default function EventsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const fetchEvents = useCallback(async () => {
+    setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
       if (search) params.set('search', search);
@@ -58,13 +59,16 @@ export default function EventsPage() {
     }
   }, [page, pageSize, search, selectedSeverities, selectedTypes]);
 
+  const fetchEventsRef = useRef(fetchEvents);
+  fetchEventsRef.current = fetchEvents;
+
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(fetchEvents, 10000);
+    const interval = setInterval(() => fetchEventsRef.current(), 10000);
     return () => clearInterval(interval);
-  }, [autoRefresh, fetchEvents]);
+  }, [autoRefresh]);
 
   const toggleSeverity = (s: EventSeverity) => {
     setSelectedSeverities((prev) =>
@@ -81,22 +85,24 @@ export default function EventsPage() {
   };
 
   const handleAcknowledge = async (ids: string[]) => {
-    await fetch('/api/events/acknowledge', {
+    const res = await fetch('/api/events/acknowledge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ eventIds: ids }),
     });
-    fetchEvents();
+    if (!res.ok) return;
+    await fetchEvents();
     setSelectedIds(new Set());
   };
 
   const handleAcknowledgeAll = async () => {
-    await fetch('/api/events/acknowledge', {
+    const res = await fetch('/api/events/acknowledge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ all: true }),
     });
-    fetchEvents();
+    if (!res.ok) return;
+    await fetchEvents();
     setSelectedIds(new Set());
   };
 
@@ -108,15 +114,7 @@ export default function EventsPage() {
     });
   };
 
-  // Stat counts
   const events = data?.events || [];
-  const stats = {
-    total: data?.total || 0,
-    critical: events.filter((e) => e.severity === 'critical').length,
-    error: events.filter((e) => e.severity === 'error').length,
-    warning: events.filter((e) => e.severity === 'warning').length,
-    info: events.filter((e) => e.severity === 'info').length,
-  };
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--background)' }}>
@@ -151,24 +149,15 @@ export default function EventsPage() {
       </div>
 
       <div className="p-6 space-y-4">
-        {/* Stat cards */}
+        {/* Stat card — total only; per-severity counts are misleading when paginated */}
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {[
-            { label: 'Total', count: stats.total, color: 'var(--foreground)' },
-            { label: 'Critical', count: stats.critical, color: '#dc2626' },
-            { label: 'Error', count: stats.error, color: '#ef4444' },
-            { label: 'Warning', count: stats.warning, color: '#f59e0b' },
-            { label: 'Info', count: stats.info, color: '#3b82f6' },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="glass-card"
-              style={{ padding: '12px 20px', minWidth: '100px', textAlign: 'center' }}
-            >
-              <div style={{ fontSize: '22px', fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono, monospace)' }}>{s.count}</div>
-              <div style={{ fontSize: '10px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{s.label}</div>
-            </div>
-          ))}
+          <div
+            className="glass-card"
+            style={{ padding: '12px 20px', minWidth: '100px', textAlign: 'center' }}
+          >
+            <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--foreground)', fontFamily: 'var(--font-mono, monospace)' }}>{data?.total || 0}</div>
+            <div style={{ fontSize: '10px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Total Events</div>
+          </div>
         </div>
 
         {/* Filter bar */}
@@ -279,7 +268,16 @@ export default function EventsPage() {
                   return (
                     <React.Fragment key={event.id}>
                       <tr
+                        tabIndex={0}
+                        role="button"
+                        aria-expanded={isExpanded}
                         onClick={() => setExpandedId(isExpanded ? null : event.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setExpandedId(isExpanded ? null : event.id);
+                          }
+                        }}
                         style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', background: isExpanded ? 'rgba(59,130,246,0.04)' : 'transparent' }}
                       >
                         <td style={tdStyle}>
@@ -302,7 +300,7 @@ export default function EventsPage() {
                             padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 600,
                             background: 'var(--surface-2)', color: 'var(--muted)', textTransform: 'capitalize',
                           }}>
-                            {event.eventType.replace('_', ' ')}
+                            {event.eventType.replace(/_/g, ' ')}
                           </span>
                         </td>
                         <td style={{ ...tdStyle, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.title}</td>

@@ -5,7 +5,7 @@ import type { SystemEvent, InAppNotification } from '@/types';
 const inAppQueue: InAppNotification[] = [];
 const MAX_QUEUE_SIZE = 200;
 
-export async function send(event: SystemEvent): Promise<void> {
+export async function send(event: SystemEvent, _config?: Record<string, unknown>): Promise<void> {
   const notification: InAppNotification = {
     id: uuidv4(),
     eventId: event.id,

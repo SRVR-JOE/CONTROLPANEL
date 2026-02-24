@@ -17,11 +17,23 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
   const twilio = await import('twilio');
   const client = twilio.default(accountSid, authToken);
 
-  const body = `[AV CTRL] ${event.severity.toUpperCase()}: ${event.title}\n${event.message}`;
+  // FIX 9: truncate body to 1550 chars to stay within SMS limits
+  const MAX_SMS_BODY = 1550;
+  const rawBody = `[AV CTRL] ${event.severity.toUpperCase()}: ${event.title}\n${event.message}`;
+  const body = rawBody.length > MAX_SMS_BODY ? rawBody.slice(0, MAX_SMS_BODY) + '...' : rawBody;
 
-  await Promise.all(
+  const results = await Promise.allSettled(
     recipients.map((to) =>
       client.messages.create({ body, from: fromNumber, to })
     )
   );
+
+  // FIX 6: throw when ALL deliveries fail; warn on partial failures
+  const failures = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+  if (failures.length === recipients.length) {
+    throw new Error(`All SMS deliveries failed: ${failures.map(f => String(f.reason)).join('; ')}`);
+  }
+  if (failures.length > 0) {
+    console.error(`[SMS] ${failures.length}/${recipients.length} failed: ${failures.map(f => String(f.reason)).join('; ')}`);
+  }
 }

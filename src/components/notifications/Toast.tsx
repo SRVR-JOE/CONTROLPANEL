@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X, AlertTriangle, AlertCircle, Info, Flame } from 'lucide-react';
 import type { EventSeverity } from '@/types';
 
@@ -25,13 +25,22 @@ export default function Toast({ id, title, message, severity, onDismiss, autoDis
   const config = severityConfig[severity];
   const Icon = config.icon;
 
+  const outerTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const innerTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
   useEffect(() => {
-    const timer = setTimeout(() => {
+    outerTimerRef.current = setTimeout(() => {
       setExiting(true);
-      setTimeout(() => onDismiss(id), 300);
+      innerTimerRef.current = setTimeout(() => onDismissRef.current(id), 300);
     }, autoDismissMs);
-    return () => clearTimeout(timer);
-  }, [id, autoDismissMs, onDismiss]);
+    return () => {
+      clearTimeout(outerTimerRef.current);
+      clearTimeout(innerTimerRef.current);
+    };
+  }, [id, autoDismissMs]);
 
   return (
     <div
@@ -63,7 +72,13 @@ export default function Toast({ id, title, message, severity, onDismiss, autoDis
         </div>
       </div>
       <button
-        onClick={() => { setExiting(true); setTimeout(() => onDismiss(id), 300); }}
+        aria-label="Dismiss notification"
+        onClick={() => {
+          clearTimeout(outerTimerRef.current);
+          clearTimeout(innerTimerRef.current);
+          setExiting(true);
+          innerTimerRef.current = setTimeout(() => onDismiss(id), 300);
+        }}
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: 'var(--muted)', flexShrink: 0 }}
       >
         <X size={14} />
