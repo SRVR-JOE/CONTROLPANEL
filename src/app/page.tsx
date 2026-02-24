@@ -9,7 +9,6 @@ import {
   CircuitBoard,
   Grid3X3,
   Heart,
-  Layers,
   Monitor,
   Pin,
   Power,
@@ -23,6 +22,9 @@ import {
 import { useMemo } from "react";
 import type { DeviceStatus } from "@/types";
 import { MANUFACTURER_COLORS, STATUS_COLORS } from "@/lib/constants";
+import RackOverview from "@/components/dashboard/RackOverview";
+import PresetShortcuts from "@/components/dashboard/PresetShortcuts";
+import TimecodeWidget from "@/components/dashboard/TimecodeWidget";
 
 const STATUS_LABELS: Record<DeviceStatus, string> = {
   online: "Online",
@@ -30,10 +32,6 @@ const STATUS_LABELS: Record<DeviceStatus, string> = {
   error: "Error",
   offline: "Offline",
 };
-
-// ============================================================
-// Helper: format seconds to human-readable uptime
-// ============================================================
 
 function formatTime(iso: string): string {
   const date = new Date(iso);
@@ -47,16 +45,11 @@ function formatTime(iso: string): string {
   return `${diffHr}h ${diffMin % 60}m ago`;
 }
 
-// ============================================================
-// Main Dashboard Page
-// ============================================================
-
 export default function DashboardPage() {
   const devices = useStore((s) => s.devices);
   const racks = useStore((s) => s.racks);
   const commandHistory = useStore((s) => s.commandHistory);
 
-  // --- Computed stats ---
   const stats = useMemo(() => {
     const statusCounts: Record<DeviceStatus, number> = {
       online: 0,
@@ -81,7 +74,6 @@ export default function DashboardPage() {
 
     const avgTemp = tempCount > 0 ? totalTemp / tempCount : 0;
 
-    // Determine overall system status
     let systemStatus: DeviceStatus = "online";
     if (statusCounts.error > 0) systemStatus = "error";
     else if (statusCounts.warning > 0) systemStatus = "warning";
@@ -93,7 +85,6 @@ export default function DashboardPage() {
 
   const recentCommands = commandHistory.slice(0, 5);
 
-  // --- Build a device lookup map for racks ---
   const deviceMap = useMemo(() => {
     const map = new Map<string, (typeof devices)[0]>();
     for (const d of devices) {
@@ -109,7 +100,7 @@ export default function DashboardPage() {
     >
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* ============================================================ */}
-        {/* HERO SECTION */}
+        {/* HERO HEADER */}
         {/* ============================================================ */}
         <header className="relative overflow-hidden rounded-xl border"
           style={{
@@ -117,7 +108,6 @@ export default function DashboardPage() {
             borderColor: "rgba(255,255,255,0.06)",
           }}
         >
-          {/* Decorative grid lines */}
           <div
             className="absolute inset-0 opacity-[0.03]"
             style={{
@@ -126,25 +116,25 @@ export default function DashboardPage() {
               backgroundSize: "40px 40px",
             }}
           />
-          <div className="relative px-6 py-8 sm:px-10 sm:py-10">
+          <div className="relative px-6 py-6 sm:px-10 sm:py-8">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <Server className="w-6 h-6" style={{ color: "#6366f1" }} />
+                <div className="flex items-center gap-3 mb-1">
+                  <Server className="w-5 h-5" style={{ color: "#6366f1" }} />
                   <span
                     className="text-[10px] tracking-[0.3em] uppercase font-mono"
                     style={{ color: "#6366f1" }}
                   >
-                    System Dashboard
+                    Control Panel
                   </span>
                 </div>
                 <h1
-                  className="text-3xl sm:text-4xl font-bold tracking-tight font-mono"
+                  className="text-2xl sm:text-3xl font-bold tracking-tight font-mono"
                   style={{ color: "#f0f0f8" }}
                 >
                   AV RACK CONTROL
                 </h1>
-                <p className="mt-2 text-sm font-mono" style={{ color: "#7a7a8e" }}>
+                <p className="mt-1 text-sm font-mono" style={{ color: "#7a7a8e" }}>
                   {devices.length} devices across {racks.length} racks
                   <span className="mx-2" style={{ color: "#333346" }}>|</span>
                   System{" "}
@@ -170,21 +160,21 @@ export default function DashboardPage() {
         </header>
 
         {/* ============================================================ */}
-        {/* RACK OVERVIEW ROW */}
+        {/* RACKS — PRIMARY SECTION */}
         {/* ============================================================ */}
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Layers className="w-4 h-4" style={{ color: "#6366f1" }} />
-            <h2 className="text-xs font-mono tracking-[0.2em] uppercase" style={{ color: "#7a7a8e" }}>
-              Rack Overview
-            </h2>
+        <RackOverview />
+
+        {/* ============================================================ */}
+        {/* PRESETS + TIMECODE ROW */}
+        {/* ============================================================ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            <PresetShortcuts />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {racks.map((rack) => (
-              <MiniRack key={rack.id} rack={rack} deviceMap={deviceMap} />
-            ))}
+          <div>
+            <TimecodeWidget />
           </div>
-        </section>
+        </div>
 
         {/* ============================================================ */}
         {/* QUICK STATUS GRID */}
@@ -197,7 +187,6 @@ export default function DashboardPage() {
             </h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {/* Status counts */}
             <StatCard
               label="Online"
               value={stats.statusCounts.online}
@@ -222,14 +211,12 @@ export default function DashboardPage() {
               borderColor={STATUS_COLORS.offline}
               icon={<WifiOff className="w-4 h-4" />}
             />
-            {/* Avg temp */}
             <StatCard
               label="Avg Temp"
               value={`${stats.avgTemp.toFixed(1)}\u00B0C`}
               borderColor="#6366f1"
               icon={<Thermometer className="w-4 h-4" />}
             />
-            {/* Total power */}
             <StatCard
               label="Power Draw"
               value={`${stats.totalPower.toFixed(0)}W`}
@@ -274,7 +261,6 @@ export default function DashboardPage() {
                         key={cmd.id}
                         className="flex items-center gap-3 px-5 py-3"
                       >
-                        {/* Status dot */}
                         <span
                           className="flex-shrink-0 w-2 h-2 rounded-full"
                           style={{
@@ -288,7 +274,6 @@ export default function DashboardPage() {
                                 : "#6b7280",
                           }}
                         />
-                        {/* Command info */}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-mono truncate" style={{ color: "#c8c8d8" }}>
                             <span style={{ color: device ? MANUFACTURER_COLORS[device.manufacturer] : "#888" }}>
@@ -298,7 +283,6 @@ export default function DashboardPage() {
                             {cmd.command}
                           </p>
                         </div>
-                        {/* Status badge */}
                         <span
                           className="flex-shrink-0 text-[10px] font-mono px-2 py-0.5 rounded-full uppercase tracking-wider"
                           style={{
@@ -318,7 +302,6 @@ export default function DashboardPage() {
                         >
                           {cmd.status}
                         </span>
-                        {/* Timestamp */}
                         <span className="flex-shrink-0 text-[10px] font-mono" style={{ color: "#4a4a5e" }}>
                           {formatTime(cmd.sentAt)}
                         </span>
@@ -372,143 +355,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-// ============================================================
-// MiniRack Component
-// ============================================================
-
-function MiniRack({
-  rack,
-  deviceMap,
-}: {
-  rack: ReturnType<typeof useStore.getState>["racks"][0];
-  deviceMap: Map<string, ReturnType<typeof useStore.getState>["devices"][0]>;
-}) {
-  // Build an array of 26 RUs, top to bottom (RU 26 at top, RU 1 at bottom, like a real rack)
-  const ruSlots = useMemo(() => {
-    const slots: {
-      ru: number;
-      deviceId?: string;
-      device?: ReturnType<typeof useStore.getState>["devices"][0];
-      isStart: boolean;
-      spanHeight: number;
-    }[] = [];
-
-    // Track which RUs are consumed by multi-RU devices (not the start slot)
-    const consumed = new Set<number>();
-    for (const slot of rack.slots) {
-      if (slot.deviceId) {
-        const dev = deviceMap.get(slot.deviceId);
-        if (dev && dev.rackSlot === slot.ru) {
-          // This is the starting slot
-          for (let i = 1; i < dev.rackUnits; i++) {
-            consumed.add(slot.ru + i);
-          }
-        }
-      }
-    }
-
-    for (let ru = 26; ru >= 1; ru--) {
-      if (consumed.has(ru)) continue;
-
-      const slot = rack.slots.find((s) => s.ru === ru);
-      const device = slot?.deviceId ? deviceMap.get(slot.deviceId) : undefined;
-      const isStart = device ? device.rackSlot === ru : false;
-
-      slots.push({
-        ru,
-        deviceId: slot?.deviceId,
-        device: isStart ? device : undefined,
-        isStart,
-        spanHeight: isStart && device ? device.rackUnits : 1,
-      });
-    }
-
-    return slots;
-  }, [rack, deviceMap]);
-
-  return (
-    <Link href={`/racks/${rack.id}`} className="group block">
-      <div
-        className="rounded-xl border p-4 transition-all duration-200 group-hover:border-opacity-40"
-        style={{
-          background: "rgba(14,14,24,0.6)",
-          borderColor: "rgba(255,255,255,0.06)",
-          backdropFilter: "blur(12px)",
-        }}
-      >
-        {/* Rack visualization */}
-        <div
-          className="rounded-lg border overflow-hidden mb-3"
-          style={{
-            background: "rgba(0,0,0,0.4)",
-            borderColor: "rgba(255,255,255,0.04)",
-          }}
-        >
-          <div className="flex flex-col gap-px p-1.5">
-            {ruSlots.map((slot) => {
-              if (slot.device) {
-                // Device block
-                const mfgColor = MANUFACTURER_COLORS[slot.device.manufacturer];
-                const statusColor = STATUS_COLORS[slot.device.status];
-                return (
-                  <div
-                    key={slot.ru}
-                    className="rounded-sm flex items-center gap-1.5 px-1.5 transition-colors"
-                    style={{
-                      height: `${slot.spanHeight * 8}px`,
-                      background: `${mfgColor}18`,
-                      borderLeft: `2px solid ${mfgColor}`,
-                    }}
-                    title={`${slot.device.name} (RU ${slot.ru}${slot.spanHeight > 1 ? `-${slot.ru + slot.spanHeight - 1}` : ""})`}
-                  >
-                    <span
-                      className="flex-shrink-0 w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: statusColor }}
-                    />
-                    <span
-                      className="text-[8px] font-mono truncate leading-none"
-                      style={{ color: mfgColor }}
-                    >
-                      {slot.device.name}
-                    </span>
-                  </div>
-                );
-              }
-              // Empty slot
-              return (
-                <div
-                  key={slot.ru}
-                  className="rounded-sm"
-                  style={{
-                    height: "8px",
-                    background: "rgba(255,255,255,0.015)",
-                  }}
-                />
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Rack info */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-mono font-semibold" style={{ color: "#d0d0de" }}>
-              {rack.name}
-            </p>
-            <p className="text-[10px] font-mono mt-0.5" style={{ color: "#4a4a5e" }}>
-              {rack.location} &bull; {rack.slots.filter((s) => s.deviceId).length}/{rack.totalRU} RU used
-            </p>
-          </div>
-          <ChevronRight
-            className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
-            style={{ color: "#4a4a5e" }}
-          />
-        </div>
-      </div>
-    </Link>
   );
 }
 
