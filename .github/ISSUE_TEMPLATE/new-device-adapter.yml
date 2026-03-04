@@ -1,0 +1,114 @@
+name: New Device Adapter
+description: Propose adding support for a new AV device manufacturer or product line
+title: "[Adapter] "
+labels: ["adapter", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to propose a new device adapter for the AV Rack Control Panel.
+
+  - type: input
+    id: manufacturer
+    attributes:
+      label: Manufacturer
+      description: The device manufacturer name
+      placeholder: e.g., Roland, Yamaha, Barco
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Device Category
+      description: Primary device category
+      options:
+        - media-server
+        - led-processor
+        - matrix-switcher
+        - video-processor
+        - converter
+        - production-switcher
+        - ptz-camera
+        - camera-controller
+        - projector
+        - wireless-microphone
+        - audio-dsp
+        - audio-interface
+        - amplifier
+        - network-switch
+        - control-processor
+        - streaming-processor
+        - recorder
+        - fiber-extender
+        - encoder-decoder
+        - graphics-processor
+        - ups
+        - pdu
+        - kvm-switch
+        - kvm-extender
+        - multiviewer
+        - opengear-frame
+        - audio-monitor
+    validations:
+      required: true
+
+  - type: dropdown
+    id: protocol
+    attributes:
+      label: Control Protocol
+      description: How does the device communicate?
+      options:
+        - REST API
+        - JSON-RPC
+        - TCP/Telnet
+        - CGI
+        - VISCA (cameras)
+        - SIS (Extron)
+        - CIP (Crestron)
+        - PJLink (projectors)
+        - mDNS/Bonjour
+        - HTTPS
+        - SNMP
+        - Dashboard/Web UI
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: models
+    attributes:
+      label: Device Models
+      description: List specific models to support
+      placeholder: |
+        - Model A (12x12 SDI matrix)
+        - Model B (PTZ camera)
+    validations:
+      required: true
+
+  - type: textarea
+    id: protocol_docs
+    attributes:
+      label: Protocol Documentation
+      description: Links to API docs, protocol guides, or control spec PDFs
+      placeholder: Link to manufacturer API documentation
+
+  - type: textarea
+    id: features
+    attributes:
+      label: Key Features to Support
+      description: What operations should the adapter handle?
+      placeholder: |
+        - Status polling (online/offline, temperature)
+        - Crosspoint routing
+        - Input/output labeling
+        - Preset recall
+    validations:
+      required: true
+
+  - type: textarea
+    id: hardware_access
+    attributes:
+      label: Hardware Access
+      description: Do you have access to real hardware for testing?
+      placeholder: Describe what hardware is available for testing, or if mocks will be needed

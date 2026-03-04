@@ -1,0 +1,61 @@
+name: Bug Report
+description: Report a bug in the AV Rack Control Panel
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Affected Area
+      description: Which part of the application is affected?
+      options:
+        - Device Adapter (specify manufacturer below)
+        - Matrix Routing
+        - Rack Visualization
+        - Health Monitoring
+        - Event System / Notifications
+        - Recording / Timecode
+        - Disguise Server Config
+        - Brompton LED Management
+        - Device Catalog
+        - Command System
+        - Dashboard / UI
+        - API / Backend
+        - Docker / Deployment
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device / Manufacturer
+      description: If this involves a specific device, which one?
+      placeholder: e.g., Blackmagic ATEM Mini Pro
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: What happened vs what you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to Reproduce
+      description: How to trigger the bug
+      placeholder: |
+        1. Navigate to...
+        2. Click on...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: Console errors, API responses, or stack traces
+      render: shell

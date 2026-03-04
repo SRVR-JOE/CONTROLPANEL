@@ -1,0 +1,57 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for the AV control panel
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the feature you'd like to see added to the AV Rack Control Panel.
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Feature Domain
+      description: Which area of the application does this affect?
+      options:
+        - Device Adapters
+        - Matrix Routing
+        - Rack Visualization
+        - Health Monitoring
+        - Event System / Notifications
+        - Recording / Timecode
+        - Disguise Server Config
+        - Brompton LED Management
+        - Device Catalog
+        - Command System
+        - Dashboard / UI
+        - API / Backend
+        - Docker / Deployment
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Clear description of the feature
+      placeholder: What should this feature do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use Case
+      description: Describe the real-world scenario where this is needed
+      placeholder: "As an AV technician, I need to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Notes
+      description: Any technical details or suggestions for implementation
+      placeholder: Relevant files, APIs, or approaches

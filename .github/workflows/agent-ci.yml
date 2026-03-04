@@ -1,0 +1,133 @@
+# ============================================================
+# CONTROLPANEL — Multi-Agent Development CI
+#
+# Triggered on pushes to agent branches (claude/*) and PRs
+# from agent branches into main. Runs the full quality gate
+# pipeline that agents must pass before merge.
+#
+# This workflow validates that parallel agent work doesn't
+# break type safety, lint rules, tests, or the build.
+# ============================================================
+
+name: Agent CI
+
+on:
+  push:
+    branches:
+      - "claude/**"
+      - "feat/**"
+      - "fix/**"
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: agent-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Quality gates — all run in parallel for speed
+  # ──────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run lint
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run test:run -- --reporter=verbose
+        env:
+          CI: "true"
+
+  # ──────────────────────────────────────────────
+  # Build gate — depends on lint + typecheck
+  # ──────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+
+  # ──────────────────────────────────────────────
+  # Change detection — reports which domains were
+  # modified so reviewers know which agent worked
+  # on what area of the codebase.
+  # ──────────────────────────────────────────────
+  detect-domains:
+    name: Detect Changed Domains
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Identify changed domains
+        run: |
+          echo "## Changed Domains" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          check_domain() {
+            local pattern="$1"
+            local label="$2"
+            if git diff --name-only "$BASE" "$HEAD" | grep -q "$pattern"; then
+              echo "- **$label**" >> $GITHUB_STEP_SUMMARY
+            fi
+          }
+
+          check_domain "src/lib/device-adapters/" "Device Adapters"
+          check_domain "src/lib/catalog/" "Device Catalog"
+          check_domain "src/components/matrix\|src/app/matrix" "Matrix Routing"
+          check_domain "src/components/rack\|src/app/racks" "Rack Visualization"
+          check_domain "src/components/health\|src/app/health" "Health Monitoring"
+          check_domain "src/lib/events\|src/app/events\|src/components/notifications" "Events & Notifications"
+          check_domain "src/components/disguise\|src/app/disguise" "Disguise Config"
+          check_domain "src/components/brompton\|src/app/brompton" "Brompton LED"
+          check_domain "src/components/recording\|src/app/recording" "Recording"
+          check_domain "src/lib/timecode\|src/app/timecode" "Timecode"
+          check_domain "src/app/api/" "API Routes"
+          check_domain "src/store/" "State Management"
+          check_domain "src/types/" "Type Definitions"
+          check_domain "__tests__" "Tests"
+          check_domain ".github/" "CI/DevOps"
