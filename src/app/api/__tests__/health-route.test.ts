@@ -240,21 +240,25 @@ describe('POST /api/health', () => {
 
   // --- Device unreachable is included in results (not a route error) ---
   it('includes unreachable devices in results without failing the whole batch', async () => {
-    // Brompton: all 5 endpoint fetches fail for dev-offline
-    // Brompton: all 5 endpoint fetches succeed for dev-online
+    // Brompton SX40: all 7 endpoint fetches fail for dev-offline
+    // Brompton SX40: all 7 endpoint fetches succeed for dev-online
     mockFetch
-      // dev-offline: 5 endpoint failures
+      // dev-offline: 7 endpoint failures
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
-      // dev-online: 5 endpoint successes
-      .mockResolvedValueOnce(makeResponse({ value: 28 }))
-      .mockResolvedValueOnce(makeResponse({ value: 55 }))
-      .mockResolvedValueOnce(makeResponse({ value: 60 }))
-      .mockResolvedValueOnce(makeResponse({ value: 3600 }))
-      .mockResolvedValueOnce(makeResponse({ value: 48 }));
+      .mockRejectedValueOnce(new Error('ECONNREFUSED'))
+      .mockRejectedValueOnce(new Error('ECONNREFUSED'))
+      // dev-online: 7 endpoint successes (SX40 API format)
+      .mockResolvedValueOnce(makeResponse({ ambient: 28 }))
+      .mockResolvedValueOnce(makeResponse({ cpu: 55 }))
+      .mockResolvedValueOnce(makeResponse({ gpu: 60 }))
+      .mockResolvedValueOnce(makeResponse({ uptime: '1h 0m' }))
+      .mockResolvedValueOnce(makeResponse({ temperature: { ambient: 28, cpu: 55, gpu: 60, fpga: 50, psu: 45, main: 39, ethernet: { copper: { a: 35, b: 39 }, sfp: { a: 36, b: 37, c: 38, d: 38 } } } }))
+      .mockResolvedValueOnce(makeResponse({ system: { fan: { case: { one: { speed: 1890 }, two: { speed: 1890 } }, fpga: { speed: 6500 } }, 'software-version': '3.5.2' } }))
+      .mockResolvedValueOnce(makeResponse({ 'software-version': '3.5.2' }));
 
     const { POST } = await import('../health/route');
     const req = makePostRequest({

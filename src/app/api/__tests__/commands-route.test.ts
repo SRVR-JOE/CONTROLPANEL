@@ -179,9 +179,9 @@ describe('POST /api/commands — Brompton', () => {
     const json = await res.json();
     expect(json.success).toBe(true);
     expect(json.response).toContain('75');
-    // Verify PUT was called to the correct endpoint
+    // Verify PUT was called to the correct SX40 endpoint
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://192.168.1.50/api/output/brightness',
+      'http://192.168.1.50/api/output/global-colour/brightness',
       expect.objectContaining({ method: 'PUT' }),
     );
   });

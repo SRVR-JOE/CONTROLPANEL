@@ -10,7 +10,7 @@ export const commandRegistry: CommandRegistry = {
     {
       type: 'set-brightness',
       label: 'Set Brightness',
-      description: 'Set LED panel brightness percentage',
+      description: 'Set LED panel brightness percentage (0-100% maps to device 0-10000 internal scale)',
       category: 'control',
       params: {
         value: { type: 'number', label: 'Brightness %', min: 0, max: 100 },
@@ -66,7 +66,7 @@ export const commandRegistry: CommandRegistry = {
         source: {
           type: 'string',
           label: 'Source',
-          options: ['SDI 1', 'SDI 2', 'HDMI 1', 'DP 1'],
+          options: ['HDMI 1', 'SDI 1'],
         },
       },
     },
@@ -104,6 +104,51 @@ export const commandRegistry: CommandRegistry = {
       description: 'Reload all panel calibration data',
       category: 'diagnostic',
       confirmRequired: true,
+    },
+    {
+      type: 'set-gamma',
+      label: 'Set Gamma',
+      description: 'Set output gamma value',
+      category: 'config',
+      params: {
+        gamma: { type: 'number', label: 'Gamma', min: 1.0, max: 4.0 },
+      },
+    },
+    {
+      type: 'set-gains',
+      label: 'Set Gains',
+      description: 'Set RGBI output gains',
+      category: 'config',
+      params: {
+        red: { type: 'number', label: 'Red %', min: 0, max: 200 },
+        green: { type: 'number', label: 'Green %', min: 0, max: 200 },
+        blue: { type: 'number', label: 'Blue %', min: 0, max: 200 },
+        intensity: { type: 'number', label: 'Intensity %', min: 0, max: 200 },
+      },
+    },
+    {
+      type: 'toggle-overdrive',
+      label: 'Overdrive',
+      description: 'Toggle overdrive processing',
+      category: 'config',
+      params: {
+        enabled: { type: 'boolean', label: 'Enable' },
+      },
+    },
+    {
+      type: 'toggle-extended-bit-depth',
+      label: 'Extended Bit Depth',
+      description: 'Toggle extended bit depth processing',
+      category: 'config',
+      params: {
+        enabled: { type: 'boolean', label: 'Enable' },
+      },
+    },
+    {
+      type: 'get-status',
+      label: 'Get Status',
+      description: 'Read full processor status (temperatures, fans, uptime, firmware)',
+      category: 'diagnostic',
     },
   ],
 
@@ -218,6 +263,86 @@ export const commandRegistry: CommandRegistry = {
       params: {
         input: { type: 'number', label: 'Input', min: 1 },
         output: { type: 'number', label: 'Output', min: 1 },
+      },
+    },
+  ],
+
+  ross: [
+    {
+      type: 'get-frame-status',
+      label: 'Frame Status',
+      description: 'Read openGear frame status (slots, PSU, temperature)',
+      category: 'diagnostic',
+    },
+    {
+      type: 'get-card-status',
+      label: 'Card Status',
+      description: 'Read status of a specific card slot',
+      category: 'diagnostic',
+      params: {
+        slot: { type: 'number', label: 'Slot #', min: 1, max: 20 },
+      },
+    },
+  ],
+
+  brainstorm: [
+    {
+      type: 'get-timecode-status',
+      label: 'Timecode Status',
+      description: 'Read current timecode value and sync state',
+      category: 'diagnostic',
+    },
+    {
+      type: 'get-sync-status',
+      label: 'Sync Status',
+      description: 'Read clock sync and reference lock status',
+      category: 'diagnostic',
+    },
+  ],
+
+  barco: [
+    {
+      type: 'select-input',
+      label: 'Select Input',
+      description: 'Switch the active input source',
+      category: 'control',
+      params: {
+        input: { type: 'number', label: 'Input #', min: 1, max: 4 },
+      },
+    },
+    {
+      type: 'set-output-resolution',
+      label: 'Output Resolution',
+      description: 'Set the output resolution',
+      category: 'config',
+      params: {
+        resolution: {
+          type: 'string',
+          label: 'Resolution',
+          options: ['1920x1080p60', '1920x1080p50', '3840x2160p60', '3840x2160p30', '1280x720p60'],
+        },
+      },
+    },
+    {
+      type: 'freeze',
+      label: 'Freeze',
+      description: 'Freeze the current output frame',
+      category: 'control',
+      params: {
+        enabled: { type: 'boolean', label: 'Enable' },
+      },
+    },
+    {
+      type: 'test-pattern',
+      label: 'Test Pattern',
+      description: 'Display a test pattern on the output',
+      category: 'diagnostic',
+      params: {
+        pattern: {
+          type: 'string',
+          label: 'Pattern',
+          options: ['color-bars', 'white', 'black', 'grid', 'ramp'],
+        },
       },
     },
   ],

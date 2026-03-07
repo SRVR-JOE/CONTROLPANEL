@@ -391,6 +391,69 @@ const initialDevices: Device[] = [
     firmware: '8.6.1',
     serialNumber: 'BMD-TNX-2024-92',
   },
+  {
+    id: 'dev-brainstorm-1',
+    name: 'Brainstorm SR-112 #1',
+    manufacturer: 'brainstorm',
+    model: 'SR-112',
+    category: 'timecode-analyzer',
+    status: 'online',
+    ipAddress: '192.168.100.63',
+    rackUnits: 1,
+    ports: [
+      { id: uuidv4(), label: 'LTC In 1', type: 'analog-audio', direction: 'input', signal: true },
+      { id: uuidv4(), label: 'LTC In 2', type: 'analog-audio', direction: 'input', signal: true },
+      { id: uuidv4(), label: 'LTC Out 1', type: 'analog-audio', direction: 'output', signal: true },
+      { id: uuidv4(), label: 'LTC Out 2', type: 'analog-audio', direction: 'output', signal: true },
+      { id: uuidv4(), label: 'LTC Out 3', type: 'analog-audio', direction: 'output', signal: true },
+      { id: uuidv4(), label: 'LTC Out 4', type: 'analog-audio', direction: 'output', signal: true },
+      { id: uuidv4(), label: 'Ethernet', type: 'ethernet', direction: 'input', signal: true },
+    ],
+    health: { ...createMockHealth('brainstorm'), temperature: 28 },
+    firmware: 'TC: 01:00:00:00 | FW 2.14',
+    serialNumber: 'BST-SR112-0087',
+  },
+  {
+    id: 'dev-brainstorm-2',
+    name: 'Brainstorm SR-112 #2',
+    manufacturer: 'brainstorm',
+    model: 'SR-112',
+    category: 'timecode-analyzer',
+    status: 'online',
+    ipAddress: '192.168.100.64',
+    rackUnits: 1,
+    ports: [
+      { id: uuidv4(), label: 'LTC In 1', type: 'analog-audio', direction: 'input', signal: true },
+      { id: uuidv4(), label: 'LTC In 2', type: 'analog-audio', direction: 'input', signal: false },
+      { id: uuidv4(), label: 'LTC Out 1', type: 'analog-audio', direction: 'output', signal: true },
+      { id: uuidv4(), label: 'LTC Out 2', type: 'analog-audio', direction: 'output', signal: true },
+      { id: uuidv4(), label: 'Ethernet', type: 'ethernet', direction: 'input', signal: true },
+    ],
+    health: { ...createMockHealth('brainstorm'), temperature: 30 },
+    firmware: 'TC: 01:00:00:00 | FW 2.14',
+    serialNumber: 'BST-SR112-0088',
+  },
+  {
+    id: 'dev-brainstorm-3',
+    name: 'Brainstorm DXD-8',
+    manufacturer: 'brainstorm',
+    model: 'DXD-8',
+    category: 'master-clock',
+    status: 'online',
+    ipAddress: '192.168.100.65',
+    rackUnits: 1,
+    ports: [
+      { id: uuidv4(), label: 'Word Clock Out 1', type: 'analog-audio', direction: 'output', signal: true },
+      { id: uuidv4(), label: 'Word Clock Out 2', type: 'analog-audio', direction: 'output', signal: true },
+      { id: uuidv4(), label: 'AES Out 1', type: 'aes-ebu', direction: 'output', signal: true },
+      { id: uuidv4(), label: 'AES Out 2', type: 'aes-ebu', direction: 'output', signal: true },
+      { id: uuidv4(), label: 'Video Ref In', type: 'sdi', direction: 'input', signal: true },
+      { id: uuidv4(), label: 'Ethernet', type: 'ethernet', direction: 'input', signal: true },
+    ],
+    health: { ...createMockHealth('brainstorm'), temperature: 26 },
+    firmware: '48.000 kHz | FW 3.01',
+    serialNumber: 'BST-DXD8-0041',
+  },
 ];
 
 // ============================================================
@@ -1435,11 +1498,11 @@ export const useStore = create<AppStore>((set, get) => ({
         return res.json();
       })
       .then((data) => {
-        if (data.machines) {
+        if (data.devices) {
           get().updateDiscoveryScan(scanId, {
             status: 'done',
             progress: 100,
-            found: data.machines,
+            found: data.devices,
             scannedCount: totalCount,
             completedAt: new Date().toISOString(),
           });

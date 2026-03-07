@@ -42,14 +42,19 @@ async function getJson(url: string): Promise<{ ok: boolean; text: string }> {
 async function dispatchBrompton(ip: string, command: string, params: Record<string, unknown>): Promise<CommandResponse> {
   const base = `http://${ip}`;
   switch (command) {
-    case 'set-brightness': { const { ok, text } = await putJson(`${base}/api/output/brightness`, { value: params.value }); return ok ? { success: true, response: `Brightness set to ${params.value}%` } : { success: false, error: `Device returned error: ${text}` }; }
+    case 'set-brightness': { const pct = Number(params.value); const scaled = Math.round(pct * 100); const { ok, text } = await putJson(`${base}/api/output/global-colour/brightness`, { brightness: scaled }); return ok ? { success: true, response: `Brightness set to ${pct}% (${scaled}/10000)` } : { success: false, error: `Device returned error: ${text}` }; }
     case 'blackout': { const { ok, text } = await putJson(`${base}/api/output/blackout`, { enabled: params.enabled }); return ok ? { success: true, response: `Blackout ${params.enabled ? 'enabled' : 'disabled'}` } : { success: false, error: `Device returned error: ${text}` }; }
     case 'freeze': { const { ok, text } = await putJson(`${base}/api/output/freeze`, { enabled: params.enabled }); return ok ? { success: true, response: `Freeze ${params.enabled ? 'enabled' : 'disabled'}` } : { success: false, error: `Device returned error: ${text}` }; }
     case 'test-pattern': { const { ok, text } = await putJson(`${base}/api/output/testPattern`, { pattern: params.pattern }); return ok ? { success: true, response: `Test pattern set to: ${params.pattern}` } : { success: false, error: `Device returned error: ${text}` }; }
-    case 'set-color-temp': { const { ok, text } = await putJson(`${base}/api/output/colorTemperature`, { kelvin: params.kelvin }); return ok ? { success: true, response: `Color temperature set to ${params.kelvin}K` } : { success: false, error: `Device returned error: ${text}` }; }
-    case 'select-input': { const { ok, text } = await putJson(`${base}/api/input/source`, { source: params.source }); return ok ? { success: true, response: `Input source switched to: ${params.source}` } : { success: false, error: `Device returned error: ${text}` }; }
-    case 'toggle-darkmagic': { const { ok, text } = await putJson(`${base}/api/processing/darkMagic`, { enabled: params.enabled }); return ok ? { success: true, response: `DarkMagic ${params.enabled ? 'enabled' : 'disabled'}` } : { success: false, error: `Device returned error: ${text}` }; }
-    case 'toggle-puretone': { const { ok, text } = await putJson(`${base}/api/processing/pureTone`, { enabled: params.enabled }); return ok ? { success: true, response: `PureTone ${params.enabled ? 'enabled' : 'disabled'}` } : { success: false, error: `Device returned error: ${text}` }; }
+    case 'set-color-temp': { const { ok, text } = await putJson(`${base}/api/output/global-colour/colour-temperature`, { 'colour-temperature': Number(params.kelvin) }); return ok ? { success: true, response: `Color temperature set to ${params.kelvin}K` } : { success: false, error: `Device returned error: ${text}` }; }
+    case 'select-input': { const src = String(params.source).trim().toUpperCase(); const match = src.match(/^(HDMI|SDI)\s*(\d+)$/); if (!match) return { success: false, error: `Invalid source format "${params.source}". Expected "HDMI 1", "SDI 1", "SDI 2", etc.` }; const portType = match[1].toLowerCase(); const portNumber = Number(match[2]) - 1; const { ok, text } = await putJson(`${base}/api/input/active/source`, { 'port-type': portType, 'port-number': portNumber }); return ok ? { success: true, response: `Input source switched to: ${params.source}` } : { success: false, error: `Device returned error: ${text}` }; }
+    case 'toggle-darkmagic': { const { ok, text } = await putJson(`${base}/api/output/global-colour/dark-magic`, { enabled: Boolean(params.enabled) }); return ok ? { success: true, response: `DarkMagic ${params.enabled ? 'enabled' : 'disabled'}` } : { success: false, error: `Device returned error: ${text}` }; }
+    case 'toggle-puretone': { const { ok, text } = await putJson(`${base}/api/output/global-colour/puretone`, { enabled: Boolean(params.enabled) }); return ok ? { success: true, response: `PureTone ${params.enabled ? 'enabled' : 'disabled'}` } : { success: false, error: `Device returned error: ${text}` }; }
+    case 'set-gamma': { const { ok, text } = await putJson(`${base}/api/output/global-colour/gamma`, { gamma: Number(params.gamma) }); return ok ? { success: true, response: `Gamma set to ${params.gamma}` } : { success: false, error: `Device returned error: ${text}` }; }
+    case 'set-gains': { const { ok, text } = await putJson(`${base}/api/output/global-colour/gains`, { red: Number(params.red), green: Number(params.green), blue: Number(params.blue), intensity: Number(params.intensity) }); return ok ? { success: true, response: `Gains set to R:${params.red} G:${params.green} B:${params.blue} I:${params.intensity}` } : { success: false, error: `Device returned error: ${text}` }; }
+    case 'toggle-overdrive': { const { ok, text } = await putJson(`${base}/api/output/global-colour/overdrive`, { enabled: Boolean(params.enabled) }); return ok ? { success: true, response: `Overdrive ${params.enabled ? 'enabled' : 'disabled'}` } : { success: false, error: `Device returned error: ${text}` }; }
+    case 'toggle-extended-bit-depth': { const { ok, text } = await putJson(`${base}/api/output/global-colour/extended-bit-depth`, { enabled: Boolean(params.enabled) }); return ok ? { success: true, response: `Extended bit depth ${params.enabled ? 'enabled' : 'disabled'}` } : { success: false, error: `Device returned error: ${text}` }; }
+    case 'get-status': { const { ok, text } = await getJson(`${base}/api/system`); if (!ok) return { success: false, error: `Device returned error: ${text}` }; return { success: true, response: text }; }
     case 'identify-panel': { const { ok, text } = await postJson(`${base}/api/panels/identify`, { panelId: params.panelId, duration: params.duration }); return ok ? { success: true, response: `Identifying panel ${params.panelId} for ${params.duration}s` } : { success: false, error: `Device returned error: ${text}` }; }
     case 'reload-panels': { const { ok, text } = await postJson(`${base}/api/panels/reload`, {}); return ok ? { success: true, response: 'Panel reload initiated' } : { success: false, error: `Device returned error: ${text}` }; }
     default: return { success: false, error: `Unknown Brompton command: ${command}` };
@@ -96,6 +101,35 @@ async function dispatchBlackmagic(ip: string, command: string, params: Record<st
   }
 }
 
+async function dispatchRoss(ip: string, command: string, params: Record<string, unknown>): Promise<CommandResponse> {
+  const base = `http://${ip}`;
+  switch (command) {
+    case 'get-frame-status': { const { ok, text } = await getJson(`${base}/`); if (!ok) return { success: false, error: `Ross frame returned error: ${text}` }; return { success: true, response: `Frame status retrieved (${text.length} bytes)` }; }
+    case 'get-card-status': { const slot = Number(params.slot); if (isNaN(slot) || slot < 1) return { success: false, error: 'get-card-status requires a numeric slot param (>= 1)' }; const { ok, text } = await getJson(`${base}/slot/${slot}`); if (!ok) return { success: false, error: `Ross frame returned error for slot ${slot}: ${text}` }; return { success: true, response: `Slot ${slot} status retrieved` }; }
+    default: return { success: false, error: `Unknown Ross command: ${command}` };
+  }
+}
+
+async function dispatchBrainstorm(ip: string, command: string): Promise<CommandResponse> {
+  const base = `http://${ip}`;
+  switch (command) {
+    case 'get-timecode-status': { const { ok, text } = await getJson(`${base}/`); if (!ok) return { success: false, error: `Brainstorm device returned error: ${text}` }; return { success: true, response: `Timecode status retrieved (${text.length} bytes)` }; }
+    case 'get-sync-status': { const { ok, text } = await getJson(`${base}/`); if (!ok) return { success: false, error: `Brainstorm device returned error: ${text}` }; return { success: true, response: `Sync status retrieved (${text.length} bytes)` }; }
+    default: return { success: false, error: `Unknown Brainstorm command: ${command}` };
+  }
+}
+
+async function dispatchBarco(ip: string, command: string, params: Record<string, unknown>): Promise<CommandResponse> {
+  const base = `http://${ip}`;
+  switch (command) {
+    case 'select-input': { const input = Number(params.input); if (isNaN(input) || input < 1) return { success: false, error: 'select-input requires a numeric input param (>= 1)' }; const { ok, text } = await putJson(`${base}/api/input/select`, { input }); return ok ? { success: true, response: `Input switched to ${input}` } : { success: false, error: `Barco returned error: ${text}` }; }
+    case 'set-output-resolution': { const { ok, text } = await putJson(`${base}/api/output/resolution`, { resolution: params.resolution }); return ok ? { success: true, response: `Output resolution set to ${params.resolution}` } : { success: false, error: `Barco returned error: ${text}` }; }
+    case 'freeze': { const { ok, text } = await putJson(`${base}/api/output/freeze`, { enabled: params.enabled }); return ok ? { success: true, response: `Freeze ${params.enabled ? 'enabled' : 'disabled'}` } : { success: false, error: `Barco returned error: ${text}` }; }
+    case 'test-pattern': { const { ok, text } = await putJson(`${base}/api/output/testPattern`, { pattern: params.pattern }); return ok ? { success: true, response: `Test pattern set to: ${params.pattern}` } : { success: false, error: `Barco returned error: ${text}` }; }
+    default: return { success: false, error: `Unknown Barco command: ${command}` };
+  }
+}
+
 async function dispatchCommand(req: CommandRequest): Promise<CommandResponse> {
   const { manufacturer, ip, command, params = {} } = req;
   try {
@@ -105,6 +139,9 @@ async function dispatchCommand(req: CommandRequest): Promise<CommandResponse> {
       case 'aja': return await dispatchAJA(ip, command, params);
       case 'lightware': return await dispatchLightware(ip, command, params);
       case 'blackmagic': return await dispatchBlackmagic(ip, command, params);
+      case 'ross': return await dispatchRoss(ip, command, params);
+      case 'brainstorm': return await dispatchBrainstorm(ip, command);
+      case 'barco': return await dispatchBarco(ip, command, params);
       default: return { success: true, response: `[Simulated] Command "${command}" acknowledged by ${manufacturer} device at ${ip}`, simulated: true };
     }
   } catch (err) {

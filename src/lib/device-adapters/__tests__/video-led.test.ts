@@ -332,6 +332,43 @@ describe('DisguiseAdapter', () => {
 // ---------------------------------------------------------------------------
 // BromptonAdapter
 // ---------------------------------------------------------------------------
+// Updated to match the real Tessera SX40 API (7 parallel fetch calls):
+//  0: /api/system/temperature/ambient  → { ambient: number }
+//  1: /api/system/temperature/cpu      → { cpu: number }
+//  2: /api/system/temperature/gpu      → { gpu: number }
+//  3: /api/system/uptime              → { uptime: "28m 28s" }  (string!)
+//  4: /api/system/temperature         → { temperature: { ambient, cpu, gpu, fpga, psu, main, ethernet } }
+//  5: /api/system                     → { fan, serial-number, software-version, ... }
+//  6: /api/system/software-version    → { "software-version": "3.5.2" }
+
+/** Mock all 7 Brompton SX40 endpoints with sensible defaults. */
+function mockBromptonEndpoints(overrides: Partial<{
+  ambient: number; cpu: number; gpu: number; uptime: string;
+  fpga: number; psu: number; main: number;
+  caseFan1: number; caseFan2: number; fpgaFan: number; firmware: string;
+}> = {}) {
+  const a = overrides.ambient ?? 28;
+  const c = overrides.cpu ?? 55;
+  const g = overrides.gpu ?? 60;
+  const ut = overrides.uptime ?? '1d 0h 0m 0s';
+  const fpga = overrides.fpga ?? 50;
+  const psu = overrides.psu ?? 45;
+  const main = overrides.main ?? 39;
+  const fw = overrides.firmware ?? '3.5.2';
+
+  mockFetch
+    .mockResolvedValueOnce(makeResponse({ ambient: a }))                  // 0
+    .mockResolvedValueOnce(makeResponse({ cpu: c }))                      // 1
+    .mockResolvedValueOnce(makeResponse({ gpu: g }))                      // 2
+    .mockResolvedValueOnce(makeResponse({ uptime: ut }))                  // 3
+    .mockResolvedValueOnce(makeResponse({                                 // 4
+      temperature: { ambient: a, cpu: c, gpu: g, fpga, psu, main, ethernet: { copper: { a: 35, b: 39 }, sfp: { a: 36, b: 37, c: 38, d: 38 } } },
+    }))
+    .mockResolvedValueOnce(makeResponse({                                 // 5
+      system: { fan: { case: { one: { speed: overrides.caseFan1 ?? 1890 }, two: { speed: overrides.caseFan2 ?? 1890 } }, fpga: { speed: overrides.fpgaFan ?? 6500 } }, 'software-version': fw },
+    }))
+    .mockResolvedValueOnce(makeResponse({ 'software-version': fw }));     // 6
+}
 
 describe('BromptonAdapter', () => {
   const adapter = new BromptonAdapter();
@@ -342,20 +379,8 @@ describe('BromptonAdapter', () => {
   });
 
   // --- Happy path ---
-  it('happy path: returns combined health from all endpoints', async () => {
-    const ambientTemp = { value: 28 };
-    const cpuTemp = { value: 55 };
-    const gpuTemp = { value: 60 };
-    const uptime = { value: 86400 };
-    const panelCount = { value: 120 };
-
-    // Promise.allSettled fires 5 fetch calls in parallel
-    mockFetch
-      .mockResolvedValueOnce(makeResponse(ambientTemp))     // ambient
-      .mockResolvedValueOnce(makeResponse(cpuTemp))         // cpu
-      .mockResolvedValueOnce(makeResponse(gpuTemp))         // gpu
-      .mockResolvedValueOnce(makeResponse(uptime))          // uptime
-      .mockResolvedValueOnce(makeResponse(panelCount));     // panel count
+  it('happy path: returns combined health from all SX40 endpoints', async () => {
+    mockBromptonEndpoints();
 
     const result = await adapter.queryHealth(ip);
 
@@ -363,101 +388,75 @@ describe('BromptonAdapter', () => {
     expect(result.health).not.toBeNull();
     expect(result.health!.temperature).toBe(28); // ambient has priority
     expect(result.health!.gpuTemp).toBe(60);
-    expect(result.health!.uptime).toBe(86400);
+    expect(result.health!.uptime).toBe(86400); // "1d 0h 0m 0s"
+    expect(result.health!.fanSpeed).toBe(1890);
     expect(result.health!.errors).toHaveLength(0);
     expect(result.health!.warnings).toHaveLength(0);
+    expect(result.firmware).toBe('3.5.2');
   });
 
-  // --- Alternate field names ---
-  it('handles alternate temperature field name (temperature instead of value)', async () => {
-    mockFetch
-      .mockResolvedValueOnce(makeResponse({ temperature: 32 })) // ambient
-      .mockResolvedValueOnce(makeResponse({ temperature: 50 })) // cpu
-      .mockResolvedValueOnce(makeResponse({ temperature: 65 })) // gpu
-      .mockResolvedValueOnce(makeResponse({ uptime: 3600 }))    // uptime
-      .mockResolvedValueOnce(makeResponse({ count: 96 }));      // panel count
+  // --- Uptime string parsing ---
+  it('parses uptime string "28m 28s" correctly', async () => {
+    mockBromptonEndpoints({ uptime: '28m 28s' });
 
     const result = await adapter.queryHealth(ip);
 
-    expect(result.health!.temperature).toBe(32);
-    expect(result.health!.gpuTemp).toBe(65);
-    expect(result.health!.uptime).toBe(3600);
+    expect(result.health!.uptime).toBe(28 * 60 + 28);
   });
 
   // --- CPU temp threshold: warning (> 70) ---
-  it('warns when CPU temperature is elevated (> 70C)', async () => {
-    mockFetch
-      .mockResolvedValueOnce(makeResponse({ value: 25 }))   // ambient
-      .mockResolvedValueOnce(makeResponse({ value: 75 }))   // cpu (elevated)
-      .mockResolvedValueOnce(makeResponse({ value: 60 }))   // gpu
-      .mockResolvedValueOnce(makeResponse({ value: 3600 })) // uptime
-      .mockResolvedValueOnce(makeResponse({ value: 48 }));  // panels
+  it('warns when CPU temperature is elevated (> 70°C)', async () => {
+    mockBromptonEndpoints({ cpu: 75 });
 
     const result = await adapter.queryHealth(ip);
 
-    expect(result.health!.warnings).toHaveLength(1);
-    expect(result.health!.warnings[0]).toContain('CPU temperature elevated: 75C');
+    expect(result.health!.warnings.some(w => w.includes('CPU temperature elevated'))).toBe(true);
     expect(result.health!.errors).toHaveLength(0);
   });
 
   // --- CPU temp threshold: error (> 80) ---
-  it('raises error when CPU temperature is critically high (> 80C)', async () => {
-    mockFetch
-      .mockResolvedValueOnce(makeResponse({ value: 25 }))   // ambient
-      .mockResolvedValueOnce(makeResponse({ value: 85 }))   // cpu (critical)
-      .mockResolvedValueOnce(makeResponse({ value: 70 }))   // gpu
-      .mockResolvedValueOnce(makeResponse({ value: 7200 })) // uptime
-      .mockResolvedValueOnce(makeResponse({ value: 48 }));  // panels
+  it('raises error when CPU temperature is critically high (> 80°C)', async () => {
+    mockBromptonEndpoints({ cpu: 85 });
 
     const result = await adapter.queryHealth(ip);
 
-    expect(result.health!.errors).toHaveLength(1);
-    expect(result.health!.errors[0]).toContain('CPU temperature critically high: 85C');
+    expect(result.health!.errors.some(e => e.includes('CPU temperature critically high'))).toBe(true);
   });
 
   // --- GPU temp threshold: warning (> 75) ---
-  it('warns when GPU temperature is elevated (> 75C)', async () => {
-    mockFetch
-      .mockResolvedValueOnce(makeResponse({ value: 25 }))   // ambient
-      .mockResolvedValueOnce(makeResponse({ value: 60 }))   // cpu
-      .mockResolvedValueOnce(makeResponse({ value: 80 }))   // gpu (elevated)
-      .mockResolvedValueOnce(makeResponse({ value: 3600 })) // uptime
-      .mockResolvedValueOnce(makeResponse({ value: 48 }));  // panels
+  it('warns when GPU temperature is elevated (> 75°C)', async () => {
+    mockBromptonEndpoints({ gpu: 80 });
 
     const result = await adapter.queryHealth(ip);
 
-    expect(result.health!.warnings).toHaveLength(1);
-    expect(result.health!.warnings[0]).toContain('GPU temperature elevated: 80C');
+    expect(result.health!.warnings.some(w => w.includes('GPU temperature elevated'))).toBe(true);
   });
 
   // --- GPU temp threshold: error (> 85) ---
-  it('raises error when GPU temperature is critically high (> 85C)', async () => {
-    mockFetch
-      .mockResolvedValueOnce(makeResponse({ value: 25 }))   // ambient
-      .mockResolvedValueOnce(makeResponse({ value: 60 }))   // cpu
-      .mockResolvedValueOnce(makeResponse({ value: 90 }))   // gpu (critical)
-      .mockResolvedValueOnce(makeResponse({ value: 3600 })) // uptime
-      .mockResolvedValueOnce(makeResponse({ value: 48 }));  // panels
+  it('raises error when GPU temperature is critically high (> 85°C)', async () => {
+    mockBromptonEndpoints({ gpu: 90 });
 
     const result = await adapter.queryHealth(ip);
 
-    expect(result.health!.errors).toHaveLength(1);
-    expect(result.health!.errors[0]).toContain('GPU temperature critically high: 90C');
+    expect(result.health!.errors.some(e => e.includes('GPU temperature critically high'))).toBe(true);
   });
 
-  // --- Zero panels warning ---
-  it('warns when no LED panels are online', async () => {
-    mockFetch
-      .mockResolvedValueOnce(makeResponse({ value: 25 }))  // ambient
-      .mockResolvedValueOnce(makeResponse({ value: 55 }))  // cpu
-      .mockResolvedValueOnce(makeResponse({ value: 60 }))  // gpu
-      .mockResolvedValueOnce(makeResponse({ value: 3600 }))// uptime
-      .mockResolvedValueOnce(makeResponse({ value: 0 }));  // panels = 0
+  // --- FPGA temp thresholds ---
+  it('warns when FPGA temperature is elevated (> 70°C)', async () => {
+    mockBromptonEndpoints({ fpga: 75 });
 
     const result = await adapter.queryHealth(ip);
 
-    expect(result.health!.warnings).toHaveLength(1);
-    expect(result.health!.warnings[0]).toContain('No LED panels online');
+    expect(result.health!.warnings.some(w => w.includes('FPGA temperature elevated'))).toBe(true);
+  });
+
+  // --- PSU temp thresholds ---
+  it('warns when PSU temperature is elevated (> 55°C)', async () => {
+    mockBromptonEndpoints({ psu: 60 });
+
+    const result = await adapter.queryHealth(ip);
+
+    expect(result.health!.warnings.some(w => w.includes('PSU temperature elevated'))).toBe(true);
   });
 
   // --- All endpoints fail ---
@@ -470,36 +469,39 @@ describe('BromptonAdapter', () => {
     expect(result.health).toBeNull();
   });
 
-  // --- Partial failure: some endpoints respond, others don't ---
+  // --- Partial failure ---
   it('returns reachable when at least one endpoint succeeds', async () => {
     mockFetch
-      .mockResolvedValueOnce(makeResponse({ value: 28 }))    // ambient ok
-      .mockRejectedValueOnce(makeNetworkError())              // cpu fails
-      .mockRejectedValueOnce(makeNetworkError())              // gpu fails
-      .mockRejectedValueOnce(makeNetworkError())              // uptime fails
-      .mockResolvedValueOnce(makeResponse({ count: 48 }));   // panels ok
+      .mockResolvedValueOnce(makeResponse({ ambient: 28 }))   // ambient ok
+      .mockRejectedValueOnce(makeNetworkError())               // cpu fails
+      .mockRejectedValueOnce(makeNetworkError())               // gpu fails
+      .mockRejectedValueOnce(makeNetworkError())               // uptime fails
+      .mockRejectedValueOnce(makeNetworkError())               // temperature fails
+      .mockRejectedValueOnce(makeNetworkError())               // system fails
+      .mockRejectedValueOnce(makeNetworkError());              // firmware fails
 
     const result = await adapter.queryHealth(ip);
 
     expect(result.reachable).toBe(true);
     expect(result.health!.temperature).toBe(28);
-    expect(result.health!.gpuTemp).toBeUndefined(); // gpu failed
+    expect(result.health!.gpuTemp).toBeUndefined();
   });
 
   // --- 404 responses ---
   it('treats 404 responses as null data', async () => {
     mockFetch
-      .mockResolvedValueOnce(makeResponse('Not Found', 404))
-      .mockResolvedValueOnce(makeResponse({ value: 55 }))    // cpu ok
-      .mockResolvedValueOnce(makeResponse({ value: 60 }))    // gpu ok
-      .mockResolvedValueOnce(makeResponse({ value: 3600 }))  // uptime ok
-      .mockResolvedValueOnce(makeResponse({ value: 48 }));   // panels ok
+      .mockResolvedValueOnce(makeResponse('Not Found', 404))  // ambient 404
+      .mockResolvedValueOnce(makeResponse({ cpu: 55 }))       // cpu ok
+      .mockResolvedValueOnce(makeResponse({ gpu: 60 }))       // gpu ok
+      .mockResolvedValueOnce(makeResponse({ uptime: '1h 0m' })) // uptime ok
+      .mockResolvedValueOnce(makeResponse('Not Found', 404))  // temperature 404
+      .mockResolvedValueOnce(makeResponse('Not Found', 404))  // system 404
+      .mockResolvedValueOnce(makeResponse('Not Found', 404)); // firmware 404
 
     const result = await adapter.queryHealth(ip);
 
-    // Ambient failed (404), cpu ok → still reachable
     expect(result.reachable).toBe(true);
-    // Falls back to cpuTemp as temperature since ambientTemp is 0
+    // Ambient failed (404) → falls back to cpuTemp
     expect(result.health!.temperature).toBe(55);
   });
 
@@ -515,31 +517,19 @@ describe('BromptonAdapter', () => {
 
   // --- cpuTempToUsage mapping ---
   it('maps CPU temperature to usage percentage using thermal model', async () => {
-    // At 62.5°C (midpoint between 40 and 85), usage should be ~50%
-    mockFetch
-      .mockResolvedValueOnce(makeResponse({ value: 25 }))      // ambient
-      .mockResolvedValueOnce(makeResponse({ value: 62 }))      // cpu ~62C → ~49%
-      .mockResolvedValueOnce(makeResponse({ value: 60 }))      // gpu
-      .mockResolvedValueOnce(makeResponse({ value: 3600 }))    // uptime
-      .mockResolvedValueOnce(makeResponse({ value: 48 }));     // panels
+    mockBromptonEndpoints({ cpu: 62 });
 
     const result = await adapter.queryHealth(ip);
-    // cpuTempToUsage(62) = round((62-40)/(85-40)*100) = round(22/45*100) = round(48.9) = 49
+    // cpuTempToUsage(62) = round((62-40)/(85-40)*100) = round(48.9) = 49
     expect(result.health!.cpuUsage).toBe(49);
   });
 
-  // --- Empty body response ---
-  it('handles empty/null response bodies without crashing', async () => {
-    mockFetch
-      .mockResolvedValueOnce(makeResponse(null))   // ambient null
-      .mockResolvedValueOnce(makeResponse(null))   // cpu null
-      .mockResolvedValueOnce(makeResponse(null))   // gpu null
-      .mockResolvedValueOnce(makeResponse(null))   // uptime null
-      .mockResolvedValueOnce(makeResponse(null));  // panels null
+  // --- Null response bodies ---
+  it('handles null response bodies without crashing', async () => {
+    for (let i = 0; i < 7; i++) {
+      mockFetch.mockResolvedValueOnce(makeResponse(null));
+    }
 
-    // All returned null body — none are "reachable" since fetchJson returns null for ok=true with null value
-    // But the raw response is ok:true, json() returns null, so fetchJson returns null
-    // anyFulfilled requires r.value !== null, so all null → not reachable
     const result = await adapter.queryHealth(ip);
     expect(result.reachable).toBe(false);
   });
