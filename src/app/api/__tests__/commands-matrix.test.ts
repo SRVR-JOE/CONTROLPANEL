@@ -501,11 +501,11 @@ describe('Lightware set-crosspoint', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Generic manufacturers (ross, barco) — simulated response
+// Ross and Barco — now have real dispatch functions and registered commands
 // ---------------------------------------------------------------------------
 
-describe('Generic manufacturer commands (ross, barco)', () => {
-  it('ross: any command returns simulated success response', async () => {
+describe('Ross and Barco registered commands', () => {
+  it('ross: rejects unknown commands now that ross has a command registry', async () => {
     const req = makeRequest({
       deviceId: 'ross-1',
       manufacturer: 'ross',
@@ -515,15 +515,12 @@ describe('Generic manufacturer commands (ross, barco)', () => {
     const res = await POST(req);
     const body = await res.json();
 
-    expect(body.success).toBe(true);
-    expect(body.simulated).toBe(true);
-    expect(body.response).toContain('ping');
-    expect(body.response).toContain('ross');
-    // No real network call for generic manufacturers
-    expect(fetch).not.toHaveBeenCalled();
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error).toContain('Unknown command');
   });
 
-  it('barco: any command returns simulated success response', async () => {
+  it('barco: rejects unknown commands now that barco has a command registry', async () => {
     const req = makeRequest({
       deviceId: 'barco-1',
       manufacturer: 'barco',
@@ -533,35 +530,38 @@ describe('Generic manufacturer commands (ross, barco)', () => {
     const res = await POST(req);
     const body = await res.json();
 
-    expect(body.success).toBe(true);
-    expect(body.simulated).toBe(true);
-    expect(body.response).toContain('reboot');
-    expect(body.response).toContain('barco');
-    expect(fetch).not.toHaveBeenCalled();
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error).toContain('Unknown command');
   });
 
-  it('ross: simulated response includes device IP', async () => {
+  it('ross: accepts get-frame-status as a valid command', async () => {
+    mockDeviceFetchOk('<html>Frame OK</html>');
     const req = makeRequest({
       deviceId: 'ross-switch',
       manufacturer: 'ross',
       ip: '10.0.1.55',
-      command: 'get-info',
+      command: 'get-frame-status',
     });
     const res = await POST(req);
     const body = await res.json();
 
-    expect(body.response).toContain('10.0.1.55');
+    expect(body.success).toBe(true);
   });
 
-  it('ross: returns 200 status for simulated command', async () => {
+  it('barco: accepts select-input as a valid command', async () => {
+    mockDeviceFetchOk('OK');
     const req = makeRequest({
-      deviceId: 'ross-1',
-      manufacturer: 'ross',
+      deviceId: 'barco-1',
+      manufacturer: 'barco',
       ip: '192.168.1.200',
-      command: 'get-info',
+      command: 'select-input',
+      params: { input: 1 },
     });
     const res = await POST(req);
-    expect(res.status).toBe(200);
+    const body = await res.json();
+
+    expect(body.success).toBe(true);
   });
 });
 

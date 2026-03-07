@@ -52,16 +52,22 @@ function makeNetworkError(message = 'fetch failed'): Error {
   return new Error(message);
 }
 
-// The updated adapter fires 7 parallel fetches via Promise.allSettled:
+// The adapter fires 11 parallel fetches via Promise.allSettled:
 //  0: /api/system/temperature/ambient
 //  1: /api/system/temperature/cpu
-//  2: /api/system/temperature/gpu   (note: key "gpu", not in original)
+//  2: /api/system/temperature/gpu
 //  3: /api/system/uptime
 //  4: /api/system/temperature       (full temp object)
 //  5: /api/system                   (full system with fans)
 //  6: /api/system/software-version
+//  7: /api/devices/statistics/online-count
+//  8: /api/devices/statistics/error-count
+//  9: /api/devices                  (panel device list)
+// 10: /api/input/active/source      (active input source)
+// Then a follow-up fetch for input metadata if active source is available:
+// 11: /api/input/ports/{type}/{number}/meta-data
 
-/** Helper: mock all 7 endpoints with live-like SX40 data. */
+/** Helper: mock all 11 parallel endpoints + follow-up metadata with live-like SX40 data. */
 function mockAllEndpoints(overrides: {
   ambient?: number;
   cpu?: number;
@@ -74,6 +80,10 @@ function mockAllEndpoints(overrides: {
   caseFan2?: number;
   fpgaFan?: number;
   firmware?: string;
+  panelOnline?: number;
+  panelErrors?: number;
+  skipDevices?: boolean;
+  skipActiveSource?: boolean;
 } = {}) {
   const ambient = overrides.ambient ?? 33.125;
   const cpu = overrides.cpu ?? 44.375;
@@ -86,6 +96,8 @@ function mockAllEndpoints(overrides: {
   const caseFan2 = overrides.caseFan2 ?? 1890;
   const fpgaFan = overrides.fpgaFan ?? 6540;
   const firmware = overrides.firmware ?? '3.5.2';
+  const panelOnline = overrides.panelOnline ?? 48;
+  const panelErrors = overrides.panelErrors ?? 0;
 
   mockFetch
     .mockResolvedValueOnce(makeResponse({ ambient }))                // 0: ambient
@@ -110,7 +122,42 @@ function mockAllEndpoints(overrides: {
         'processor-type': 'sx40',
       },
     }))
-    .mockResolvedValueOnce(makeResponse({ 'software-version': firmware })); // 6: firmware
+    .mockResolvedValueOnce(makeResponse({ 'software-version': firmware })) // 6: firmware
+    .mockResolvedValueOnce(makeResponse({ 'online-count': panelOnline }))  // 7: panel online
+    .mockResolvedValueOnce(makeResponse({ 'error-count': panelErrors }));  // 8: panel errors
+
+  // 9: /api/devices
+  if (overrides.skipDevices) {
+    mockFetch.mockRejectedValueOnce(makeNetworkError());
+  } else {
+    mockFetch.mockResolvedValueOnce(makeResponse({
+      devices: {
+        items: {
+          '014318': { firmware: 'unknown', type: 'XD' },
+          '014319': { firmware: 'unknown', type: 'XD' },
+        },
+        statistics: {},
+      },
+    }));
+  }
+
+  // 10: /api/input/active/source
+  if (overrides.skipActiveSource) {
+    mockFetch.mockRejectedValueOnce(makeNetworkError());
+  } else {
+    mockFetch.mockResolvedValueOnce(makeResponse({
+      source: { 'port-type': 'hdmi', 'port-number': 1 },
+    }));
+    // 11: follow-up /api/input/ports/hdmi/0/meta-data
+    mockFetch.mockResolvedValueOnce(makeResponse({
+      'meta-data': {
+        'bit-depth': 8,
+        'refresh-rate': 60,
+        resolution: { height: 2160, width: 3840 },
+        sampling: 'rgb',
+      },
+    }));
+  }
 }
 
 describe('BromptonAdapter (SX40 live API)', () => {
@@ -299,7 +346,11 @@ describe('BromptonAdapter (SX40 live API)', () => {
       .mockRejectedValueOnce(makeNetworkError())               // uptime fails
       .mockRejectedValueOnce(makeNetworkError())               // temperature fails
       .mockRejectedValueOnce(makeNetworkError())               // system fails
-      .mockRejectedValueOnce(makeNetworkError());              // firmware fails
+      .mockRejectedValueOnce(makeNetworkError())               // firmware fails
+      .mockRejectedValueOnce(makeNetworkError())               // panel online fails
+      .mockRejectedValueOnce(makeNetworkError())               // panel errors fails
+      .mockRejectedValueOnce(makeNetworkError())               // devices fails
+      .mockRejectedValueOnce(makeNetworkError());              // active source fails
 
     const result = await adapter.queryHealth(ip);
 
@@ -317,7 +368,7 @@ describe('BromptonAdapter (SX40 live API)', () => {
   });
 
   it('returns unreachable when all endpoints return 404', async () => {
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 11; i++) {
       mockFetch.mockResolvedValueOnce(makeResponse({ 'response-code': 'Path not found' }, 404));
     }
 
@@ -338,7 +389,11 @@ describe('BromptonAdapter (SX40 live API)', () => {
       .mockResolvedValueOnce(makeResponse({ uptime: '1h 0m' }))
       .mockResolvedValueOnce(makeResponse({ temperature: { ambient: 33, cpu: 44, gpu: 44, fpga: 50, psu: 45, main: 39, ethernet: { copper: { a: 35, b: 39 }, sfp: { a: 36, b: 37, c: 38, d: 38 } } } }))
       .mockResolvedValueOnce(makeResponse({ system: { fan: { case: { one: { speed: 1890 }, two: { speed: 1890 } }, fpga: { speed: 6500 } }, 'software-version': '3.5.2' } }))
-      .mockRejectedValueOnce(makeNetworkError()); // firmware endpoint fails
+      .mockRejectedValueOnce(makeNetworkError()) // firmware endpoint fails
+      .mockResolvedValueOnce(makeResponse({ 'online-count': 48 }))
+      .mockResolvedValueOnce(makeResponse({ 'error-count': 0 }))
+      .mockRejectedValueOnce(makeNetworkError()) // devices fails
+      .mockRejectedValueOnce(makeNetworkError()); // active source fails
 
     const result = await adapter.queryHealth(ip);
 
@@ -366,7 +421,12 @@ describe('BromptonAdapter (SX40 live API)', () => {
     expect(urls).toContain(`http://${ip}/api/system/temperature`);
     expect(urls).toContain(`http://${ip}/api/system`);
     expect(urls).toContain(`http://${ip}/api/system/software-version`);
-    expect(urls).toHaveLength(7);
+    expect(urls).toContain(`http://${ip}/api/devices/statistics/online-count`);
+    expect(urls).toContain(`http://${ip}/api/devices/statistics/error-count`);
+    expect(urls).toContain(`http://${ip}/api/devices`);
+    expect(urls).toContain(`http://${ip}/api/input/active/source`);
+    expect(urls).toContain(`http://${ip}/api/input/ports/hdmi/0/meta-data`);
+    expect(urls).toHaveLength(12); // 11 parallel + 1 follow-up metadata
   });
 
   // ---------------------------------------------------------------------------
@@ -387,5 +447,73 @@ describe('BromptonAdapter (SX40 live API)', () => {
 
     expect(result.health!.errors.length).toBeGreaterThanOrEqual(2);  // CPU + GPU critical
     expect(result.health!.warnings.length).toBeGreaterThanOrEqual(3); // FPGA + PSU + ambient + fan
+  });
+
+  // ---------------------------------------------------------------------------
+  // Extended details
+  // ---------------------------------------------------------------------------
+  it('returns ethernet temperatures in details', async () => {
+    mockAllEndpoints();
+
+    const result = await adapter.queryHealth(ip);
+
+    expect(result.details?.ethernetTemperatures).toEqual({
+      copper: { a: 35, b: 39 },
+      sfp: { a: 36, b: 37, c: 38, d: 38 },
+    });
+  });
+
+  it('returns panel device count and types in details', async () => {
+    mockAllEndpoints();
+
+    const result = await adapter.queryHealth(ip);
+
+    expect(result.details?.panelDeviceCount).toBe(2);
+    expect(result.details?.panelDeviceTypes).toEqual(['XD']);
+  });
+
+  it('returns processor info in details', async () => {
+    mockAllEndpoints();
+
+    const result = await adapter.queryHealth(ip);
+
+    expect(result.details?.processorName).toBe('LED A');
+    expect(result.details?.processorType).toBe('sx40');
+    expect(result.details?.serialNumber).toBe('022188');
+  });
+
+  it('returns input source and metadata in details', async () => {
+    mockAllEndpoints();
+
+    const result = await adapter.queryHealth(ip);
+
+    expect(result.details?.inputSource).toEqual({
+      portType: 'hdmi',
+      portNumber: 1,
+    });
+    expect(result.details?.inputMetadata).toEqual({
+      bitDepth: 8,
+      refreshRate: 60,
+      resolution: { width: 3840, height: 2160 },
+      sampling: 'rgb',
+    });
+  });
+
+  it('omits input metadata when active source endpoint fails', async () => {
+    mockAllEndpoints({ skipActiveSource: true });
+
+    const result = await adapter.queryHealth(ip);
+
+    expect(result.details?.inputSource).toBeUndefined();
+    expect(result.details?.inputMetadata).toBeUndefined();
+  });
+
+  it('omits panel device info when devices endpoint fails', async () => {
+    mockAllEndpoints({ skipDevices: true });
+
+    const result = await adapter.queryHealth(ip);
+
+    expect(result.details?.panelDeviceCount).toBeUndefined();
+    expect(result.details?.panelDeviceTypes).toBeUndefined();
   });
 });

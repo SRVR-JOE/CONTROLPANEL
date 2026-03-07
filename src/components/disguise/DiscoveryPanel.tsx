@@ -10,29 +10,14 @@ import {
   CheckCircle2,
   XCircle,
   Plus,
-  Crown,
-  Play,
-  Shield,
   Server,
-  Cpu,
-  Clock,
-  MonitorCheck,
+  Wifi,
+  Globe,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import type { D3NetRole, DiscoveredMachine } from '@/types';
-import { formatUptime } from '@/lib/utils';
-
-const roleIcons: Record<D3NetRole, typeof Crown> = {
-  director: Crown,
-  actor: Play,
-  understudy: Shield,
-};
-
-const roleColors: Record<D3NetRole, string> = {
-  director: 'text-warning',
-  actor: 'text-accent',
-  understudy: 'text-muted',
-};
+import type { DiscoveredDevice } from '@/types';
+import { MANUFACTURER_COLORS } from '@/lib/constants';
+import { CATEGORY_LABELS } from '@/lib/constants';
 
 export default function DiscoveryPanel() {
   const {
@@ -54,9 +39,9 @@ export default function DiscoveryPanel() {
   );
 
   const [expanded, setExpanded] = useState(false);
-  const [subnet, setSubnet] = useState('10.0.0');
-  const [rangeStart, setRangeStart] = useState(1);
-  const [rangeEnd, setRangeEnd] = useState(30);
+  const [subnet, setSubnet] = useState('192.168.100');
+  const [rangeStart, setRangeStart] = useState(50);
+  const [rangeEnd, setRangeEnd] = useState(75);
   const [port, setPort] = useState(80);
   const [assignProfileId, setAssignProfileId] = useState<string>('');
   const [addedIps, setAddedIps] = useState<Set<string>>(new Set());
@@ -93,20 +78,23 @@ export default function DiscoveryPanel() {
     startDiscovery(subnet, rangeStart, rangeEnd, port);
   };
 
-  const handleAddToSession = (machine: DiscoveredMachine) => {
+  const handleAddDisguiseToSession = (device: DiscoveredDevice) => {
     if (!session) return;
-    addDiscoveredToSession(session.id, machine, assignProfileId || undefined);
-    setAddedIps((prev) => new Set(prev).add(machine.ip));
-  };
-
-  const handleAddAll = () => {
-    if (!session || !displayScan) return;
-    for (const m of displayScan.found) {
-      if (!addedIps.has(m.ip) && !isAlreadyInSession(m.ip)) {
-        addDiscoveredToSession(session.id, m, assignProfileId || undefined);
-        setAddedIps((prev) => new Set(prev).add(m.ip));
-      }
-    }
+    // Build a DiscoveredMachine-compatible object for the disguise session
+    const asMachine = {
+      ip: device.ip,
+      hostname: device.hostname ?? `Device-${device.ip.split('.').pop()}`,
+      model: 'VX 4' as const,
+      role: 'actor' as const,
+      designerVersion: 'r27.1',
+      apiPort: port,
+      workgroup: 'DISGUISE',
+      uptime: 0,
+      d3ServiceRunning: true,
+      discoveredAt: device.discoveredAt,
+    };
+    addDiscoveredToSession(session.id, asMachine, assignProfileId || undefined);
+    setAddedIps((prev) => new Set(prev).add(device.ip));
   };
 
   const isAlreadyInSession = (ip: string): boolean => {
@@ -119,9 +107,7 @@ export default function DiscoveryPanel() {
 
   const displayScan = activeScan ?? latestScan;
 
-  if (!session) return null;
-
-  const newMachines = displayScan?.found.filter(
+  const newDevices = displayScan?.found.filter(
     (m) => !isAlreadyInSession(m.ip) && !addedIps.has(m.ip)
   ) ?? [];
 
@@ -134,7 +120,7 @@ export default function DiscoveryPanel() {
       >
         <div className="flex items-center gap-2">
           <Radar className="h-4 w-4 text-accent" />
-          <h3 className="text-sm font-semibold text-foreground">Auto-Discover Machines</h3>
+          <h3 className="text-sm font-semibold text-foreground">Network Discovery</h3>
           {scanning && (
             <span className="flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-medium text-accent">
               <Loader2 className="h-3 w-3 animate-spin" /> Scanning...
@@ -159,7 +145,7 @@ export default function DiscoveryPanel() {
                 value={subnet}
                 onChange={(e) => setSubnet(e.target.value)}
                 className="w-32 rounded-lg border border-border bg-surface-2 px-3 py-1.5 text-sm text-foreground outline-none focus:border-accent"
-                placeholder="10.0.0"
+                placeholder="192.168.100"
               />
             </div>
             <div>
@@ -185,7 +171,7 @@ export default function DiscoveryPanel() {
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted">API Port</label>
+              <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted">Port</label>
               <input
                 type="number"
                 min={1}
@@ -227,95 +213,85 @@ export default function DiscoveryPanel() {
           {/* Results */}
           {displayScan && displayScan.status === 'done' && displayScan.found.length > 0 && (
             <div className="space-y-3">
-              {/* Profile assignment for new machines */}
-              <div className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/20 bg-accent/5 px-3 py-2">
-                <span className="text-xs font-medium text-foreground">When adding, apply profile:</span>
-                <select
-                  value={assignProfileId}
-                  onChange={(e) => setAssignProfileId(e.target.value)}
-                  className="rounded-lg border border-border bg-surface-2 px-3 py-1 text-xs text-foreground outline-none focus:border-accent"
-                >
-                  <option value="">New blank profile</option>
-                  {session.profiles.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-                {newMachines.length > 0 && (
-                  <button
-                    onClick={handleAddAll}
-                    className="ml-auto flex items-center gap-1 rounded-lg bg-accent px-3 py-1 text-xs font-medium text-white hover:bg-accent/80"
+              {/* Profile assignment for disguise machines */}
+              {session && newDevices.some((d) => d.manufacturer === 'disguise') && (
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/20 bg-accent/5 px-3 py-2">
+                  <span className="text-xs font-medium text-foreground">When adding disguise machines, apply profile:</span>
+                  <select
+                    value={assignProfileId}
+                    onChange={(e) => setAssignProfileId(e.target.value)}
+                    className="rounded-lg border border-border bg-surface-2 px-3 py-1 text-xs text-foreground outline-none focus:border-accent"
                   >
-                    <Plus className="h-3 w-3" /> Add All New ({newMachines.length})
-                  </button>
-                )}
-              </div>
+                    <option value="">New blank profile</option>
+                    {session.profiles.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-              {/* Machine list */}
+              {/* Device list */}
               <div className="space-y-1.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                  Discovered Machines ({displayScan.found.length})
+                  Discovered Devices ({displayScan.found.length})
                 </span>
-                {displayScan.found.map((machine) => {
-                  const alreadyInSession = isAlreadyInSession(machine.ip);
-                  const justAdded = addedIps.has(machine.ip);
-                  const RoleIcon = roleIcons[machine.role];
+                {displayScan.found.map((device) => {
+                  const alreadyInSession = isAlreadyInSession(device.ip);
+                  const justAdded = addedIps.has(device.ip);
+                  const mfgColor = device.manufacturer ? MANUFACTURER_COLORS[device.manufacturer] : '#6b7280';
+                  const isDisguise = device.manufacturer === 'disguise';
+
                   return (
                     <div
-                      key={machine.ip}
+                      key={device.ip}
                       className={`flex items-center gap-3 rounded-lg border px-4 py-2.5 transition-all ${
                         alreadyInSession || justAdded
                           ? 'border-success/30 bg-success/5'
                           : 'border-border bg-surface-2/50 hover:border-accent/30'
                       }`}
                     >
-                      {/* Status indicator */}
-                      <div className={`h-2.5 w-2.5 rounded-full ${machine.d3ServiceRunning ? 'bg-success' : 'bg-error'}`}
-                        title={machine.d3ServiceRunning ? 'd3 Service Running' : 'd3 Service Stopped'}
+                      {/* Manufacturer color dot */}
+                      <div
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: mfgColor }}
+                        title={device.manufacturer ?? 'Unknown'}
                       />
 
-                      {/* Role icon + hostname */}
+                      {/* Manufacturer + model */}
                       <div className="flex min-w-[130px] items-center gap-2">
-                        <RoleIcon className={`h-4 w-4 ${roleColors[machine.role]}`} />
+                        <Server className="h-4 w-4 text-muted" />
                         <div>
-                          <span className="block text-sm font-medium text-foreground">{machine.hostname}</span>
-                          <span className="block text-[10px] uppercase text-muted">{machine.role}</span>
+                          <span className="block text-sm font-medium text-foreground">
+                            {device.hostname ?? device.model ?? device.ip}
+                          </span>
+                          <span className="block text-[10px] uppercase text-muted">
+                            {device.manufacturer ?? 'unknown'}
+                            {device.category ? ` / ${CATEGORY_LABELS[device.category] ?? device.category}` : ''}
+                          </span>
                         </div>
                       </div>
 
                       {/* IP */}
                       <div className="min-w-[110px]">
-                        <span className="block font-mono text-xs text-foreground">{machine.ip}</span>
-                        <span className="block text-[10px] text-muted">:{machine.apiPort}</span>
+                        <span className="block font-mono text-xs text-foreground">{device.ip}</span>
+                        <span className="block text-[10px] text-muted">
+                          Ports: {device.openPorts.join(', ') || 'none'}
+                        </span>
                       </div>
 
-                      {/* Model */}
-                      <div className="flex min-w-[80px] items-center gap-1">
-                        <Server className="h-3 w-3 text-muted" />
-                        <span className="text-xs text-muted">{machine.model}</span>
-                      </div>
-
-                      {/* Version */}
-                      <span className="min-w-[50px] text-xs text-muted">{machine.designerVersion}</span>
-
-                      {/* GPU */}
-                      {machine.gpuName && (
-                        <div className="hidden min-w-[140px] items-center gap-1 lg:flex">
-                          <Cpu className="h-3 w-3 text-muted" />
-                          <span className="text-[11px] text-muted">{machine.gpuName.replace('NVIDIA ', '')}</span>
+                      {/* Model / Signature */}
+                      {device.model && (
+                        <div className="hidden min-w-[100px] items-center gap-1 md:flex">
+                          <Globe className="h-3 w-3 text-muted" />
+                          <span className="text-xs text-muted">{device.model}</span>
                         </div>
                       )}
 
-                      {/* Uptime */}
-                      <div className="hidden min-w-[60px] items-center gap-1 md:flex">
-                        <Clock className="h-3 w-3 text-muted" />
-                        <span className="text-[11px] text-muted">{formatUptime(machine.uptime)}</span>
-                      </div>
-
-                      {/* Project */}
-                      {machine.currentProject && (
-                        <div className="hidden min-w-[120px] items-center gap-1 xl:flex">
-                          <MonitorCheck className="h-3 w-3 text-muted" />
-                          <span className="text-[11px] text-accent/70">{machine.currentProject}</span>
+                      {/* HTTP signature */}
+                      {device.httpSignature && (
+                        <div className="hidden min-w-[100px] items-center gap-1 lg:flex">
+                          <Wifi className="h-3 w-3 text-muted" />
+                          <span className="text-[11px] text-muted">{device.httpSignature}</span>
                         </div>
                       )}
 
@@ -329,13 +305,15 @@ export default function DiscoveryPanel() {
                           <span className="flex items-center gap-1 text-xs text-success">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Added
                           </span>
-                        ) : (
+                        ) : isDisguise && session ? (
                           <button
-                            onClick={() => handleAddToSession(machine)}
+                            onClick={() => handleAddDisguiseToSession(device)}
                             className="flex items-center gap-1 rounded-lg bg-accent px-3 py-1 text-xs font-medium text-white hover:bg-accent/80"
                           >
-                            <Plus className="h-3 w-3" /> Add
+                            <Plus className="h-3 w-3" /> Add to Session
                           </button>
+                        ) : (
+                          <span className="text-[10px] text-muted">Detected</span>
                         )}
                       </div>
                     </div>
@@ -349,8 +327,8 @@ export default function DiscoveryPanel() {
           {displayScan && displayScan.status === 'done' && displayScan.found.length === 0 && (
             <div className="rounded-lg border border-border bg-surface-2/30 px-4 py-6 text-center">
               <XCircle className="mx-auto mb-2 h-6 w-6 text-muted" />
-              <p className="text-sm text-muted">No disguise servers found in {subnet}.{displayScan.rangeStart}-{displayScan.rangeEnd}</p>
-              <p className="mt-1 text-xs text-muted">Check that machines are powered on and d3 service is running on port {port}</p>
+              <p className="text-sm text-muted">No devices found in {subnet}.{displayScan.rangeStart}-{displayScan.rangeEnd}</p>
+              <p className="mt-1 text-xs text-muted">Check that devices are powered on and reachable on the network</p>
             </div>
           )}
 

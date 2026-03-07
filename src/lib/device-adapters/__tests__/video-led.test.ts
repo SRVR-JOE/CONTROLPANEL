@@ -332,16 +332,18 @@ describe('DisguiseAdapter', () => {
 // ---------------------------------------------------------------------------
 // BromptonAdapter
 // ---------------------------------------------------------------------------
-// Updated to match the real Tessera SX40 API (7 parallel fetch calls):
+// Updated to match the real Tessera SX40 API (9 parallel fetch calls):
 //  0: /api/system/temperature/ambient  → { ambient: number }
 //  1: /api/system/temperature/cpu      → { cpu: number }
 //  2: /api/system/temperature/gpu      → { gpu: number }
 //  3: /api/system/uptime              → { uptime: "28m 28s" }  (string!)
 //  4: /api/system/temperature         → { temperature: { ambient, cpu, gpu, fpga, psu, main, ethernet } }
-//  5: /api/system                     → { fan, serial-number, software-version, ... }
+//  5: /api/system                     → { system: { fan, serial-number, software-version, ... } }
 //  6: /api/system/software-version    → { "software-version": "3.5.2" }
+//  7: /api/devices/statistics/online-count → { "online-count": number }
+//  8: /api/devices/statistics/error-count  → { "error-count": number }
 
-/** Mock all 7 Brompton SX40 endpoints with sensible defaults. */
+/** Mock all 9 Brompton SX40 endpoints with sensible defaults. */
 function mockBromptonEndpoints(overrides: Partial<{
   ambient: number; cpu: number; gpu: number; uptime: string;
   fpga: number; psu: number; main: number;
@@ -367,7 +369,9 @@ function mockBromptonEndpoints(overrides: Partial<{
     .mockResolvedValueOnce(makeResponse({                                 // 5
       system: { fan: { case: { one: { speed: overrides.caseFan1 ?? 1890 }, two: { speed: overrides.caseFan2 ?? 1890 } }, fpga: { speed: overrides.fpgaFan ?? 6500 } }, 'software-version': fw },
     }))
-    .mockResolvedValueOnce(makeResponse({ 'software-version': fw }));     // 6
+    .mockResolvedValueOnce(makeResponse({ 'software-version': fw }))      // 6
+    .mockResolvedValueOnce(makeResponse({ 'online-count': 48 }))          // 7
+    .mockResolvedValueOnce(makeResponse({ 'error-count': 0 }));           // 8
 }
 
 describe('BromptonAdapter', () => {
@@ -478,7 +482,9 @@ describe('BromptonAdapter', () => {
       .mockRejectedValueOnce(makeNetworkError())               // uptime fails
       .mockRejectedValueOnce(makeNetworkError())               // temperature fails
       .mockRejectedValueOnce(makeNetworkError())               // system fails
-      .mockRejectedValueOnce(makeNetworkError());              // firmware fails
+      .mockRejectedValueOnce(makeNetworkError())               // firmware fails
+      .mockRejectedValueOnce(makeNetworkError())               // panel online fails
+      .mockRejectedValueOnce(makeNetworkError());              // panel errors fails
 
     const result = await adapter.queryHealth(ip);
 
@@ -496,7 +502,9 @@ describe('BromptonAdapter', () => {
       .mockResolvedValueOnce(makeResponse({ uptime: '1h 0m' })) // uptime ok
       .mockResolvedValueOnce(makeResponse('Not Found', 404))  // temperature 404
       .mockResolvedValueOnce(makeResponse('Not Found', 404))  // system 404
-      .mockResolvedValueOnce(makeResponse('Not Found', 404)); // firmware 404
+      .mockResolvedValueOnce(makeResponse('Not Found', 404))  // firmware 404
+      .mockResolvedValueOnce(makeResponse('Not Found', 404))  // panel online 404
+      .mockResolvedValueOnce(makeResponse('Not Found', 404)); // panel errors 404
 
     const result = await adapter.queryHealth(ip);
 
@@ -526,7 +534,7 @@ describe('BromptonAdapter', () => {
 
   // --- Null response bodies ---
   it('handles null response bodies without crashing', async () => {
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 9; i++) {
       mockFetch.mockResolvedValueOnce(makeResponse(null));
     }
 

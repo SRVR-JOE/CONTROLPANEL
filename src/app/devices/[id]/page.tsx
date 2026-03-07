@@ -5,7 +5,7 @@ import { useStore } from '@/store';
 import {
   ArrowLeft, Send, Thermometer, Cpu, HardDrive, Zap, Fan, Clock, Wifi, WifiOff,
 } from 'lucide-react';
-import { MANUFACTURER_COLORS, STATUS_COLORS } from '@/lib/constants';
+import { MANUFACTURER_COLORS, STATUS_COLORS, CATEGORY_LABELS } from '@/lib/constants';
 import { formatUptime } from '@/lib/utils';
 import CommandPalette from '@/components/commands/CommandPalette';
 
@@ -143,7 +143,7 @@ export default function DeviceDetailPage() {
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2"><Cpu size={18} /> Info</h2>
             <div className="space-y-2 text-sm">
               {[
-                ['Category', device.category.replace('-', ' ')],
+                ['Category', CATEGORY_LABELS[device.category] ?? device.category.replace(/-/g, ' ')],
                 ['Rack Units', `${device.rackUnits} RU`],
                 ['Rack', device.rackId || 'Unassigned'],
                 ['Slot', device.rackSlot ? `RU ${device.rackSlot}` : 'N/A'],

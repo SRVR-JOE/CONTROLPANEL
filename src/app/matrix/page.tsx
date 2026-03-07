@@ -36,7 +36,7 @@ export default function MatrixPage() {
     );
   }
 
-  const mfgColor = MANUFACTURER_COLORS[selectedRouter.manufacturer];
+  const mfgColor = MANUFACTURER_COLORS[selectedRouter.manufacturer] ?? '#6b7280';
 
   return (
     <div className="flex h-full flex-col gap-4 p-4 pl-20">

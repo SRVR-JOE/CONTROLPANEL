@@ -6,6 +6,9 @@ import { BlackmagicAdapter } from './blackmagic';
 import { LightwareAdapter } from './lightware';
 import { AJAAdapter } from './aja';
 import { GenericAdapter } from './generic';
+import { RossAdapter } from './ross';
+import { BrainstormAdapter } from './brainstorm';
+import { BarcoImageProAdapter } from './barco-imagepro';
 import { NovastarAdapter } from './novastar';
 import { PanasonicAdapter } from './panasonic';
 import { SonyAdapter } from './sony';
@@ -36,6 +39,9 @@ const blackmagicAdapter = new BlackmagicAdapter();
 const lightwareAdapter = new LightwareAdapter();
 const ajaAdapter = new AJAAdapter();
 const genericAdapter = new GenericAdapter();
+const rossAdapter = new RossAdapter();
+const brainstormAdapter = new BrainstormAdapter();
+const barcoImageProAdapter = new BarcoImageProAdapter();
 const novastarAdapter = new NovastarAdapter();
 const panasonicAdapter = new PanasonicAdapter();
 const sonyAdapter = new SonyAdapter();
@@ -64,8 +70,8 @@ const adapterMap: Record<DeviceManufacturer, DeviceAdapter> = {
   blackmagic: blackmagicAdapter,
   lightware: lightwareAdapter,
   aja: ajaAdapter,
-  ross: genericAdapter,
-  barco: genericAdapter,
+  ross: rossAdapter,
+  barco: barcoImageProAdapter,
   novastar: novastarAdapter,
   panasonic: panasonicAdapter,
   sony: sonyAdapter,
@@ -87,6 +93,7 @@ const adapterMap: Record<DeviceManufacturer, DeviceAdapter> = {
   raritan: raritanAdapter,
   apc: apcAdapter,
   cyberpower: cyberpowerAdapter,
+  brainstorm: brainstormAdapter,
 };
 
 /**

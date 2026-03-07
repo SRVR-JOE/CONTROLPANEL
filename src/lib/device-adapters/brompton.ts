@@ -1,5 +1,5 @@
 import { DeviceHealth } from '@/types';
-import { DeviceAdapter, DeviceQueryResult } from './types';
+import { DeviceAdapter, DeviceQueryResult, BromptonDeviceDetails } from './types';
 import { fetchWithTimeout } from '@/lib/utils';
 
 async function fetchJson<T>(url: string): Promise<T | null> {
@@ -101,6 +101,37 @@ interface TesseraSoftwareVersion {
   'software-version': string;
 }
 
+interface TesseraOnlineCount {
+  'online-count': number;
+}
+
+interface TesseraErrorCount {
+  'error-count': number;
+}
+
+interface TesseraDevices {
+  devices: {
+    items: Record<string, { firmware?: string; type?: string }>;
+    statistics?: Record<string, unknown>;
+  };
+}
+
+interface TesseraActiveSource {
+  source: {
+    'port-type': string;
+    'port-number': number;
+  };
+}
+
+interface TesseraInputMetadata {
+  'meta-data': {
+    'bit-depth'?: number;
+    'refresh-rate'?: number;
+    resolution?: { height: number; width: number };
+    sampling?: string;
+  };
+}
+
 // --- Temperature thresholds ---
 
 const THRESHOLDS = {
@@ -126,6 +157,10 @@ export class BromptonAdapter implements DeviceAdapter {
         temperatureResult,
         systemResult,
         firmwareResult,
+        panelOnlineResult,
+        panelErrorResult,
+        devicesResult,
+        activeSourceResult,
       ] = await Promise.allSettled([
         fetchJson<TesseraAmbientTemp>(`${base}/api/system/temperature/ambient`),
         fetchJson<TesseraCpuTemp>(`${base}/api/system/temperature/cpu`),
@@ -134,12 +169,17 @@ export class BromptonAdapter implements DeviceAdapter {
         fetchJson<TesseraTemperature>(`${base}/api/system/temperature`),
         fetchJson<TesseraSystem>(`${base}/api/system`),
         fetchJson<TesseraSoftwareVersion>(`${base}/api/system/software-version`),
+        fetchJson<TesseraOnlineCount>(`${base}/api/devices/statistics/online-count`),
+        fetchJson<TesseraErrorCount>(`${base}/api/devices/statistics/error-count`),
+        fetchJson<TesseraDevices>(`${base}/api/devices`),
+        fetchJson<TesseraActiveSource>(`${base}/api/input/active/source`),
       ]);
 
       // Check if we got at least one successful response to consider the device reachable
       const results = [
         ambientResult, cpuResult, gpuResult, uptimeResult,
         temperatureResult, systemResult, firmwareResult,
+        panelOnlineResult, panelErrorResult,
       ];
       const anyFulfilled = results.some(
         (r) => r.status === 'fulfilled' && r.value !== null
@@ -238,6 +278,19 @@ export class BromptonAdapter implements DeviceAdapter {
         warnings.push(`FPGA fan speed low: ${fpgaFan} RPM`);
       }
 
+      // --- Panel statistics warnings ---
+      const panelOnlineData = panelOnlineResult.status === 'fulfilled' ? panelOnlineResult.value : null;
+      const panelErrorData = panelErrorResult.status === 'fulfilled' ? panelErrorResult.value : null;
+      const onlineCount = panelOnlineData?.['online-count'];
+      const errorCount = panelErrorData?.['error-count'];
+
+      if (onlineCount !== undefined && onlineCount === 0) {
+        warnings.push('No panels currently online');
+      }
+      if (errorCount !== undefined && errorCount > 0) {
+        warnings.push(`${errorCount} panel(s) reporting errors`);
+      }
+
       const health: DeviceHealth = {
         temperature: ambientTemp || mainTemp || cpuTemp,
         cpuUsage: cpuTemp > 0 ? cpuTempToUsage(cpuTemp) : undefined,
@@ -248,7 +301,67 @@ export class BromptonAdapter implements DeviceAdapter {
         warnings,
       };
 
-      return { reachable: true, health, firmware };
+      // --- Build extended details ---
+      const details: BromptonDeviceDetails = {};
+
+      // Ethernet temperatures from the full temperature response
+      const ethTemps = tempData?.temperature?.ethernet;
+      if (ethTemps) {
+        details.ethernetTemperatures = {
+          copper: ethTemps.copper,
+          sfp: ethTemps.sfp,
+        };
+      }
+
+      // Panel device info from /api/devices
+      const devicesData = devicesResult.status === 'fulfilled' ? devicesResult.value : null;
+      const deviceItems = devicesData?.devices?.items;
+      if (deviceItems) {
+        const entries = Object.values(deviceItems);
+        details.panelDeviceCount = entries.length;
+        const types = new Set<string>();
+        for (const item of entries) {
+          if (item?.type) types.add(item.type);
+        }
+        if (types.size > 0) {
+          details.panelDeviceTypes = Array.from(types);
+        }
+      }
+
+      // Processor info from /api/system
+      if (sys?.['processor-name']) details.processorName = sys['processor-name'];
+      if (sys?.['processor-type']) details.processorType = sys['processor-type'];
+      if (sys?.['serial-number']) details.serialNumber = sys['serial-number'];
+
+      // Input source info from /api/input/active/source
+      const activeSourceData = activeSourceResult.status === 'fulfilled' ? activeSourceResult.value : null;
+      const source = activeSourceData?.source;
+      if (source?.['port-type'] != null && source?.['port-number'] != null) {
+        details.inputSource = {
+          portType: source['port-type'],
+          portNumber: source['port-number'],
+        };
+
+        // Follow-up fetch: input metadata (depends on active source, cannot be parallelized)
+        const portIndex = source['port-number'] - 1;
+        const metaData = await fetchJson<TesseraInputMetadata>(
+          `${base}/api/input/ports/${source['port-type']}/${portIndex}/meta-data`
+        );
+        if (metaData?.['meta-data']) {
+          const md = metaData['meta-data'];
+          details.inputMetadata = {
+            bitDepth: md['bit-depth'],
+            refreshRate: md['refresh-rate'],
+            resolution: md.resolution ? { width: md.resolution.width, height: md.resolution.height } : undefined,
+            sampling: md.sampling,
+          };
+        }
+      }
+
+      // Only include details if we have any data
+      const hasDetails = Object.keys(details).length > 0;
+
+      return { reachable: true, health, firmware, ...(hasDetails ? { details } : {}) };
     } catch {
       return { reachable: false, health: null };
     }

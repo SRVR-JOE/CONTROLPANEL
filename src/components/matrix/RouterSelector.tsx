@@ -13,6 +13,7 @@ const MANUFACTURER_LABELS: Record<MatrixManufacturer, string> = {
   crestron: 'Crestron',
   extron: 'Extron',
   netgear: 'Netgear',
+  barco: 'Barco',
 };
 
 export default function RouterSelector() {

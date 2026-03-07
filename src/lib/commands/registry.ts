@@ -17,32 +17,39 @@ export const commandRegistry: CommandRegistry = {
       },
     },
     {
-      type: 'blackout',
+      type: 'set-blackout',
       label: 'Blackout',
-      description: 'Toggle blackout on all outputs',
+      description: 'Enable/disable blackout on all outputs (override/blackout/enabled) with optional fade time',
       category: 'control',
       params: {
         enabled: { type: 'boolean', label: 'Enable' },
+        fadeTime: { type: 'number', label: 'Fade Time (s)', min: 0, max: 10 },
       },
       confirmRequired: true,
     },
     {
-      type: 'test-pattern',
+      type: 'set-test-pattern',
       label: 'Test Pattern',
-      description: 'Display a test pattern on all outputs',
+      description: 'Enable a test pattern on all outputs (override/test-pattern/*)',
       category: 'diagnostic',
       params: {
-        pattern: {
+        enabled: { type: 'boolean', label: 'Enable' },
+        type: {
           type: 'string',
-          label: 'Pattern',
-          options: ['color-bars', 'white', 'red', 'green', 'blue', 'gradient', 'grid'],
+          label: 'Pattern Type',
+          options: [
+            'brompton', 'red', 'green', 'blue', 'cyan', 'magenta', 'yellow',
+            'white', 'black', 'grid', 'scrolling-grid', 'checkerboard',
+            'colour-bars', 'gradient', 'smpte-bars', 'custom-colour',
+            'custom-gradient', 'forty-five-degree-grid', 'strobe',
+          ],
         },
       },
     },
     {
-      type: 'freeze',
+      type: 'set-freeze',
       label: 'Freeze Frame',
-      description: 'Freeze the current output frame',
+      description: 'Enable/disable video freeze (override/freeze/enabled)',
       category: 'control',
       params: {
         enabled: { type: 'boolean', label: 'Enable' },
@@ -145,10 +152,194 @@ export const commandRegistry: CommandRegistry = {
       },
     },
     {
+      type: 'set-colour-correct-enabled',
+      label: 'Colour Correct',
+      description: 'Enable/disable 14-way colour correction (processing/colour-correct/enabled)',
+      category: 'config',
+      params: {
+        enabled: { type: 'boolean', label: 'Enable' },
+      },
+    },
+    {
+      type: 'set-3d-lut-enabled',
+      label: '3D LUT',
+      description: 'Enable/disable 3D LUT mapping (processing/3d-lut/enabled)',
+      category: 'config',
+      params: {
+        enabled: { type: 'boolean', label: 'Enable' },
+      },
+    },
+    {
+      type: 'set-scaler-enabled',
+      label: 'Scaler',
+      description: 'Enable/disable scaler (processing/scaler/enabled)',
+      category: 'config',
+      params: {
+        enabled: { type: 'boolean', label: 'Enable' },
+      },
+    },
+    {
+      type: 'set-osca-module-correction',
+      label: 'OSCA Module Correction',
+      description: 'Enable/disable OSCA module correction (processing/osca/module-correction-enabled)',
+      category: 'config',
+      params: {
+        enabled: { type: 'boolean', label: 'Enable' },
+      },
+    },
+    {
+      type: 'set-osca-seam-correction',
+      label: 'OSCA Seam Correction',
+      description: 'Enable/disable OSCA seam correction (processing/osca/seam-correction-enabled)',
+      category: 'config',
+      params: {
+        enabled: { type: 'boolean', label: 'Enable' },
+      },
+    },
+    {
       type: 'get-status',
       label: 'Get Status',
       description: 'Read full processor status (temperatures, fans, uptime, firmware)',
       category: 'diagnostic',
+    },
+    {
+      type: 'set-network-bit-depth',
+      label: 'Network Bit Depth',
+      description: 'Set the output network bit depth (8, 10, or 12)',
+      category: 'config',
+      params: {
+        bitDepth: { type: 'number', label: 'Bit Depth', min: 8, max: 12 },
+      },
+    },
+    {
+      type: 'set-genlock-source',
+      label: 'Genlock Source',
+      description: 'Set the genlock reference source',
+      category: 'config',
+      params: {
+        source: {
+          type: 'string',
+          label: 'Source',
+          options: ['internal', 'sdi', 'sdi-a', 'sdi-b', 'hdmi', 'dvi', 'ref-in', 'active-input'],
+        },
+      },
+    },
+    {
+      type: 'set-genlock-internal-rate',
+      label: 'Genlock Internal Rate',
+      description: 'Set the genlock internal refresh rate in Hz (23.5-251)',
+      category: 'config',
+      params: {
+        rate: { type: 'number', label: 'Rate (Hz)', min: 23.5, max: 251 },
+      },
+    },
+    {
+      type: 'set-frame-rate-multiplier',
+      label: 'Frame Rate Multiplier',
+      description: 'Set the output frame rate multiplier (1-10)',
+      category: 'config',
+      params: {
+        multiplier: { type: 'number', label: 'Multiplier', min: 1, max: 10 },
+      },
+    },
+    {
+      type: 'get-failover-status',
+      label: 'Failover Status',
+      description: 'Read the current failover state (active, partner present)',
+      category: 'diagnostic',
+    },
+    {
+      type: 'request-failover',
+      label: 'Request Failover',
+      description: 'Trigger a manual failover to the partner processor',
+      category: 'control',
+      confirmRequired: true,
+    },
+    {
+      type: 'set-shuttersync-mode',
+      label: 'ShutterSync Mode',
+      description: 'Set the ShutterSync mode for camera synchronisation',
+      category: 'config',
+      params: {
+        mode: {
+          type: 'string',
+          label: 'Mode',
+          options: ['none', 'speed', 'angle'],
+        },
+      },
+    },
+    {
+      type: 'set-hidden-markers',
+      label: 'Hidden Markers',
+      description: 'Enable/disable hidden markers and set marker mode',
+      category: 'config',
+      params: {
+        enabled: { type: 'boolean', label: 'Enable' },
+        mode: {
+          type: 'string',
+          label: 'Mode',
+          options: ['none', 'redspy', 'startracker', 'custom'],
+        },
+      },
+    },
+    {
+      type: 'get-panel-stats',
+      label: 'Panel Statistics',
+      description: 'Get panel statistics (associated count, online count, error count)',
+      category: 'diagnostic',
+    },
+    {
+      type: 'get-preset-info',
+      label: 'Preset Info',
+      description: 'Get active preset name and number',
+      category: 'diagnostic',
+    },
+    {
+      type: 'get-project-name',
+      label: 'Project Name',
+      description: 'Get current project name',
+      category: 'diagnostic',
+    },
+    {
+      type: 'get-input-info',
+      label: 'Input Info',
+      description: 'Get current input source, resolution, refresh rate, and HDR format',
+      category: 'diagnostic',
+    },
+    {
+      type: 'get-output-settings',
+      label: 'Output Settings',
+      description: 'Read global colour output settings (brightness, colour-temperature, gamma, gains, dark-magic, puretone, overdrive, extended-bit-depth)',
+      category: 'diagnostic',
+      confirmRequired: false,
+    },
+    {
+      type: 'get-processing-status',
+      label: 'Processing Status',
+      description: 'Read processing pipeline status (colour-correct, 3d-lut, osca, scaler, colour-replace, curves)',
+      category: 'diagnostic',
+      confirmRequired: false,
+    },
+    {
+      type: 'get-override-status',
+      label: 'Override Status',
+      description: 'Read override state (blackout, freeze, test-pattern)',
+      category: 'diagnostic',
+      confirmRequired: false,
+    },
+    {
+      type: 'get-network-settings',
+      label: 'Network Settings',
+      description: 'Read output network settings (bit-depth, genlock, frame-rate-multiplier, shuttersync, hidden-markers, failover)',
+      category: 'diagnostic',
+      confirmRequired: false,
+    },
+    {
+      type: 'get-device-list',
+      label: 'Device List',
+      description: 'List connected panels/modules with type, firmware, and statistics',
+      category: 'diagnostic',
+      confirmRequired: false,
     },
   ],
 

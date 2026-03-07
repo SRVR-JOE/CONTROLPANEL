@@ -41,6 +41,7 @@ export const MANUFACTURER_COLORS: Record<DeviceManufacturer, string> = {
   raritan: '#6d4c41',
   apc: '#ff6f00',
   cyberpower: '#37474f',
+  brainstorm: '#00ACC1',
 };
 
 /**
@@ -95,6 +96,8 @@ export const CATEGORY_LABELS: Record<DeviceCategory, string> = {
   multiviewer: 'Multiviewer',
   'opengear-frame': 'OpenGear Frame',
   'audio-monitor': 'Audio Monitor',
+  'timecode-analyzer': 'Timecode Analyzer',
+  'master-clock': 'Master Clock',
 };
 
 export const ALL_MANUFACTURERS: DeviceManufacturer[] = [
@@ -102,6 +105,7 @@ export const ALL_MANUFACTURERS: DeviceManufacturer[] = [
   'novastar', 'panasonic', 'sony', 'christie', 'epson', 'shure', 'qsc',
   'audinate', 'luminex', 'crestron', 'extron', 'netgear', 'avitech', 'adder',
   'sonifex', 'eaton', 'toshiba', 'gude', 'raritan', 'apc', 'cyberpower',
+  'brainstorm',
 ];
 
 export const ALL_CATEGORIES: DeviceCategory[] = [
@@ -111,5 +115,5 @@ export const ALL_CATEGORIES: DeviceCategory[] = [
   'amplifier', 'network-switch', 'control-processor', 'streaming-processor',
   'recorder', 'fiber-extender', 'encoder-decoder', 'graphics-processor',
   'ups', 'pdu', 'kvm-switch', 'kvm-extender', 'multiviewer', 'opengear-frame',
-  'audio-monitor',
+  'audio-monitor', 'timecode-analyzer', 'master-clock',
 ];

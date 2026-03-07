@@ -186,25 +186,25 @@ describe('POST /api/commands — Brompton', () => {
     );
   });
 
-  it('dispatches blackout (enable) and returns success', async () => {
+  it('dispatches set-blackout (enable) and returns success', async () => {
     mockFetch.mockResolvedValueOnce(makeDeviceResponse(200));
     const { POST } = await import('../commands/route');
-    const req = makePostRequest({ ...baseRequest, command: 'blackout', params: { enabled: true } });
+    const req = makePostRequest({ ...baseRequest, command: 'set-blackout', params: { enabled: true } });
     const res = await POST(req);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
     expect(json.response).toContain('enabled');
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://192.168.1.50/api/output/blackout',
+      'http://192.168.1.50/api/override/blackout/enabled',
       expect.objectContaining({ method: 'PUT' }),
     );
   });
 
-  it('dispatches freeze and returns success', async () => {
+  it('dispatches set-freeze and returns success', async () => {
     mockFetch.mockResolvedValueOnce(makeDeviceResponse(200));
     const { POST } = await import('../commands/route');
-    const req = makePostRequest({ ...baseRequest, command: 'freeze', params: { enabled: false } });
+    const req = makePostRequest({ ...baseRequest, command: 'set-freeze', params: { enabled: false } });
     const res = await POST(req);
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -212,15 +212,14 @@ describe('POST /api/commands — Brompton', () => {
     expect(json.response).toContain('disabled');
   });
 
-  it('dispatches test-pattern and returns success', async () => {
-    mockFetch.mockResolvedValueOnce(makeDeviceResponse(200));
+  it('dispatches set-test-pattern and returns success', async () => {
+    mockFetch.mockResolvedValueOnce(makeDeviceResponse(200)).mockResolvedValueOnce(makeDeviceResponse(200));
     const { POST } = await import('../commands/route');
-    const req = makePostRequest({ ...baseRequest, command: 'test-pattern', params: { pattern: 'color-bars' } });
+    const req = makePostRequest({ ...baseRequest, command: 'set-test-pattern', params: { enabled: true, type: 'color-bars' } });
     const res = await POST(req);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
-    expect(json.response).toContain('color-bars');
   });
 
   it('dispatches set-color-temp and returns success', async () => {

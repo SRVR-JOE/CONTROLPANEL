@@ -19,6 +19,7 @@ import {
   avitechCatalog,
   sonifexCatalog,
 } from './manufacturers/kvm-av';
+import { brainstormCatalog } from './manufacturers/brainstorm';
 
 // ─── Brompton ───────────────────────────────────────────────
 const bromptonCatalog: CatalogManufacturer = {
@@ -1286,6 +1287,7 @@ export const CATALOG: CatalogManufacturer[] = [
   raritanCatalog,
   apcCatalog,
   cyberpowerCatalog,
+  brainstormCatalog,
 ];
 
 /** Flat list of all products across all manufacturers. */

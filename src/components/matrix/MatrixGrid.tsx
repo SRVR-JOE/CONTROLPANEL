@@ -16,7 +16,7 @@ export default function MatrixGrid({ router }: MatrixGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isLarge = router.inputs.length > 16 || router.outputs.length > 16;
-  const headerColor = MANUFACTURER_COLORS[router.manufacturer];
+  const headerColor = MANUFACTURER_COLORS[router.manufacturer] ?? '#6b7280';
 
   // Build a lookup: outputIndex -> routedFrom inputIndex
   const routeMap = useMemo(() => {

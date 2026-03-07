@@ -799,12 +799,14 @@ describe('adapterMap: ross and barco use GenericAdapter', () => {
     expect(typeof barcoAdapter.queryHealth).toBe('function');
   });
 
-  it('ross and barco share the same GenericAdapter instance', async () => {
+  it('ross and barco now have dedicated adapters', async () => {
     const { getAdapter } = await import('../index');
     const rossAdapter = getAdapter('ross');
     const barcoAdapter = getAdapter('barco');
-    // Both map to the same singleton genericAdapter
-    expect(rossAdapter).toBe(barcoAdapter);
+    // They now have their own dedicated adapter instances
+    expect(rossAdapter).not.toBe(barcoAdapter);
+    expect(rossAdapter.manufacturer).toBe('ross');
+    expect(barcoAdapter.manufacturer).toBe('barco');
   });
 
   it('getAdapter("aja") returns AJAAdapter', async () => {

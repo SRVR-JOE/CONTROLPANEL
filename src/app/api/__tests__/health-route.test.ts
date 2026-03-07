@@ -240,10 +240,10 @@ describe('POST /api/health', () => {
 
   // --- Device unreachable is included in results (not a route error) ---
   it('includes unreachable devices in results without failing the whole batch', async () => {
-    // Brompton SX40: all 7 endpoint fetches fail for dev-offline
-    // Brompton SX40: all 7 endpoint fetches succeed for dev-online
+    // Brompton SX40: all 9 endpoint fetches fail for dev-offline
+    // Brompton SX40: all 9 endpoint fetches succeed for dev-online
     mockFetch
-      // dev-offline: 7 endpoint failures
+      // dev-offline: 9 endpoint failures
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
@@ -251,14 +251,18 @@ describe('POST /api/health', () => {
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
       .mockRejectedValueOnce(new Error('ECONNREFUSED'))
-      // dev-online: 7 endpoint successes (SX40 API format)
+      .mockRejectedValueOnce(new Error('ECONNREFUSED'))
+      .mockRejectedValueOnce(new Error('ECONNREFUSED'))
+      // dev-online: 9 endpoint successes (SX40 API format)
       .mockResolvedValueOnce(makeResponse({ ambient: 28 }))
       .mockResolvedValueOnce(makeResponse({ cpu: 55 }))
       .mockResolvedValueOnce(makeResponse({ gpu: 60 }))
       .mockResolvedValueOnce(makeResponse({ uptime: '1h 0m' }))
       .mockResolvedValueOnce(makeResponse({ temperature: { ambient: 28, cpu: 55, gpu: 60, fpga: 50, psu: 45, main: 39, ethernet: { copper: { a: 35, b: 39 }, sfp: { a: 36, b: 37, c: 38, d: 38 } } } }))
       .mockResolvedValueOnce(makeResponse({ system: { fan: { case: { one: { speed: 1890 }, two: { speed: 1890 } }, fpga: { speed: 6500 } }, 'software-version': '3.5.2' } }))
-      .mockResolvedValueOnce(makeResponse({ 'software-version': '3.5.2' }));
+      .mockResolvedValueOnce(makeResponse({ 'software-version': '3.5.2' }))
+      .mockResolvedValueOnce(makeResponse({ 'online-count': 48 }))
+      .mockResolvedValueOnce(makeResponse({ 'error-count': 0 }));
 
     const { POST } = await import('../health/route');
     const req = makePostRequest({

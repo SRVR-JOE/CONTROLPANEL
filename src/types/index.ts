@@ -32,7 +32,8 @@ export type DeviceManufacturer =
   | 'gude'
   | 'raritan'
   | 'apc'
-  | 'cyberpower';
+  | 'cyberpower'
+  | 'brainstorm';
 
 export type DeviceCategory =
   | 'media-server'
@@ -61,7 +62,9 @@ export type DeviceCategory =
   | 'kvm-extender'
   | 'multiviewer'
   | 'opengear-frame'
-  | 'audio-monitor';
+  | 'audio-monitor'
+  | 'timecode-analyzer'
+  | 'master-clock';
 
 export type DeviceStatus = 'online' | 'warning' | 'error' | 'offline';
 
@@ -201,7 +204,7 @@ export interface Rack {
 
 // --- Matrix Routing ---
 
-export type MatrixManufacturer = 'aja' | 'lightware' | 'blackmagic' | 'ross' | 'crestron' | 'extron' | 'netgear';
+export type MatrixManufacturer = 'aja' | 'lightware' | 'blackmagic' | 'ross' | 'crestron' | 'extron' | 'netgear' | 'barco';
 
 export interface MatrixInput {
   id: string;
@@ -444,6 +447,17 @@ export interface DiscoveredMachine {
   discoveredAt: string;
 }
 
+export interface DiscoveredDevice {
+  ip: string;
+  hostname?: string;
+  manufacturer?: DeviceManufacturer;
+  model?: string;
+  category?: DeviceCategory;
+  openPorts: number[];
+  httpSignature?: string;
+  discoveredAt: string;
+}
+
 export type DiscoveryStatus = 'idle' | 'scanning' | 'done' | 'error';
 
 export interface DiscoveryScan {
@@ -454,7 +468,7 @@ export interface DiscoveryScan {
   port: number;
   status: DiscoveryStatus;
   progress: number; // 0-100
-  found: DiscoveredMachine[];
+  found: DiscoveredDevice[];
   scannedCount: number;
   totalCount: number;
   startedAt: string;
