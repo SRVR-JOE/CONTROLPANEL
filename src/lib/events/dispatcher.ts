@@ -67,7 +67,7 @@ export async function sendTestNotification(channelId: string): Promise<{ success
     eventType: 'status_change',
     severity: 'info',
     title: 'Test Notification',
-    message: 'This is a test notification from Luminex Configurator. If you receive this, the channel is configured correctly.',
+    message: 'This is a test notification from Virtual Rack. If you receive this, the channel is configured correctly.',
     metadata: { test: true },
     acknowledged: false,
     createdAt: new Date().toISOString(),

@@ -1,5 +1,5 @@
 /**
- * Shared visual constants for the Luminex Configurator.
+ * Shared visual constants for Virtual Rack.
  *
  * This is the single source of truth for manufacturer and status color
  * mappings. All components must import from here rather than defining

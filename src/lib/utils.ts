@@ -1,5 +1,5 @@
 /**
- * Shared utility functions for the Luminex Configurator.
+ * Shared utility functions for Virtual Rack.
  *
  * Centralises helpers that were previously duplicated across 5+ files.
  */

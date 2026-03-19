@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Luminex Configurator - Standalone Server Launcher
+ * Virtual Rack - Standalone Server Launcher
  *
  * Wraps the Next.js standalone server with:
  *  - ASCII banner + network info
@@ -51,8 +51,8 @@ function getLocalIP() {
 // Banner
 console.log('');
 console.log('  ╔══════════════════════════════════════════════╗');
-console.log('  ║       Luminex Configurator                    ║');
-console.log('  ║       Switch Configuration Tool              ║');
+console.log('  ║       VIRTUAL RACK                              ║');
+console.log('  ║       AV Device Management                   ║');
 console.log('  ╚══════════════════════════════════════════════╝');
 console.log('');
 

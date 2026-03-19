@@ -125,14 +125,14 @@ export default function DashboardPage() {
                     className="text-[10px] tracking-[0.3em] uppercase font-mono"
                     style={{ color: "#6366f1" }}
                   >
-                    Configurator
+                    Virtual Rack
                   </span>
                 </div>
                 <h1
                   className="text-2xl sm:text-3xl font-bold tracking-tight font-mono"
                   style={{ color: "#f0f0f8" }}
                 >
-                  LUMINEX CONFIGURATOR
+                  VIRTUAL RACK
                 </h1>
                 <p className="mt-1 text-sm font-mono" style={{ color: "#7a7a8e" }}>
                   {devices.length} devices across {racks.length} racks

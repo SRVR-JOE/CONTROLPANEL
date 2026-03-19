@@ -34,7 +34,7 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
   await transporter.sendMail({
     from,
     to: recipients.join(', '),
-    subject: `[LUMINEX] [${event.severity.toUpperCase()}] ${event.title}`,
+    subject: `[V-RACK] [${event.severity.toUpperCase()}] ${event.title}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px;">
         <div style="background: ${SEVERITY_COLORS[event.severity] || '#6b7280'}; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">

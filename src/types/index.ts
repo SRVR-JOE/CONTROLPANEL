@@ -1,5 +1,5 @@
 // ============================================================
-// Luminex Configurator - Core Type Definitions
+// Virtual Rack - Core Type Definitions
 // ============================================================
 
 // --- Device Types ---

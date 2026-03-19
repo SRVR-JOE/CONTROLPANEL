@@ -45,7 +45,7 @@ export default function Sidebar() {
           AV
         </div>
         <span className="whitespace-nowrap text-sm font-bold tracking-wide text-foreground opacity-0 transition-opacity duration-300 group-hover/sidebar:opacity-100">
-          LUMINEX
+          V-RACK
         </span>
       </div>
 
