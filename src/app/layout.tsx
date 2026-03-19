@@ -11,8 +11,8 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'AV Rack Control Panel',
-  description: 'Professional AV rack monitoring and control system',
+  title: 'Luminex Configurator',
+  description: 'Professional Luminex switch configuration tool for live production',
 };
 
 export default function RootLayout({

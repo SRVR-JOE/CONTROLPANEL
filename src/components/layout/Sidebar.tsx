@@ -15,6 +15,7 @@ import {
   Clock,
   Circle,
   History,
+  Type,
 } from 'lucide-react';
 
 const navItems = [
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/disguise-config', label: 'Disguise', icon: Sliders },
   { href: '/pinboard', label: 'Pin Board', icon: Pin },
   { href: '/devices', label: 'Devices', icon: HardDrive },
+  { href: '/naming', label: 'Naming', icon: Type },
   { href: '/presets', label: 'Presets', icon: Save },
   { href: '/timecode', label: 'Timecode', icon: Clock },
   { href: '/recording', label: 'Recording', icon: Circle },
@@ -43,7 +45,7 @@ export default function Sidebar() {
           AV
         </div>
         <span className="whitespace-nowrap text-sm font-bold tracking-wide text-foreground opacity-0 transition-opacity duration-300 group-hover/sidebar:opacity-100">
-          AV CTRL
+          LUMINEX
         </span>
       </div>
 

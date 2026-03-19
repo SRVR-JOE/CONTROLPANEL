@@ -1,5 +1,5 @@
 /**
- * Shared visual constants for the AV Rack Control Panel.
+ * Shared visual constants for the Luminex Configurator.
  *
  * This is the single source of truth for manufacturer and status color
  * mappings. All components must import from here rather than defining
@@ -99,6 +99,32 @@ export const CATEGORY_LABELS: Record<DeviceCategory, string> = {
   'timecode-analyzer': 'Timecode Analyzer',
   'master-clock': 'Master Clock',
 };
+
+// --- Naming Ideology ---
+
+import type { LocationType, NamingTemplate } from '@/types';
+
+export const LOCATION_TYPE_CONFIG: Record<LocationType, { label: string; color: string; icon: string }> = {
+  truss: { label: 'Truss', color: '#f59e0b', icon: 'truss' },
+  rack: { label: 'Rack', color: '#3b82f6', icon: 'rack' },
+  floor: { label: 'Floor', color: '#22c55e', icon: 'floor' },
+};
+
+export const NAMING_PRESETS: Omit<NamingTemplate, 'createdAt' | 'updatedAt'>[] = [
+  { id: 'preset-foh-rack', name: 'FOH Rack', locationType: 'rack', pattern: 'FOH-{type}-{number}', variables: { type: 'RACK', number: '01' }, isBuiltIn: true },
+  { id: 'preset-stage-floor', name: 'Stage Floor', locationType: 'floor', pattern: 'STAGE-{zone}-{number}', variables: { zone: 'A', number: '01' }, isBuiltIn: true },
+  { id: 'preset-broadcast', name: 'Broadcast', locationType: 'rack', pattern: 'BX-{type}-{number}', variables: { type: 'RACK', number: '01' }, isBuiltIn: true },
+  { id: 'preset-truss-ds', name: 'Truss DS', locationType: 'truss', pattern: 'TRUSS-DS-{number}', variables: { number: '01' }, isBuiltIn: true },
+  { id: 'preset-truss-us', name: 'Truss US', locationType: 'truss', pattern: 'TRUSS-US-{number}', variables: { number: '01' }, isBuiltIn: true },
+  { id: 'preset-truss-sl', name: 'Truss SL', locationType: 'truss', pattern: 'TRUSS-SL-{number}', variables: { number: '01' }, isBuiltIn: true },
+  { id: 'preset-truss-sr', name: 'Truss SR', locationType: 'truss', pattern: 'TRUSS-SR-{number}', variables: { number: '01' }, isBuiltIn: true },
+  { id: 'preset-pit-floor', name: 'Pit Floor', locationType: 'floor', pattern: 'PIT-FL-{number}', variables: { number: '01' }, isBuiltIn: true },
+  { id: 'preset-delay-truss', name: 'Delay Truss', locationType: 'truss', pattern: 'DLY-{zone}-{number}', variables: { zone: 'A', number: '01' }, isBuiltIn: true },
+  { id: 'preset-dimmers-sr', name: 'Dimmers SR', locationType: 'rack', pattern: 'DIM-SR-{number}', variables: { number: '01' }, isBuiltIn: true },
+  { id: 'preset-dimmers-sl', name: 'Dimmers SL', locationType: 'rack', pattern: 'DIM-SL-{number}', variables: { number: '01' }, isBuiltIn: true },
+  { id: 'preset-thrust', name: 'Thrust', locationType: 'floor', pattern: 'THRUST-{number}', variables: { number: '01' }, isBuiltIn: true },
+  { id: 'preset-tower', name: 'Tower', locationType: 'truss', pattern: 'TOWER-{number}', variables: { number: '01' }, isBuiltIn: true },
+];
 
 export const ALL_MANUFACTURERS: DeviceManufacturer[] = [
   'disguise', 'barco', 'brompton', 'lightware', 'aja', 'blackmagic', 'ross',

@@ -28,7 +28,7 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
           { name: 'Severity', value: event.severity.toUpperCase(), inline: true },
         ],
         timestamp: event.createdAt,
-        footer: { text: 'AV Rack Control Panel' },
+        footer: { text: 'Luminex Configurator' },
       },
     ],
   };

@@ -48,7 +48,7 @@ function copyRecursive(src, dest) {
 }
 
 console.log('');
-console.log('  Building AV Rack Control Panel...');
+console.log('  Building Luminex Configurator...');
 console.log('');
 
 // Step 1: Clean
@@ -112,7 +112,7 @@ console.log('  [4/5] Creating launcher scripts...');
 const shScript = `#!/bin/bash
 cd "$(dirname "$0")"
 echo ""
-echo "  Starting AV Rack Control Panel..."
+echo "  Starting Luminex Configurator..."
 echo "  Press Ctrl+C to stop"
 echo ""
 node server.js "$@"
@@ -128,10 +128,10 @@ fs.writeFileSync(path.join(OUT, 'run.command'), commandScript, { mode: 0o755 });
 
 // Windows batch file
 const batScript = `@echo off
-title AV Rack Control Panel
+title Luminex Configurator
 cd /d "%~dp0"
 echo.
-echo   Starting AV Rack Control Panel...
+echo   Starting Luminex Configurator...
 echo   Press Ctrl+C to stop
 echo.
 node server.js %*
@@ -143,7 +143,7 @@ fs.writeFileSync(path.join(OUT, 'run.bat'), batScript);
 const ps1Script = `$ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 Write-Host ""
-Write-Host "  Starting AV Rack Control Panel..."
+Write-Host "  Starting Luminex Configurator..."
 Write-Host "  Press Ctrl+C to stop"
 Write-Host ""
 node server.js @args

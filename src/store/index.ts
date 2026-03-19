@@ -486,6 +486,7 @@ const initialRacks: Rack[] = [
     id: 'rack-server',
     name: 'Server Rack',
     location: 'Stage Left',
+    locationType: 'rack',
     width: 1,
     totalRU: 26,
     slots: createSlots(initialDevices, 'rack-server', 26, 1),
@@ -497,6 +498,7 @@ const initialRacks: Rack[] = [
     id: 'rack-foh',
     name: 'FOH',
     location: 'FOH',
+    locationType: 'rack',
     width: 1,
     totalRU: 12,
     slots: createSlots(initialDevices, 'rack-foh', 12, 1),
@@ -873,7 +875,7 @@ interface AppStore {
   // Rack actions
   addRack: (rack: Omit<Rack, 'id' | 'slots'>) => string;
   removeRack: (rackId: string) => void;
-  updateRack: (rackId: string, updates: Partial<Pick<Rack, 'name' | 'location' | 'totalRU' | 'width'>>) => void;
+  updateRack: (rackId: string, updates: Partial<Pick<Rack, 'name' | 'location' | 'locationType' | 'totalRU' | 'width'>>) => void;
   updateRackWidth: (rackId: string, width: 1 | 2 | 3) => void;
 
   // Notifications (in-app, transient, not persisted)

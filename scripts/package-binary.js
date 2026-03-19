@@ -32,7 +32,7 @@ function run(cmd) {
 }
 
 console.log('');
-console.log('  Packaging AV Rack Control Panel as executable...');
+console.log('  Packaging Luminex Configurator as executable...');
 console.log('');
 
 // Step 1: Make sure the standalone build exists

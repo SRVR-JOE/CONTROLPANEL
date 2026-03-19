@@ -7,6 +7,7 @@ import { useStore } from "@/store";
 import { useShallow } from "zustand/react/shallow";
 import { STATUS_COLORS, MANUFACTURER_COLORS } from "@/lib/constants";
 import type { DeviceStatus, Rack, Device } from "@/types";
+import LocationTypeBadge from "@/components/naming/LocationTypeBadge";
 
 // ============================================================
 // Types
@@ -229,16 +230,20 @@ function RackCard({
                 {rack.name}
               </span>
             </div>
-            <span
-              style={{
-                fontSize: "10px",
-                fontFamily: "var(--font-mono, monospace)",
-                color: "#5a5a6e",
-                display: "block",
-              }}
-            >
-              {rack.location}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontFamily: "var(--font-mono, monospace)",
+                  color: "#5a5a6e",
+                }}
+              >
+                {rack.location}
+              </span>
+              {rack.locationType && (
+                <LocationTypeBadge type={rack.locationType} size="sm" />
+              )}
+            </div>
           </div>
 
           {/* Status badge */}

@@ -1,0 +1,1315 @@
+TESSERA PROCESSING IP CONTROL API
+SOFTWARE VERSION: 3.5.2 PUBLISH DATE: 20/06/25 18:15
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 1 of 77
+
+CHANGELOG
+3.5.2
+Fixed formatting and precision of floating point values
+3.5.0
+Added optional units for numerical endpoints Added hidden markers subtree to contain StarTracker endpoints and new custom marker endpoints Moved StarTracker endpoints into new hidden markers subtree, marked old paths as deprecated to be removed in a future release Added project name endpoint Added processor name and serial endpoints Added processor temperature sensor endpoints Added fan speed and status endpoints Added new TestPatternType data type Changed test-pattern/type endpoint to accept the TestPatternType data type Changed RedundantCableLoopState endpoint's data type from ENUM to STRING and added possible outputs to its description
+3.4.0
+Added colour replace endpoints Added colour curves endpoints Added test pattern restrict to achievable colours switch Added group and global brightness overdrive switches Added DynaCal highlight out of gamut and overbright pixels switches Added Genlock source and internal source framerate endpoints Added endpoints for the remaining StarTracker parameters Added Dynacal gamut endpoints for all inputs and output Removed deprecated input refresh rate and resolution height/width endpoints Added custom gradient test pattern endpoints Added group and global extended bit depth switches Added ShutterSync sensor type and readout time endpoints
+3.3.0
+Added StarTracker enabled switch at output/network/startracker/enabled, and group StarTracker enabled and global override switches under group/items/{number} Added extensive new input endpoints for each port type under input/ports. input/active/resolution/height and width, and input/active/refresh-rate are now deprecated, to be removed in 3.4 Added failover trigger endpoint at output/network/failover/actions/request-failover Added genlock phase offset controls under output/network/genlock/phase-offset Added test pattern custom colour controls under override/test-pattern/custom-colour Added system reboot and shutdown trigger endpoints under system/actions
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 2 of 77
+
+CONTENTS
+1. INTRODUCTION SUPPORTED PROTOCOLS PROCESSOR SETUP CONTROL DEVICE SETUP POLLING
+2. API DATA TYPES COMMANDS ACCESS SPECIFIERS ERRORS DYNAMIC PATHS
+3. FULL ENDPOINT REFERENCE API TREE STRUCTURE ENDPOINTS DESCRIPTION
+4. PROTOCOL EXAMPLE USAGE HTTP TELNET/TCP SOCKET
+5. APPENDICES APPENDIX A | DATA TYPES EXAMPLE USAGE
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 3 of 77
+
+1. INTRODUCTION
+As of version 3.1.0 Tessera processors support remote query and control/triggering functionality over a variety of IP-based protocols via a filesystem-like, RESTful API. This document describes how to access the information available and the format in which it is presented. The API currently focuses on functionality needed for runtime control of the processor, it does not seek to offer all functions of the processor UI. More functionality will be added in future releases. In order to use IP control it must be enabled in the Live Control tile in the processor user interface. The processor on the client must be on the same network and have a compatible IP address configuration.
+COPYRIGHT
+© 2025 Brompton Technology Ltd. All rights reserved.
+TRADEMARKS
+Brompton is a registered trademark owned by Carallon Ltd. All other brand and product names used in this document may be trademarks, registered trademarks or trade names of their respective holders.
+CHANGES
+The information and specifications contained within this document are subject to change without notice. Brompton Technology Ltd reserves the right to make improvements and changes to the hardware and software described in this document at any time and without notice. Brompton Technology Ltd assumes no responsibility or liability for any errors or inaccuracies that might occur in this document.
+SUPPORTED PROTOCOLS
+The following protocols are supported by the Tessera API: HTTP - standard requests via an HTTP client (e.g. web browser) Commandline TCP socket - Telnet-style text-based commands sent over TCP
+Examples of use of each protocol are detailed after the generic control section. All paths, tags and commands are case-insensitive for all protocols.
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 4 of 77
+
+PROCESSOR SETUP
+IP control must be enabled within the project file in order to function, this is done from the control tile in the processor UI. Please refer to the Tessera User Manual for more information.
+CONTROL DEVICE SETUP
+Make sure that your control device (e.g. laptop) is set to an IP range in the same subnet as the processor, and is physically connected to the same network as your processor's management port. For the purposes of this document, we will be using the factory default IP address of a Brompton processor, 192.168.0.50. Be sure to replace this IP address with that of your processor.
+POLLING
+Many IP based control systems are set up to 'poll' the target device at fixed intervals to retrieve and update information about that device. Polling the processor has a 'cost' to retrieve the information requested, both for the client (e.g. the laptop sending the API request) and host (e.g. the processor). Consider how often you need to update the information, and the scope of the information you need. Polling large amounts of data multiple times per second may cause adverse performance issues with your processor, so is generally unadvised.
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 5 of 77
+
+2. API
+DATA TYPES
+The following endpoint data types are supported:
+string: text string of up to 128 UTF-8 encoded characters bool: boolean state, true or false integer: signed 16-bit integer, range -32768 to 32767 float: floating point value bytearray: array of bytes containing binary data enum: string enumeration representing one of a discrete set of possible values testpatterntype: either an enum representing a test pattern, or an integer representing a frame store image by its user number.
+COMMANDS
+get: get one or more endpoints' value(s) set: set an endpoint or group of endpoints' value(s) list: show a summary of available endpoints starting from any position in the API tree help: show help text for an endpoint or directory detailing what the endpoint represents, access specifier, data format and range
+Examples of each command are given in the protocol section.
+ACCESS SPECIFIERS
+The following access specifiers are supported:
+R/W: the endpoint is both readable and writable R/O: the endpoint is read-only and may not be written to W/O: the endpoint is write-only and may not be read
+ERRORS
+The following errors may be returned as the result of a command operation:
+Path not found: the requested endpoint path was not recognised Bad operation: operation was not valid, e.g. trying to set a read-only endpoint Not supported: not supported by the hardware platform or not yet implemented Missing input parameter: required input parameters are missing or malformed Bad input parameter type: one of the input parameters had an incorrect type or format Bad input parameter value: one of the input parameters had an invalid/out of range value Access denied: insufficient privilege level for the requested operation No project loaded: the target processor does not have a project loaded Object not found: the requested object (e.g. panel) was not found Operation failed: general runtime failure
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 6 of 77
+
+DYNAMIC PATHS
+Some paths in the API are dynamic in that they depend on the project configuration. For example, accessing group properties depends on what groups have been created in the project. The dynamic sections in the tree are marked with brackets, for example {number}.
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 7 of 77
+
+3. FULL ENDPOINT REFERENCE
+API TREE STRUCTURE
+api/ devices/ items/ {serial}/ firmware type statistics/ associated-count error-count online-count groups/ items/ {number}/ brightness brightness-limit/ enabled value colour-temperature dark-magic/ enabled extended-bit-depth/ enabled gains/ blue green intensity red gamma global-colour-override global-gains-override global-startracker-override name overdrive/ enabled puretone/ enabled startracker/ enabled input/ active/ source/ port-number port-type ports/ dvi/ {dvi-port-number}/ controls/ colour-space/ colour dvi-colour-format dynacal/ blue/ gamut x y green/ gamut x
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 8 of 77
+
+y red/
+gamut x y white/ colour-temperature gamut x y meta-data/ refresh-rate resolution/ height width proc-amp/ black-level contrast highlight/ blue green red hue saturation shadow/ blue green red hdmi/ {hdmi-port-number}/ controls/ colour-space/ colour info-frame-override-enabled hdmi-colour-format hdr/ format pq/
+auto-brighten gain max-cll-override/
+enabled luminance quantisation-range dynacal/ blue/ gamut x y green/ gamut x y red/ gamut x y white/ colour-temperature gamut x y meta-data/ bit-depth hdr/ format
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 9 of 77
+
+refresh-rate resolution/
+height width sampling proc-amp/ black-level contrast highlight/ blue green red hue saturation shadow/ blue green red sdi/ {sdi-port-number}/ controls/ colour-space/ colour hdr/ format pq/
+auto-brighten gain max-cll-override/
+enabled luminance dynacal/ blue/ gamut x y green/ gamut x y red/ gamut x y white/ colour-temperature gamut x y meta-data/ refresh-rate resolution/ height width proc-amp/ black-level contrast highlight/ blue green red hue saturation shadow/ blue green
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 10 of 77
+
+red output/
+dynacal/ {panel-type}/ blue/ mode x y green/ mode x y luminance-only-fraction mode red/ mode x y
+global-colour/ brightness brightness-limit/ enabled value colour-temperature dark-magic/ enabled dynacal/ highlight-out-of-gamut-pixels-enabled highlight-overbright-pixels-enabled extended-bit-depth/ enabled gains/ blue green intensity red gamma overdrive/ enabled puretone/ enabled
+network/ bit-depth cable-redundancy/ loops/ {loop-number}/ state failover/ actions/ request-failover settings/ enabled modes/ on-button-press on-partner-fail on-partner-video-fail prefer-primary role state/ is-active is-partner-present partner-absence-duration partner-name partner-serial partner-video-absence-duration frame-rate-multiplier
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 11 of 77
+
+frame-remapping/ enabled frames/ {frame}/ blue green mode red x-offset y-offset
+genlock/ internal-rate phase-offset/ absolute/ lines pixels angle fraction mode source
+hidden-markers/ background-gain blackout-affects-markers closed-shutter-markers custom/ data filename marker-gain/ blue green red scaling enabled frames-enabled-on mode redspy/ distance-to-tracker marker-gain marker-seed marker-size-scaler startracker/ blue/ distance-to-tracker enabled marker-gain marker-seed marker-size-scaler green/ distance-to-tracker enabled marker-gain marker-seed marker-size-scaler red/ distance-to-tracker enabled marker-gain marker-seed marker-size-scaler
+shuttersync/ angle-settings/ custom-frame-rate shutter-angle use-custom-frame-rate dark-time dark-time-mode
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 12 of 77
+
+dark-time-percentage insert-dark-time mode prioritise-refresh-rate sensor-readout-time sensor-type speed-settings/
+shutter-speed time viewer startracker/ background-gain (deprecated) blackout-affects-markers (deprecated) blue/ distance-to-tracker (deprecated) enabled (deprecated) marker-gain (deprecated) marker-size-scaler (deprecated) star-map-seed (deprecated) enabled (deprecated) frames-enabled-on (deprecated) green/ distance-to-tracker (deprecated) enabled (deprecated) marker-gain (deprecated) marker-size-scaler (deprecated) star-map-seed (deprecated) red/ distance-to-tracker (deprecated) enabled (deprecated) marker-gain (deprecated) marker-size-scaler (deprecated) star-map-seed (deprecated) override/ blackout/ enabled fade-time freeze/ enabled test-pattern/ custom-colour/ blue green red custom-gradient/ end-colour/ blue green red orientation start-colour/ blue green red enabled format frame-store/ capture-frame delete-frame frames/ {frame-user-number}/
+colour-space enable-alpha format name scaling-mode
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 13 of 77
+
+restrict-to-achievable-colours type presets/ active/ name number items/ {number}/
+name status processing/ 3d-lut/ data enabled filename strength colour-correct/ black/ blue green red blue/ brightness hue saturation cobalt/ brightness hue saturation crimson/ brightness hue saturation cyan/ brightness hue saturation enabled green/ brightness hue saturation lime/ brightness hue saturation magenta/ brightness hue saturation orange/ brightness hue saturation red/ brightness hue saturation turquoise/ brightness hue saturation violet/ brightness hue saturation
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 14 of 77
+
+white/ blue green red
+yellow/ brightness hue saturation
+colour-replace/ apply-to-brightness apply-to-hue apply-to-saturation brightness-tolerance colour-from/ blue green red colour-to/ blue green red colour-tolerance enabled method softness strength view-matte
+curves/ blue/ points enabled green/ points red/ points white/ points
+osca/ module-correction-enabled seam-correction-enabled
+scaler/ enabled
+project/ name
+system/ actions/ reboot shutdown current-date-time fan/ case/ one/ speed status two/ speed status fpga/ speed status processor-name processor-type serial-number software-version temperature/ ambient
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 15 of 77
+
+cpu dsp ethernet/
+copper/ a b
+sfp/ a b c d
+fpga front gpu main psu rear uptime
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 16 of 77
+
+ENDPOINTS DESCRIPTION
+DEVICES
+DEVICE FIRMWARE
+Path: devices/items/{serial}/firmware Description: Current device firmware version Data type: string Access Specifier: ReadOnly
+DEVICE TYPE
+Path: devices/items/{serial}/type Description: Device type name Data type: string Access Specifier: ReadOnly
+ASSOCIATED DEVICES COUNT
+Path: devices/statistics/associated-count Description: The number of devices currently being controlled by the processor Data type: int Range: 0 - 2200 Access Specifier: ReadOnly
+ERROR DEVICES COUNT
+Path: devices/statistics/error-count Description: The number of online devices currently reporting an error state Data type: int Range: 0 - 2048 Access Specifier: ReadOnly
+ONLINE DEVICE COUNT
+Path: devices/statistics/online-count Description: The number of online devices currently detected by the processor Data type: int Range: 0 - 2048 Access Specifier: ReadOnly
+GROUPS
+GROUP BRIGHTNESS
+Path: groups/items/{number}/brightness Description: Gets or sets the group output brightness/luminance Data type: int Units: Nits Range: 0 - 10000 Access Specifier: ReadWrite
+GROUP BRIGHTNESS LIMIT
+Path: groups/items/{number}/brightness-limit/enabled Description: Enables or disables group brightness limit
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 17 of 77
+
+Data type: bool Access Specifier: ReadOnly
+GROUP BRIGHTNESS LIMIT VALUE
+Path: groups/items/{number}/brightness-limit/value Description: Current group maximum brightness value if brightness limit enabled Data type: int Units: Nits Range: 0 - 10000 Access Specifier: ReadOnly
+GROUP COLOUR TEMPERATURE
+Path: groups/items/{number}/colour-temperature Description: Gets or sets the group colour temperature Data type: int Units: Kelvin Range: 2000 - 11000 Access Specifier: ReadWrite
+GROUP DARK MAGIC ENABLED
+Path: groups/items/{number}/dark-magic/enabled Description: Enables or disables group Dark Magic Data type: bool Access Specifier: ReadWrite
+GROUP EXTENDED BIT DEPTH
+Path: groups/items/{number}/extended-bit-depth/enabled Description: Enables or disables group extended bit depth Data type: bool Access Specifier: ReadWrite
+GROUP BLUE GAIN
+Path: groups/items/{number}/gains/blue Description: Gets or sets the value of the group blue gain Data type: float Units: Percentage Range: 0 - 100 Decimal places: 2 Access Specifier: ReadWrite
+GROUP GREEN GAIN
+Path: groups/items/{number}/gains/green Description: Gets or sets the value of the group green gain Data type: float Units: Percentage Range: 0 - 100 Decimal places: 2 Access Specifier: ReadWrite
+GROUP INTENSITY GAIN
+Path: groups/items/{number}/gains/intensity Description: Gets or sets the value of the group intensity gain Data type: float Units: Percentage Range: 0 - 100 Decimal places: 2
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 18 of 77
+
+Access Specifier: ReadWrite
+GROUP RED GAIN
+Path: groups/items/{number}/gains/red Description: Gets or sets the value of the group red gain Data type: float Units: Percentage Range: 0 - 100 Decimal places: 2 Access Specifier: ReadWrite
+GROUP OUTPUT GAMMA
+Path: groups/items/{number}/gamma Description: Gets or sets the group gamma value Data type: float Range: 0.2 - 4.0 Decimal places: 2 Access Specifier: ReadWrite
+GROUP GLOBAL COLOUR OVERRIDE
+Path: groups/items/{number}/global-colour-override Description: Enables or disables group global colour override Data type: bool Access Specifier: ReadWrite
+GROUP GLOBAL GAINS OVERRIDE
+Path: groups/items/{number}/global-gains-override Description: Enables or disables group global gains override Data type: bool Access Specifier: ReadWrite
+GROUP GLOBAL STARTRACKER OVERRIDE
+Path: groups/items/{number}/global-startracker-override Description: Enables or disables global StarTracker override for this group Data type: bool Access Specifier: ReadWrite
+GROUP NAME
+Path: groups/items/{number}/name Description: Gets or sets the group name Data type: string Access Specifier: ReadWrite
+GROUP OVERDRIVE ENABLED
+Path: groups/items/{number}/overdrive/enabled Description: Enables or disables group brightness overdrive Data type: bool Access Specifier: ReadWrite
+GROUP PURE TONE ENABLED
+Path: groups/items/{number}/puretone/enabled Description: Enables or disables group PureTone Data type: bool Access Specifier: ReadWrite
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 19 of 77
+
+GROUP STARTRACKER ENABLED
+Path: groups/items/{number}/startracker/enabled Description: Enables or disables markers in group StarTracker override Data type: bool Access Specifier: ReadWrite
+INPUT
+INPUT PORT NUMBER
+Path: input/active/source/port-number Description: Which physical port instance is currently enabled for video input. For example, SDI A = port 1, SDI B = port 2. The available number of port instances for any port type will vary based on the processor hardware variant. Data type: int Range: 1 - 2 Access Specifier: ReadWrite
+INPUT PORT TYPE
+Path: input/active/source/port-type Description: Which physical port instance is currently enabled for video input. The available types will vary based on the processor hardware variant. Data type: enum Supported values: dvi, hdmi, sdi Access Specifier: ReadWrite
+DVI INPUT COLOUR SPACE
+Path: input/ports/dvi/{dvi-port-number}/controls/colour-space/colour Description: Gets or sets the colour space used for the incoming DVI content Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+INPUT DVI COLOUR FORMAT
+Path: input/ports/dvi/{dvi-port-number}/controls/dvi-colour-format Description: Gets or sets the colour format applied by the processor to the input for DVI input Data type: enum Supported values: rgb, ypbpr601, ypbpr709 Access Specifier: ReadWrite
+DVI DYNACAL BLUE GAMUT
+Path: input/ports/dvi/{dvi-port-number}/dynacal/blue/gamut Description: Blue component of DVI input colour space Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+DVI DYNACAL BLUE X
+Path: input/ports/dvi/{dvi-port-number}/dynacal/blue/x Description: Blue component X value of DVI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 20 of 77
+
+DVI DYNACAL BLUE Y
+Path: input/ports/dvi/{dvi-port-number}/dynacal/blue/y Description: DVI component Y value of video input colour space Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+DVI DYNACAL GREEN GAMUT
+Path: input/ports/dvi/{dvi-port-number}/dynacal/green/gamut Description: Green component of DVI input colour space Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+DVI DYNACAL GREEN X
+Path: input/ports/dvi/{dvi-port-number}/dynacal/green/x Description: Green component X value of DVI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+DVI DYNACAL GREEN Y
+Path: input/ports/dvi/{dvi-port-number}/dynacal/green/y Description: Green component Y value of DVI input colour space Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+DVI DYNACAL RED GAMUT
+Path: input/ports/dvi/{dvi-port-number}/dynacal/red/gamut Description: Red component of DVI input colour space Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+DVI DYNACAL RED X
+Path: input/ports/dvi/{dvi-port-number}/dynacal/red/x Description: Red component X value of DVI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+DVI DYNACAL RED Y
+Path: input/ports/dvi/{dvi-port-number}/dynacal/red/y Description: Red component Y value of DVI input colour space Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+DVI DYNACAL WHITE COLOUR TEMPERATURE
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 21 of 77
+
+Path: input/ports/dvi/{dvi-port-number}/dynacal/white/colour-temperature Description: DVI input white component colour temperature Data type: int Units: Kelvin Range: 2000 - 11000 Access Specifier: ReadWrite
+DVI DYNACAL WHITE GAMUT
+Path: input/ports/dvi/{dvi-port-number}/dynacal/white/gamut Description: White component of DVI input colour space. Set to 'Colour Temperature' to control this white-only parameter Data type: enum Supported values: d65, aces, colour-temperature, custom Access Specifier: ReadWrite
+DVI DYNACAL WHITE X
+Path: input/ports/dvi/{dvi-port-number}/dynacal/white/x Description: White component X value of DVI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+DVI DYNACAL WHITE Y
+Path: input/ports/dvi/{dvi-port-number}/dynacal/white/y Description: DVI input white component Y value Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+DVI INPUT REFRESH RATE
+Path: input/ports/dvi/{dvi-port-number}/meta-data/refresh-rate Description: DVI input refresh rate Data type: float Units: Hertz Range: 24 - 250 Decimal places: 1 Access Specifier: ReadOnly
+DVI INPUT RESOLUTION HEIGHT
+Path: input/ports/dvi/{dvi-port-number}/meta-data/resolution/height Description: DVI input height Data type: int Units: Pixels Range: 32 - 4095 Access Specifier: ReadOnly
+DVI INPUT RESOLUTION WIDTH
+Path: input/ports/dvi/{dvi-port-number}/meta-data/resolution/width Description: DVI input width Data type: int Units: Pixels Range: 32 - 4096 Access Specifier: ReadOnly
+DVI INPUT BLACK LEVEL
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 22 of 77
+
+Path: input/ports/dvi/{dvi-port-number}/proc-amp/black-level Description: Gets or sets black level of a DVI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+DVI INPUT CONTRAST
+Path: input/ports/dvi/{dvi-port-number}/proc-amp/contrast Description: Gets or sets contrast of a DVI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+DVI BLUE HIGHLIGHT
+Path: input/ports/dvi/{dvi-port-number}/proc-amp/highlight/blue Description: Gets or sets blue highlight of a DVI input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+DVI GREEN HIGHLIGHT
+Path: input/ports/dvi/{dvi-port-number}/proc-amp/highlight/green Description: Gets or sets green highlight of a DVI input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+DVI RED HIGHLIGHT
+Path: input/ports/dvi/{dvi-port-number}/proc-amp/highlight/red Description: Gets or sets red highlight of a DVI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+DVI INPUT HUE
+Path: input/ports/dvi/{dvi-port-number}/proc-amp/hue Description: Gets or sets hue of a DVI video input. 0Â° is the passthough value Data type: int Units: Degrees Range: -180 - 180 Access Specifier: ReadWrite
+DVI INPUT SATURATION
+Path: input/ports/dvi/{dvi-port-number}/proc-amp/saturation Description: Gets or sets saturation of a DVI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+DVI BLUE SHADOW
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 23 of 77
+
+Path: input/ports/dvi/{dvi-port-number}/proc-amp/shadow/blue Description: Gets or sets blue shadow of a DVI input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+DVI GREEN SHADOW
+Path: input/ports/dvi/{dvi-port-number}/proc-amp/shadow/green Description: Gets or sets green shadow of a DVI input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+RED SHADOW
+Path: input/ports/dvi/{dvi-port-number}/proc-amp/shadow/red Description: Gets or sets red shadow of a DVI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+HDMI INPUT COLOUR SPACE
+Path: input/ports/hdmi/{hdmi-port-number}/controls/colour-space/colour Description: Gets or sets the colour space used for the incoming HDMI content Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+INFOFRAME OVERRIDE ENABLED
+Path: input/ports/hdmi/{hdmi-port-number}/controls/colour-space/info-frame-override-enabled Description: Enables or disables InfoFrame override Data type: bool Access Specifier: ReadWrite
+HDMI INPUT COLOUR FORMAT
+Path: input/ports/hdmi/{hdmi-port-number}/controls/hdmi-colour-format Description: Gets or sets the colour format applied by the processor to the input for HDMI input Data type: enum Supported values: from-input, rgb, ycbcr Access Specifier: ReadWrite
+HDMI INPUT HDR FORMAT OVERRIDE
+Path: input/ports/hdmi/{hdmi-port-number}/controls/hdr/format Description: Gets or sets the HDR format applied by the processor to the input for HDMI input Data type: enum Supported values: from-input, standard-dynamic-range, perceptual-quantiser, hybrid-log-gamma Access Specifier: ReadWrite
+HDMI PQ AUTO BRIGHTEN
+Path: input/ports/hdmi/{hdmi-port-number}/controls/hdr/pq/auto-brighten Description: Enables or disables PQ auto brighten for HDMI input Data type: bool Access Specifier: ReadWrite
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 24 of 77
+
+HDMI PQ GAIN
+Path: input/ports/hdmi/{hdmi-port-number}/controls/hdr/pq/gain Description: Gets or sets the value of the PQ gain for HDMI input Data type: float Range: 0.1 - 10.0 Decimal places: 2 Access Specifier: ReadWrite
+HDMI PQ MAXCLL OVERRIDE ENABLED
+Path: input/ports/hdmi/{hdmi-port-number}/controls/hdr/pq/max-cll-override/enabled Description: Enables or disables PQ MaxCLL override for HDMI input Data type: bool Access Specifier: ReadWrite
+HDMI PQ MAXCLL OVERRIDE LUMINANCE
+Path: input/ports/hdmi/{hdmi-port-number}/controls/hdr/pq/max-cll-override/luminance Description: Gets or sets the value of the PQ MaxCLL override luminance for HDMI input Data type: int Units: Nits Range: 1 - 10000 Access Specifier: ReadWrite
+HDMI INPUT QUANTISATION RANGE
+Path: input/ports/hdmi/{hdmi-port-number}/controls/quantisation-range Description: Gets or sets the quantisation range applied by the processor to the HDMI input Data type: enum Supported values: from-input, full, limited Access Specifier: ReadWrite
+HDMI DYNACAL BLUE GAMUT
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/blue/gamut Description: Blue component of HDMI input colour space Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+HDMI DYNACAL BLUE X
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/blue/x Description: Blue component X value of HDMI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+HDMI DYNACAL BLUE Y
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/blue/y Description: Blue component Y value of HDMI input colour space Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+HDMI DYNACAL GREEN GAMUT
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/green/gamut Description: Green component of HDMI input colour space
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 25 of 77
+
+Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+HDMI DYNACAL GREEN X
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/green/x Description: Green component X value of HDMI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+HDMI DYNACAL GREEN Y
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/green/y Description: Green component Y value of HDMI input colour space Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+HDMI DYNACAL RED GAMUT
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/red/gamut Description: Red component of HDMI input colour space Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+HDMI DYNACAL RED X
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/red/x Description: Red component X value of HDMI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+HDMI DYNACAL RED Y
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/red/y Description: Red component Y value of HDMI input colour space Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+HDMI DYNACAL WHITE COLOUR TEMPERATURE
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/white/colour-temperature Description: HDMI input white component colour temperature Data type: int Units: Kelvin Range: 2000 - 11000 Access Specifier: ReadWrite
+HDMI DYNACAL WHITE GAMUT
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/white/gamut Description: White component of HDMI input colour space. Set to 'Colour Temperature' to control this whiteonly parameter Data type: enum
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 26 of 77
+
+Supported values: d65, aces, colour-temperature, custom Access Specifier: ReadWrite
+HDMI DYNACAL WHITE X
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/white/x Description: White component X value of HDMI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+HDMI DYNACAL WHITE Y
+Path: input/ports/hdmi/{hdmi-port-number}/dynacal/white/y Description: HDMI input white component Y value Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+HDMI INPUT BIT DEPTH
+Path: input/ports/hdmi/{hdmi-port-number}/meta-data/bit-depth Description: Gets bit depth of HDMI video input. Valid values are 8, 10, and 12 Data type: int Units: Bits Range: 8 - 12 Access Specifier: ReadOnly
+HDMI INPUT HDR FORMAT
+Path: input/ports/hdmi/{hdmi-port-number}/meta-data/hdr/format Description: HDR format reported by the HDMI input Data type: enum Supported values: standard-dynamic-range, perceptual-quantiser, hybrid-log-gamma Access Specifier: ReadOnly
+HDMI INPUT REFRESH RATE
+Path: input/ports/hdmi/{hdmi-port-number}/meta-data/refresh-rate Description: Hdmi input refresh rate Data type: float Units: Hertz Range: 24 - 250 Decimal places: 1 Access Specifier: ReadOnly
+HDMI INPUT RESOLUTION HEIGHT
+Path: input/ports/hdmi/{hdmi-port-number}/meta-data/resolution/height Description: HDMI input height Data type: int Units: Pixels Range: 32 - 4095 Access Specifier: ReadOnly
+HDMI INPUT RESOLUTION WIDTH
+Path: input/ports/hdmi/{hdmi-port-number}/meta-data/resolution/width Description: HDMI input width Data type: int Units: Pixels
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 27 of 77
+
+Range: 32 - 4096 Access Specifier: ReadOnly
+HDMI INPUT SAMPLING
+Path: input/ports/hdmi/{hdmi-port-number}/meta-data/sampling Description: Gets current HDMI sampling scheme Data type: enum Supported values: rgb, ycbcr422, ycbcr444, ycbcr420 Access Specifier: ReadOnly
+HDMI INPUT BLACK LEVEL
+Path: input/ports/hdmi/{hdmi-port-number}/proc-amp/black-level Description: Gets or sets black level of an HDMI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+HDMI INPUT CONTRAST
+Path: input/ports/hdmi/{hdmi-port-number}/proc-amp/contrast Description: Gets or sets contrast of an HDMI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+HDMI BLUE HIGHLIGHT
+Path: input/ports/hdmi/{hdmi-port-number}/proc-amp/highlight/blue Description: Gets or sets blue highlight of an HDMI input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+HDMI GREEN HIGHLIGHT
+Path: input/ports/hdmi/{hdmi-port-number}/proc-amp/highlight/green Description: Gets or sets green highlight of an HDMI input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+HDMI RED HIGHLIGHT
+Path: input/ports/hdmi/{hdmi-port-number}/proc-amp/highlight/red Description: Gets or sets red highlight of an HDMI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+HDMI INPUT HUE
+Path: input/ports/hdmi/{hdmi-port-number}/proc-amp/hue Description: Gets or sets hue of an HDMI video input. 0Â° is the passthough value Data type: int Units: Degrees Range: -180 - 180
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 28 of 77
+
+Access Specifier: ReadWrite
+HDMI INPUT SATURATION
+Path: input/ports/hdmi/{hdmi-port-number}/proc-amp/saturation Description: Gets or sets saturation of an HDMI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+HDMI BLUE SHADOW
+Path: input/ports/hdmi/{hdmi-port-number}/proc-amp/shadow/blue Description: Gets or sets blue shadow of an HDMI input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+HDMI GREEN SHADOW
+Path: input/ports/hdmi/{hdmi-port-number}/proc-amp/shadow/green Description: Gets or sets green shadow of an HDMI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+HDMI RED SHADOW
+Path: input/ports/hdmi/{hdmi-port-number}/proc-amp/shadow/red Description: Gets or sets red shadow of an HDMI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+SDI INPUT COLOUR SPACE
+Path: input/ports/sdi/{sdi-port-number}/controls/colour-space/colour Description: Gets or sets the colour space used for the incoming SDI content Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+SDI INPUT HDR FORMAT OVERRIDE
+Path: input/ports/sdi/{sdi-port-number}/controls/hdr/format Description: Gets or sets the HDR format applied by the processor to the input for SDI input Data type: enum Supported values: from-input, standard-dynamic-range, perceptual-quantiser, hybrid-log-gamma Access Specifier: ReadWrite
+SDI PQ AUTO BRIGHTEN
+Path: input/ports/sdi/{sdi-port-number}/controls/hdr/pq/auto-brighten Description: Enables or disables PQ auto brighten for SDI input Data type: bool Access Specifier: ReadWrite
+SDI PQ GAIN
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 29 of 77
+
+Path: input/ports/sdi/{sdi-port-number}/controls/hdr/pq/gain Description: Gets or sets the value of the PQ gain for SDI input Data type: float Range: 0.1 - 10.0 Decimal places: 2 Access Specifier: ReadWrite
+SDI PQ MAXCLL OVERRIDE ENABLED
+Path: input/ports/sdi/{sdi-port-number}/controls/hdr/pq/max-cll-override/enabled Description: Enables or disables PQ MaxCLL override for SDI input Data type: bool Access Specifier: ReadWrite
+SDI PQ MAXCLL OVERRIDE LUMINANCE
+Path: input/ports/sdi/{sdi-port-number}/controls/hdr/pq/max-cll-override/luminance Description: Gets or sets the value of the PQ MaxCLL override luminance for SDI input Data type: int Units: Nits Range: 1 - 10000 Access Specifier: ReadWrite
+SDI DYNACAL BLUE GAMUT
+Path: input/ports/sdi/{sdi-port-number}/dynacal/blue/gamut Description: Blue component of SDI input colour space Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+SDI DYNACAL BLUE X
+Path: input/ports/sdi/{sdi-port-number}/dynacal/blue/x Description: Blue component X value of SDI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+SDI DYNACAL BLUE Y
+Path: input/ports/sdi/{sdi-port-number}/dynacal/blue/y Description: Blue component Y value of SDI input colour space Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+SDI DYNACAL GREEN GAMUT
+Path: input/ports/sdi/{sdi-port-number}/dynacal/green/gamut Description: Green component of SDI input colour space Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+SDI DYNACAL GREEN X
+Path: input/ports/sdi/{sdi-port-number}/dynacal/green/x Description: Green component X value of SDI input colour space Data type: float Range: 0.0 - 0.8
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 30 of 77
+
+Decimal places: 4 Access Specifier: ReadWrite
+SDI DYNACAL GREEN Y
+Path: input/ports/sdi/{sdi-port-number}/dynacal/green/y Description: Green component Y value of SDI input colour space Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+SDI DYNACAL RED GAMUT
+Path: input/ports/sdi/{sdi-port-number}/dynacal/red/gamut Description: Red component of SDI input colour space Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: ReadWrite
+SDI DYNACAL RED X
+Path: input/ports/sdi/{sdi-port-number}/dynacal/red/x Description: Red component X value of SDI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+SDI DYNACAL RED Y
+Path: input/ports/sdi/{sdi-port-number}/dynacal/red/y Description: Red component Y value of SDI input colour space Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+SDI DYNACAL WHITE COLOUR TEMPERATURE
+Path: input/ports/sdi/{sdi-port-number}/dynacal/white/colour-temperature Description: SDI input white component colour temperature Data type: int Units: Kelvin Range: 2000 - 11000 Access Specifier: ReadWrite
+SDI DYNACAL WHITE GAMUT
+Path: input/ports/sdi/{sdi-port-number}/dynacal/white/gamut Description: White component of SDI input colour space. Set to 'Colour Temperature' to control this white-only parameter Data type: enum Supported values: d65, aces, colour-temperature, custom Access Specifier: ReadWrite
+SDI DYNACAL WHITE X
+Path: input/ports/sdi/{sdi-port-number}/dynacal/white/x Description: White component X value of SDI input colour space Data type: float Range: 0.0 - 0.8 Decimal places: 4
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 31 of 77
+
+Access Specifier: ReadWrite
+SDI DYNACAL WHITE Y
+Path: input/ports/sdi/{sdi-port-number}/dynacal/white/y Description: SDI input white component Y value Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+SDI INPUT REFRESH RATE
+Path: input/ports/sdi/{sdi-port-number}/meta-data/refresh-rate Description: SDI input refresh rate Data type: float Units: Hertz Range: 24 - 250 Decimal places: 1 Access Specifier: ReadOnly
+SDI INPUT RESOLUTION HEIGHT
+Path: input/ports/sdi/{sdi-port-number}/meta-data/resolution/height Description: SDI input height Data type: int Units: Pixels Range: 32 - 4095 Access Specifier: ReadOnly
+SDI INPUT RESOLUTION WIDTH
+Path: input/ports/sdi/{sdi-port-number}/meta-data/resolution/width Description: SDI input width Data type: int Units: Pixels Range: 32 - 4096 Access Specifier: ReadOnly
+SDI INPUT BLACK LEVEL
+Path: input/ports/sdi/{sdi-port-number}/proc-amp/black-level Description: Gets or sets black level of an SDI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+SDI INPUT CONTRAST
+Path: input/ports/sdi/{sdi-port-number}/proc-amp/contrast Description: Gets or sets contrast of an SDI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+SDI BLUE HIGHLIGHT
+Path: input/ports/sdi/{sdi-port-number}/proc-amp/highlight/blue Description: Gets or sets blue highlight of an SDI input. 100% is the passthough value Data type: int Units: Percentage
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 32 of 77
+
+Range: 0 - 200 Access Specifier: ReadWrite
+SDI GREEN HIGHLIGHT
+Path: input/ports/sdi/{sdi-port-number}/proc-amp/highlight/green Description: Gets or sets green highlight of an SDI input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+SDI RED HIGHLIGHT
+Path: input/ports/sdi/{sdi-port-number}/proc-amp/highlight/red Description: Gets or sets red highlight of an SDI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+SDI INPUT HUE
+Path: input/ports/sdi/{sdi-port-number}/proc-amp/hue Description: Gets or sets hue of an SDI video input. 0Â° is the passthough value Data type: int Units: Degrees Range: -180 - 180 Access Specifier: ReadWrite
+SDI INPUT SATURATION
+Path: input/ports/sdi/{sdi-port-number}/proc-amp/saturation Description: Gets or sets saturation of an SDI video input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+SDI BLUE SHADOW
+Path: input/ports/sdi/{sdi-port-number}/proc-amp/shadow/blue Description: Gets or sets blue shadow of an SDI input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+SDI GREEN SHADOW
+Path: input/ports/sdi/{sdi-port-number}/proc-amp/shadow/green Description: Gets or sets green shadow of an SDI input. 100% is the passthough value Data type: int Units: Percentage Range: 0 - 200 Access Specifier: ReadWrite
+SDI RED SHADOW
+Path: input/ports/sdi/{sdi-port-number}/proc-amp/shadow/red Description: Gets or sets red shadow of an SDI video input. 100% is the passthough value Data type: int Units: Percentage
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 33 of 77
+
+Range: 0 - 200 Access Specifier: ReadWrite
+OUTPUT
+OUTPUT DYNACAL BLUE MODE
+Path: output/dynacal/{panel-type}/blue/mode Description: Gets or sets the blue component of panel output colour space Data type: enum Supported values: achievable, custom Access Specifier: ReadWrite
+OUTPUT DYNACAL BLUE X
+Path: output/dynacal/{panel-type}/blue/x Description: X value of panel output colour space blue component Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+OUTPUT DYNACAL BLUE Y
+Path: output/dynacal/{panel-type}/blue/y Description: Y value of panel output colour space blue component Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+OUTPUT DYNACAL GREEN MODE
+Path: output/dynacal/{panel-type}/green/mode Description: Gets or sets the green component of panel output colour space Data type: enum Supported values: achievable, custom Access Specifier: ReadWrite
+OUTPUT DYNACAL GREEN X
+Path: output/dynacal/{panel-type}/green/x Description: X value of panel output colour space green component Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+OUTPUT DYNACAL GREEN Y
+Path: output/dynacal/{panel-type}/green/y Description: Y value of panel output colour space green component Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+OUTPUT DYNACAL LUMINANCE ONLY FRACTION
+Path: output/dynacal/{panel-type}/luminance-only-fraction
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 34 of 77
+
+Description: Gets or sets the percentage mix of output calibration Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+OUTPUT DYNACAL MODE
+Path: output/dynacal/{panel-type}/mode Description: Gets or sets the panel output colour space Data type: enum Supported values: match-input, achievable, custom Access Specifier: ReadWrite
+OUTPUT DYNACAL RED MODE
+Path: output/dynacal/{panel-type}/red/mode Description: Gets or sets the red component of panel output colour space Data type: enum Supported values: achievable, custom Access Specifier: ReadWrite
+OUTPUT DYNACAL RED X
+Path: output/dynacal/{panel-type}/red/x Description: X value of panel output colour space red component Data type: float Range: 0.0 - 0.8 Decimal places: 4 Access Specifier: ReadWrite
+OUTPUT DYNACAL RED Y
+Path: output/dynacal/{panel-type}/red/y Description: Y value of panel output colour space red component Data type: float Range: 0.0 - 0.9 Decimal places: 4 Access Specifier: ReadWrite
+OUTPUT BRIGHTNESS
+Path: output/global-colour/brightness Description: Write -1 to reset output brightness to calculated common maximum for available fixtures. Data type: int Units: Nits Range: -1 - 10000 Access Specifier: ReadWrite
+BRIGHTNESS LIMIT ENABLED
+Path: output/global-colour/brightness-limit/enabled Description: Enables or disables global brightness limit Data type: bool Access Specifier: ReadOnly
+BRIGHTNESS LIMIT VALUE
+Path: output/global-colour/brightness-limit/value Description: Current maximum brightness value if brightness limit enabled Data type: int Units: Nits Range: 0 - 10000
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 35 of 77
+
+Access Specifier: ReadOnly
+OUTPUT COLOUR TEMPERATURE
+Path: output/global-colour/colour-temperature Description: Gets or sets the output colour temperature Data type: int Units: Kelvin Range: 2000 - 11000 Access Specifier: ReadWrite
+DARK MAGIC ENABLED
+Path: output/global-colour/dark-magic/enabled Description: Enables or disables the processor's Dark Magic feature Data type: bool Access Specifier: ReadWrite
+HIGHLIGHT OUT OF GAMUT PIXELS ENABLED
+Path: output/global-colour/dynacal/highlight-out-of-gamut-pixels-enabled Description: Enables or disables DynaCal's out-of-gamut pixel feature Data type: bool Access Specifier: ReadWrite
+HIGHLIGHT OVERBRIGHT PIXELS ENABLED
+Path: output/global-colour/dynacal/highlight-overbright-pixels-enabled Description: Enables or disables DynaCal's overbright pixel feature Data type: bool Access Specifier: ReadWrite
+EXTENDED BIT DEPTH ENABLED
+Path: output/global-colour/extended-bit-depth/enabled Description: Enables or disables extended bit depth Data type: bool Access Specifier: ReadWrite
+BLUE GAIN
+Path: output/global-colour/gains/blue Description: Gets or sets the value of the output blue gain Data type: float Units: Percentage Range: 0 - 100 Decimal places: 2 Access Specifier: ReadWrite
+GREEN GAIN
+Path: output/global-colour/gains/green Description: Gets or sets the value of the output green gain Data type: float Units: Percentage Range: 0 - 100 Decimal places: 2 Access Specifier: ReadWrite
+INTENSITY GAIN
+Path: output/global-colour/gains/intensity
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 36 of 77
+
+Description: Gets or sets the value of the output intensity gain Data type: float Units: Percentage Range: 0 - 100 Decimal places: 2 Access Specifier: ReadWrite
+RED GAIN
+Path: output/global-colour/gains/red Description: Gets or sets the value of the output red gain Data type: float Units: Percentage Range: 0 - 100 Decimal places: 2 Access Specifier: ReadWrite
+OUTPUT GAMMA
+Path: output/global-colour/gamma Description: Gets or sets the value of the output gamma Data type: float Range: 0.2 - 4.0 Decimal places: 2 Access Specifier: ReadWrite
+OVERDRIVE ENABLED
+Path: output/global-colour/overdrive/enabled Description: Enables or disables global brightness overdrive Data type: bool Access Specifier: ReadWrite
+PURE TONE ENABLED
+Path: output/global-colour/puretone/enabled Description: Enables or disables PureTone Data type: bool Access Specifier: ReadWrite
+NETWORK BIT DEPTH
+Path: output/network/bit-depth Description: Gets or sets bit depth of video output. Valid values are 8, 10, and 12 Data type: int Units: Bits Range: 8 - 12 Access Specifier: ReadWrite
+REDUNDANT CABLE LOOP STATE
+Path: output/network/cable-redundancy/loops/{loop-number}/state Description: Current state of cable loop redundancy on the processor in the format : ->, where can be: 'loopfound', 'no-loop-found', 'incorrect-loop-found', or 'one-to-many-error' . is the connected trunk followed by the XD port number (e.g. 'A1'). If is 'no-loop-found', can be 'No connection'. Data type: string Access Specifier: ReadOnly
+REQUEST FAILOVER
+Path: output/network/failover/actions/request-failover Description: Send an empty string to activate processor redundancy Data type: string
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 37 of 77
+
+Access Specifier: WriteOnly
+FAILOVER ENABLED
+Path: output/network/failover/settings/enabled Description: Enables or disables failover mode on the processor Data type: bool Access Specifier: ReadWrite
+BUTTON PRESS FAILOVER MODE ENABLED
+Path: output/network/failover/settings/modes/on-button-press Description: Enables or disables failover to backup processor when the processor's Blackout/Freeze buttons are pushed Data type: bool Access Specifier: ReadWrite
+PARTNER FAILOVER MODE ENABLED
+Path: output/network/failover/settings/modes/on-partner-fail Description: Enables or disables partner processor failover when processor failure is detected (e.g. the processor loses power) Data type: bool Access Specifier: ReadWrite
+PARTNER VIDEO FAILOVER MODE ENABLED
+Path: output/network/failover/settings/modes/on-partner-video-fail Description: Enables or disables partner processor failover on video signal loss Data type: bool Access Specifier: ReadWrite
+PREFER PRIMARY FAILOVER MODE ENABLED
+Path: output/network/failover/settings/modes/prefer-primary Description: If prefer primary processor failover mode is activated, when primary processor is functioning correctly, it will be automatically always be the active processor Data type: bool Access Specifier: ReadWrite
+FAILOVER ROLE
+Path: output/network/failover/settings/role Description: Is processor's failover role Primary or Backup Data type: enum Supported values: primary, backup Access Specifier: ReadOnly
+FAILOVER IS ACTIVE
+Path: output/network/failover/state/is-active Description: Whether failover is active on the processor Data type: bool Access Specifier: ReadOnly
+FAILOVER PARTNER IS ONLINE
+Path: output/network/failover/state/is-partner-present Description: Whether the backup processor is currently online and detected Data type: bool Access Specifier: ReadOnly
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 38 of 77
+
+FAILOVER PARTNER ABSENCE DURATION
+Path: output/network/failover/state/partner-absence-duration Description: How long the backup processor has been absent for Data type: string Access Specifier: ReadOnly
+FAILOVER PARTNER NAME
+Path: output/network/failover/state/partner-name Description: Name of the backup processor Data type: string Access Specifier: ReadOnly
+FAILOVER PARTNER SERIAL
+Path: output/network/failover/state/partner-serial Description: Serial number of the backup processor Data type: string Access Specifier: ReadOnly
+FAILOVER PARTNER VIDEO ABSENCE DURATION
+Path: output/network/failover/state/partner-video-absence-duration Description: Time since backup processor video source was last detected Data type: string Access Specifier: ReadOnly
+NETWORK FRAME RATE MULTIPLIER
+Path: output/network/frame-rate-multiplier Description: Gets or sets frame rate multiplier of video output. Set value to 1 to disable frame rate multiplication. Data type: int Range: 1 - 10 Access Specifier: ReadWrite
+FRAME REMAPPING ENABLED
+Path: output/network/frame-remapping/enabled Description: Is frame remapping globally enabled or disabled Data type: bool Access Specifier: ReadWrite
+FRAME REMAPPING BLUE
+Path: output/network/frame-remapping/frames/{frame}/blue Description: Gets or sets blue value of frame colour Data type: int Range: 0 - 255 Access Specifier: ReadWrite
+FRAME REMAPPING GREEN
+Path: output/network/frame-remapping/frames/{frame}/green Description: Gets or sets green value of frame colour Data type: int Range: 0 - 255 Access Specifier: ReadWrite
+FRAME REMAPPING MODE
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 39 of 77
+
+Path: output/network/frame-remapping/frames/{frame}/mode Description: Is frame mode Colour or Video Data type: enum Supported values: colour, video Access Specifier: ReadWrite
+FRAME REMAPPING RED
+Path: output/network/frame-remapping/frames/{frame}/red Description: Gets or sets red value of frame colour Data type: int Range: 0 - 255 Access Specifier: ReadWrite
+FRAME REMAPPING X OFFSET
+Path: output/network/frame-remapping/frames/{frame}/x-offset Description: Gets or sets x offset of frame Data type: int Units: Pixels Range: -4095 - 4095 Access Specifier: ReadWrite
+FRAME REMAPPING Y OFFSET
+Path: output/network/frame-remapping/frames/{frame}/y-offset Description: Gets or sets y offset of frame Data type: int Units: Pixels Range: -4095 - 4095 Access Specifier: ReadWrite
+GENLOCKINTERNALSOURCERATE
+Path: output/network/genlock/internal-rate Description: Gets or sets current refresh rate for internal genlock source Data type: float Units: Hertz Range: 23.5 - 251.0 Decimal places: 4 Access Specifier: ReadWrite
+GENLOCK PHASE OFFSET LINES
+Path: output/network/genlock/phase-offset/absolute/lines Description: Gets or sets genlock phase offset absolute lines value for the processor Data type: int Range: -9999 - 9999 Access Specifier: ReadWrite
+GENLOCK PHASE OFFSET PIXELS
+Path: output/network/genlock/phase-offset/absolute/pixels Description: Gets or sets genlock phase offset absolute pixels value for the processor Data type: int Range: -9999 - 9999 Access Specifier: ReadWrite
+GENLOCK PHASE OFFSET ANGLE
+Path: output/network/genlock/phase-offset/angle Description: Gets or sets genlock phase offset angle for the processor Data type: float
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 40 of 77
+
+Units: Degrees Range: -360 - 360 Decimal places: 6 Access Specifier: ReadWrite
+GENLOCK PHASE OFFSET FRACTION
+Path: output/network/genlock/phase-offset/fraction Description: Gets or sets genlock phase offset fraction for the processor Data type: float Units: Percentage Range: -100 - 100 Decimal places: 5 Access Specifier: ReadWrite
+GENLOCK PHASE OFFSET MODE
+Path: output/network/genlock/phase-offset/mode Description: Gets or sets genlock phase offset mode for the processor Data type: enum Supported values: none, angle, fraction, absolute Access Specifier: ReadWrite
+GENLOCK SOURCE
+Path: output/network/genlock/source Description: Gets or sets the current genlock source for the processor Data type: enum Supported values: internal, sdi, sdi-a, sdi-b, hdmi, dvi, ref-in, active-input Access Specifier: ReadWrite
+HIDDENMARKERS BACKGROUND GAIN
+Path: output/network/hidden-markers/background-gain Description: Gets or sets brightness of the video underneath hidden markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+HIDDENMARKERS BLACKOUT AFFECTS MARKERS
+Path: output/network/hidden-markers/blackout-affects-markers Description: Gets or sets whether blackout affects markers as well as video Data type: bool Access Specifier: ReadWrite
+CLOSED SHUTTER MARKERS
+Path: output/network/hidden-markers/closed-shutter-markers Description: Gets or sets whether markers are only shown when camera shutter is closed Data type: bool Access Specifier: ReadWrite
+CUSTOM MARKERS DATA
+Path: output/network/hidden-markers/custom/data Description: Send bulk data in image file format to upload custom markers Data type: bytearray Access Specifier: ReadWrite
+CUSTOM MARKERS FILENAME
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 41 of 77
+
+Path: output/network/hidden-markers/custom/filename Description: The name of the stored custom markers file Data type: string Access Specifier: ReadOnly
+CUSTOM MARKERS BLUE GAIN
+Path: output/network/hidden-markers/custom/marker-gain/blue Description: Gets or sets the current brightness of the blue custom markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+CUSTOM MARKERS GREEN GAIN
+Path: output/network/hidden-markers/custom/marker-gain/green Description: Gets or sets the current brightness of the green custom markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+CUSTOM MARKERS RED GAIN
+Path: output/network/hidden-markers/custom/marker-gain/red Description: Gets or sets the current brightness of the red custom markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+CUSTOM MARKERS SCALING
+Path: output/network/hidden-markers/custom/scaling Description: Gets or sets current scaling for hidden markers Data type: enum Supported values: 1:1, stretch, fit, fill Access Specifier: ReadWrite
+HIDDENMARKERS ENABLED
+Path: output/network/hidden-markers/enabled Description: Enables or disables hidden markers Data type: bool Access Specifier: ReadWrite
+HIDDENMARKERS FRAMES ENABLED ON
+Path: output/network/hidden-markers/frames-enabled-on Description: A valid array must contain ints in the range between 1 and the max supported frame rate multiplier for the platform Data type: array Access Specifier: ReadWrite
+HIDDEN MARKERS MODE
+Path: output/network/hidden-markers/mode Description: Gets or sets current hidden markers mode Data type: enum Supported values: none, redspy, startracker, custom Access Specifier: ReadWrite
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 42 of 77
+
+REDSPY DISTANCE TO TRACKER
+Path: output/network/hidden-markers/redspy/distance-to-tracker Description: Gets or sets distance to tracker for RedSpy markers in metres Data type: float Units: Metres Range: 0.1 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+REDSPY MARKER GAIN
+Path: output/network/hidden-markers/redspy/marker-gain Description: Gets or sets the current brightness of the RedSpy markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+REDSPY MARKER SEED
+Path: output/network/hidden-markers/redspy/marker-seed Description: Gets or sets seed value for RedSpy marker positions Data type: int Range: 1 - 65535 Access Specifier: ReadWrite
+REDSPY MARKER SIZE SCALER
+Path: output/network/hidden-markers/redspy/marker-size-scaler Description: Gets or sets the size scaling for RedSpy markers as a percentage Data type: int Units: Percentage Range: 10 - 200 Access Specifier: ReadWrite
+STARTRACKER BLUE DISTANCE TO TRACKER
+Path: output/network/hidden-markers/startracker/blue/distance-to-tracker Description: Gets or sets distance to tracker for blue StarTracker markers in metres Data type: float Units: Metres Range: 0.1 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+STARTRACKER BLUE ENABLED
+Path: output/network/hidden-markers/startracker/blue/enabled Description: Enables or disables blue markers for StarTracker Data type: bool Access Specifier: ReadWrite
+STARTRACKER BLUE MARKER GAIN
+Path: output/network/hidden-markers/startracker/blue/marker-gain Description: Gets or sets the current brightness of the blue StarTracker markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+STARTRACKER BLUE MARKER SEED
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 43 of 77
+
+Path: output/network/hidden-markers/startracker/blue/marker-seed Description: Gets or sets seed value for blue StarTracker marker positions Data type: int Range: 1 - 65535 Access Specifier: ReadWrite
+STARTRACKER BLUE MARKER SIZE SCALER
+Path: output/network/hidden-markers/startracker/blue/marker-size-scaler Description: Gets or sets the size scaling for blue StarTracker markers as a percentage Data type: int Units: Percentage Range: 10 - 200 Access Specifier: ReadWrite
+STARTRACKER GREEN DISTANCE TO TRACKER
+Path: output/network/hidden-markers/startracker/green/distance-to-tracker Description: Gets or sets distance to tracker for green StarTracker markers in metres Data type: float Units: Metres Range: 0.1 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+STARTRACKER GREEN ENABLED
+Path: output/network/hidden-markers/startracker/green/enabled Description: Enables or disables green markers for StarTracker Data type: bool Access Specifier: ReadWrite
+STARTRACKER GREEN MARKER GAIN
+Path: output/network/hidden-markers/startracker/green/marker-gain Description: Gets or sets the current brightness of the green StarTracker markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+STARTRACKER GREEN MARKER SEED
+Path: output/network/hidden-markers/startracker/green/marker-seed Description: Gets or sets seed value for green StarTracker marker positions Data type: int Range: 1 - 65535 Access Specifier: ReadWrite
+STARTRACKER GREEN MARKER SIZE SCALER
+Path: output/network/hidden-markers/startracker/green/marker-size-scaler Description: Gets or sets the size scaling for green StarTracker markers as a percentage Data type: int Units: Percentage Range: 10 - 200 Access Specifier: ReadWrite
+STARTRACKER RED DISTANCE TO TRACKER
+Path: output/network/hidden-markers/startracker/red/distance-to-tracker Description: Gets or sets distance to tracker for red StarTracker markers in metres Data type: float
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 44 of 77
+
+Units: Metres Range: 0.1 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+STARTRACKER RED ENABLED
+Path: output/network/hidden-markers/startracker/red/enabled Description: Enables or disables red markers for StarTracker Data type: bool Access Specifier: ReadWrite
+STARTRACKER RED MARKER GAIN
+Path: output/network/hidden-markers/startracker/red/marker-gain Description: Gets or sets the current brightness of the red StarTracker markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+STARTRACKER RED MARKER SEED
+Path: output/network/hidden-markers/startracker/red/marker-seed Description: Gets or sets seed value for red StarTracker marker positions Data type: int Range: 1 - 65535 Access Specifier: ReadWrite
+STARTRACKER RED MARKER SIZE SCALER
+Path: output/network/hidden-markers/startracker/red/marker-size-scaler Description: Gets or sets the size scaling for red StarTracker markers as a percentage Data type: int Units: Percentage Range: 10 - 200 Access Specifier: ReadWrite
+SHUTTERSYNC CUSTOM FRAME RATE
+Path: output/network/shuttersync/angle-settings/custom-frame-rate Description: Gets or sets the value of the ShutterSync custom frame rate Data type: float Units: Frames per Second Range: 1 - 250 Decimal places: 3 Access Specifier: ReadWrite
+SHUTTERSYNC ANGLE
+Path: output/network/shuttersync/angle-settings/shutter-angle Description: Gets or sets the value of the shutter angle Data type: float Units: Degrees Range: 1 - 360 Decimal places: 3 Access Specifier: ReadWrite
+SHUTTERSYNC USE CUSTOM FRAME RATE
+Path: output/network/shuttersync/angle-settings/use-custom-frame-rate Description: Enables or disables ShutterSync Custom Frame Rate Data type: bool
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 45 of 77
+
+Access Specifier: ReadWrite
+SHUTTERSYNC DARK TIME
+Path: output/network/shuttersync/dark-time Description: Gets or sets the value of the ShutterSync dark time in milliseconds. Value stored independently of percentage value. Data type: float Units: Milliseconds Range: 0 - 100 Decimal places: 3 Access Specifier: ReadWrite
+SHUTTERSYNC DARK TIME MODE
+Path: output/network/shuttersync/dark-time-mode Description: Gets or sets the ShutterSync dark time mode. The processor can hold the dark time mode as a percentage and a time in milliseconds. This endpoint selects which value the processor uses. Data type: enum Supported values: time, percentage Access Specifier: ReadWrite
+SHUTTERSYNC DARK TIME PERCENTAGE
+Path: output/network/shuttersync/dark-time-percentage Description: Gets or sets the value of the ShutterSync dark time as a percentage of a frame. Value stored independently of milliseconds value. Data type: float Units: Percentage Range: 0 - 100 Decimal places: 1 Access Specifier: ReadWrite
+SHUTTERSYNC INSERT DARK TIME
+Path: output/network/shuttersync/insert-dark-time Description: Enables or disables insertion of dark time. Inserting dark time corresponds to displaying black frames in-between camera exposures. Data type: bool Access Specifier: ReadWrite
+SHUTTERSYNC MODE
+Path: output/network/shuttersync/mode Description: Gets or sets ShutterSync operation mode Data type: enum Supported values: none, speed, angle Access Specifier: ReadWrite
+SHUTTERSYNC PRIORITISE REFRESH RATE
+Path: output/network/shuttersync/prioritise-refresh-rate Description: Enables or disables ShutterSync prioritise refresh rate setting Data type: bool Access Specifier: ReadWrite
+SHUTTERSYNC SENSOR READOUT TIME
+Path: output/network/shuttersync/sensor-readout-time Description: Gets or sets sensor readout time Data type: float Units: Milliseconds Range: 0.00 - 42.00
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 46 of 77
+
+Decimal places: 2 Access Specifier: ReadWrite
+SHUTTERSYNC SENSOR TYPE
+Path: output/network/shuttersync/sensor-type Description: Gets or sets ShutterSync sensor type Data type: enum Supported values: any, global-shutter, rolling-shutter Access Specifier: ReadWrite
+SHUTTERSYNC SPEED
+Path: output/network/shuttersync/speed-settings/shutter-speed Description: Gets or sets the denominator value of ShutterSync speed, numerator is 1 Data type: float Range: 10 - 250 Decimal places: 3 Access Specifier: ReadWrite
+SHUTTERSYNC TIME
+Path: output/network/shuttersync/speed-settings/time Description: Gets or sets the time value of ShutterSync time Data type: float Units: Milliseconds Range: 4 - 100 Decimal places: 3 Access Specifier: ReadWrite
+SHUTTERSYNC VIEWER
+Path: output/network/shuttersync/viewer Description: Gets or sets the ShutterSync viewer mode Data type: enum Supported values: eye, camera Access Specifier: ReadWrite
+OLD STARTRACKER BACKGROUND GAIN
+Path: output/network/startracker/background-gain Description: Gets or sets brightness of the video underneath StarTracker markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+OLD STARTRACKER BLACKOUT AFFECTS MARKERS
+Path: output/network/startracker/blackout-affects-markers Description: Gets or sets whether blackout affects markers as well as video Data type: bool Access Specifier: ReadWrite
+OLD STARTRACKER BLUE DISTANCE TO TRACKER
+Path: output/network/startracker/blue/distance-to-tracker Description: Gets or sets distance to tracker for blue StarTracker markers in metres Data type: float Units: Metres Range: 0.1 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 47 of 77
+
+OLD STARTRACKER BLUE ENABLED
+Path: output/network/startracker/blue/enabled Description: Enables or disables blue markers for StarTracker Data type: bool Access Specifier: ReadWrite
+OLD STARTRACKER BLUE MARKER GAIN
+Path: output/network/startracker/blue/marker-gain Description: Gets or sets the current brightness of the blue StarTracker markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+OLD STARTRACKER BLUE MARKER SIZE SCALER
+Path: output/network/startracker/blue/marker-size-scaler Description: Gets or sets the size scaling for blue StarTracker markers as a percentage Data type: int Units: Percentage Range: 10 - 200 Access Specifier: ReadWrite
+OLD STARTRACKER BLUE MARKER SEED
+Path: output/network/startracker/blue/star-map-seed Description: Gets or sets seed value for blue StarTracker marker positions Data type: int Range: 1 - 65535 Access Specifier: ReadWrite
+OLD STARTRACKER ENABLED
+Path: output/network/startracker/enabled Description: Enables or disables StarTracker markers Data type: bool Access Specifier: ReadWrite
+OLD STARTRACKER FRAMES ENABLED ON
+Path: output/network/startracker/frames-enabled-on Description: A valid array must contain ints in the range between 1 and the max supported frame rate multiplier for the platform Data type: array Access Specifier: ReadWrite
+OLD STARTRACKER GREEN DISTANCE TO TRACKER
+Path: output/network/startracker/green/distance-to-tracker Description: Gets or sets distance to tracker for green StarTracker markers in metres Data type: float Units: Metres Range: 0.1 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+OLD STARTRACKER GREEN ENABLED
+Path: output/network/startracker/green/enabled Description: Enables or disables green markers for StarTracker Data type: bool
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 48 of 77
+
+Access Specifier: ReadWrite
+OLD STARTRACKER GREEN MARKER GAIN
+Path: output/network/startracker/green/marker-gain Description: Gets or sets the current brightness of the green StarTracker markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+OLD STARTRACKER GREEN MARKER SIZE SCALER
+Path: output/network/startracker/green/marker-size-scaler Description: Gets or sets the size scaling for green StarTracker markers as a percentage Data type: int Units: Percentage Range: 10 - 200 Access Specifier: ReadWrite
+OLD STARTRACKER GREEN MARKER SEED
+Path: output/network/startracker/green/star-map-seed Description: Gets or sets seed value for green StarTracker marker positions Data type: int Range: 1 - 65535 Access Specifier: ReadWrite
+OLD STARTRACKER RED DISTANCE TO TRACKER
+Path: output/network/startracker/red/distance-to-tracker Description: Gets or sets distance to tracker for red StarTracker markers in metres Data type: float Units: Metres Range: 0.1 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+OLD STARTRACKER RED ENABLED
+Path: output/network/startracker/red/enabled Description: Enables or disables red markers for StarTracker Data type: bool Access Specifier: ReadWrite
+OLD STARTRACKER RED MARKER GAIN
+Path: output/network/startracker/red/marker-gain Description: Gets or sets the current brightness of the red StarTracker markers as a percentage Data type: int Units: Percentage Range: 0 - 100 Access Specifier: ReadWrite
+OLD STARTRACKER RED MARKER SIZE SCALER
+Path: output/network/startracker/red/marker-size-scaler Description: Gets or sets the size scaling for red StarTracker markers as a percentage Data type: int Units: Percentage Range: 10 - 200 Access Specifier: ReadWrite
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 49 of 77
+
+OLD STARTRACKER RED MARKER SEED
+Path: output/network/startracker/red/star-map-seed Description: Gets or sets seed value for red StarTracker marker positions Data type: int Range: 1 - 65535 Access Specifier: ReadWrite
+OVERRIDE
+BLACKOUT ENABLED
+Path: override/blackout/enabled Description: Enables or disables blackout Data type: bool Access Specifier: ReadWrite
+BLACKOUT FADE TIME
+Path: override/blackout/fade-time Description: The value of the blackout fade time. The fade time may be adjusted between zero (snap) and 10 seconds Data type: float Units: Seconds Range: 0.0 - 10.0 Decimal places: 1 Access Specifier: ReadWrite
+FREEZE ENABLED
+Path: override/freeze/enabled Description: Enables or disables video freeze Data type: bool Access Specifier: ReadWrite
+TEST PATTERN CUSTOM COLOUR BLUE
+Path: override/test-pattern/custom-colour/blue Description: Gets or sets the custom colour test pattern blue value Data type: int Range: 0 - 4095 Access Specifier: ReadWrite
+TEST PATTERN CUSTOM COLOUR GREEN
+Path: override/test-pattern/custom-colour/green Description: Gets or sets the custom colour test pattern green value Data type: int Range: 0 - 4095 Access Specifier: ReadWrite
+TEST PATTERN CUSTOM COLOUR RED
+Path: override/test-pattern/custom-colour/red Description: Gets or sets the custom colour test pattern red value Data type: int Range: 0 - 4095 Access Specifier: ReadWrite
+TEST PATTERN CUSTOM GRADIENT END BLUE
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 50 of 77
+
+Path: override/test-pattern/custom-gradient/end-colour/blue Description: Gets or sets blue component of custom gradient test pattern end colour as a 12 bit integer Data type: int Range: 0 - 4095 Access Specifier: ReadWrite
+TEST PATTERN CUSTOM GRADIENT END GREEN
+Path: override/test-pattern/custom-gradient/end-colour/green Description: Gets or sets green component of custom gradient test pattern end colour as a 12 bit integer Data type: int Range: 0 - 4095 Access Specifier: ReadWrite
+TEST PATTERN CUSTOM GRADIENT END RED
+Path: override/test-pattern/custom-gradient/end-colour/red Description: Gets or sets red component of custom gradient test pattern end colour as a 12 bit integer Data type: int Range: 0 - 4095 Access Specifier: ReadWrite
+TEST PATTERN CUSTOM GRADIENT ORIENTATION
+Path: override/test-pattern/custom-gradient/orientation Description: Gets or sets the custom gradient test pattern orientation Data type: enum Supported values: horizontal, vertical Access Specifier: ReadWrite
+TEST PATTERN CUSTOM GRADIENT START GREEN
+Path: override/test-pattern/custom-gradient/start-colour/blue Description: Gets or sets green component of custom gradient test pattern start colour as a 12 bit integer Data type: int Range: 0 - 4095 Access Specifier: ReadWrite
+TEST PATTERN CUSTOM GRADIENT START BLUE
+Path: override/test-pattern/custom-gradient/start-colour/green Description: Gets or sets blue component of custom gradient test pattern start colour as a 12 bit integer Data type: int Range: 0 - 4095 Access Specifier: ReadWrite
+TEST PATTERN CUSTOM GRADIENT START RED
+Path: override/test-pattern/custom-gradient/start-colour/red Description: Gets or sets red component of custom gradient test pattern start colour as a 12 bit integer Data type: int Range: 0 - 4095 Access Specifier: ReadWrite
+TEST PATTERN ENABLED
+Path: override/test-pattern/enabled Description: Enables or disables test pattern output function Data type: bool Access Specifier: ReadWrite
+TEST PATTERN FORMAT
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 51 of 77
+
+Path: override/test-pattern/format Description: Format of the generated test pattern Data type: enum Supported values: from-input, standard-dynamic-range, perceptual-quantiser, hybrid-log-gamma Access Specifier: ReadWrite
+CAPTURE FRAME
+Path: override/test-pattern/frame-store/capture-frame Description: Captures the current frame and saves it to the frame store with the user number provided. (Warning: Specifying a user number that already exists will overwrite the existing frame. This operation cannot be undone.) Data type: int Range: 1 - 50 Access Specifier: WriteOnly
+DELETE FRAME
+Path: override/test-pattern/frame-store/delete-frame Description: Delete the frame store frame at the user number provided. Data type: int Range: 1 - 50 Access Specifier: WriteOnly
+FRAME STORE COLOUR SPACE
+Path: override/test-pattern/frame-store/frames/{frame-user-number}/colour-space Description: Set colour space for the frame Data type: enum Supported values: rec-2020, dci-p3, rec-709, aces-cg, custom Access Specifier: WriteOnly
+FRAME STORE ALPHA ENABLED
+Path: override/test-pattern/frame-store/frames/{frame-user-number}/enable-alpha Description: Set alpha mode for the frame Data type: bool Access Specifier: ReadWrite
+FRAME STORE FORMAT
+Path: override/test-pattern/frame-store/frames/{frame-user-number}/format Description: Set format for the frame Data type: enum Supported values: from-input, standard-dynamic-range, perceptual-quantiser, hybrid-log-gamma Access Specifier: WriteOnly
+FRAME NAME
+Path: override/test-pattern/frame-store/frames/{frame-user-number}/name Description: Name of the Frame Data type: string Access Specifier: ReadWrite
+FRAME STORE SCALING MODE
+Path: override/test-pattern/frame-store/frames/{frame-user-number}/scaling-mode Description: Set scaling mode for the frame Data type: enum Supported values: 1:1, stretch, fit, fill Access Specifier: WriteOnly
+TEST PATTERN RESTRICT TO ACHIEVABLE COLOURS
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 52 of 77
+
+Path: override/test-pattern/restrict-to-achievable-colours Description: Enables or disables restrict to achievable colours switch Data type: bool Access Specifier: ReadWrite
+TEST PATTERN TYPE
+Path: override/test-pattern/type Description: Determines which test pattern or frame store image will be shown when the test pattern widget is activated. Accepts either a frame store user number, or test pattern title. Defaults to SMPTE bars. Data type: testpatterntype Range: 1 - 50 Supported values: brompton, red, green, blue, cyan, magenta, yellow, white, black, grid, scrolling-grid, checkerboard, scrolling-checkerboard, colour-bars, scrolling-colour-bars, gradient, scrolling-gradient, strobe, smpte-bars, scrolling-smpte-bars, custom-colour, custom, forty-five-degree-grid, scrolling-forty-five-degree-grid, custom-gradient, scrolling-custom-gradient Access Specifier: ReadWrite
+PRESETS
+ACTIVE PRESET NAME
+Path: presets/active/name Description: Name of the currently active preset Data type: string Access Specifier: ReadOnly
+ACTIVE PRESET NUMBER
+Path: presets/active/number Description: Set to activate a preset Data type: int Range: 1 - 128 Access Specifier: ReadWrite
+PRESET NAME
+Path: presets/items/{number}/name Description: Processor preset name Data type: string Access Specifier: ReadWrite
+PRESET STATUS
+Path: presets/items/{number}/status Description: Preset activation status Data type: bool Access Specifier: ReadOnly
+PROCESSING
+3D LUT DATA
+Path: processing/3d-lut/data Description: Send bulk data in .cube file format to upload 3D LUT Data type: bytearray Access Specifier: ReadWrite
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 53 of 77
+
+3D LUT ENABLED
+Path: processing/3d-lut/enabled Description: Enables or disables 3D LUT mapping Data type: bool Access Specifier: ReadWrite
+3D LUT FILENAME
+Path: processing/3d-lut/filename Description: The name of the stored 3D LUT file Data type: string Access Specifier: ReadOnly
+3D LUT STRENGTH
+Path: processing/3d-lut/strength Description: Intensity/opacity of 3D LUT Data type: float Units: Percentage Range: 0.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT BLACK BLUE
+Path: processing/colour-correct/black/blue Description: Gets or sets the value of the black blue Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT BLACK GREEN
+Path: processing/colour-correct/black/green Description: Gets or sets the value of the black green Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT BLACK RED
+Path: processing/colour-correct/black/red Description: Gets or sets the value of the black red Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT BLUE BRIGHTNESS
+Path: processing/colour-correct/blue/brightness Description: Gets or sets the value of the blue brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 54 of 77
+
+14-WAY COLOUR CORRECT BLUE HUE
+Path: processing/colour-correct/blue/hue Description: Gets or sets the value of the blue hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT BLUE SATURATION
+Path: processing/colour-correct/blue/saturation Description: Gets or sets the value of the blue saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT COBALT BRIGHTNESS
+Path: processing/colour-correct/cobalt/brightness Description: Gets or sets the value of the cobalt brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT COBALT HUE
+Path: processing/colour-correct/cobalt/hue Description: Gets or sets the value of the cobalt hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT COBALT SATURATION
+Path: processing/colour-correct/cobalt/saturation Description: Gets or sets the value of the cobalt saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT CRIMSON BRIGHTNESS
+Path: processing/colour-correct/crimson/brightness Description: Gets or sets the value of the crimson brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT CRIMSON HUE
+Path: processing/colour-correct/crimson/hue
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 55 of 77
+
+Description: Gets or sets the value of the crimson hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT CRIMSON SATURATION
+Path: processing/colour-correct/crimson/saturation Description: Gets or sets the value of the crimson saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT CYAN BRIGHTNESS
+Path: processing/colour-correct/cyan/brightness Description: Gets or sets the value of the cyan brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT CYAN HUE
+Path: processing/colour-correct/cyan/hue Description: Gets or sets the value of the cyan hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT CYAN SATURATION
+Path: processing/colour-correct/cyan/saturation Description: Gets or sets the value of the cyan saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT ENABLED
+Path: processing/colour-correct/enabled Description: Enables or disables the processor's 14-Way Colour Correct feature Data type: bool Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT GREEN BRIGHTNESS
+Path: processing/colour-correct/green/brightness Description: Gets or sets the value of the green brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 56 of 77
+
+14-WAY COLOUR CORRECT GREEN HUE
+Path: processing/colour-correct/green/hue Description: Gets or sets the value of the green hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT GREEN SATURATION
+Path: processing/colour-correct/green/saturation Description: Gets or sets the value of the green saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT LIME BRIGHTNESS
+Path: processing/colour-correct/lime/brightness Description: Gets or sets the value of the lime brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT LIME HUE
+Path: processing/colour-correct/lime/hue Description: Gets or sets the value of the lime hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT LIME SATURATION
+Path: processing/colour-correct/lime/saturation Description: Gets or sets the value of the lime saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT MAGENTA BRIGHTNESS
+Path: processing/colour-correct/magenta/brightness Description: Gets or sets the value of the magenta brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT MAGENTA HUE
+Path: processing/colour-correct/magenta/hue
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 57 of 77
+
+Description: Gets or sets the value of the magenta hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT MAGENTA SATURATION
+Path: processing/colour-correct/magenta/saturation Description: Gets or sets the value of the magenta saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT ORANGE BRIGHTNESS
+Path: processing/colour-correct/orange/brightness Description: Gets or sets the value of the orange brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT ORANGE HUE
+Path: processing/colour-correct/orange/hue Description: Gets or sets the value of the orange hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT ORANGE SATURATION
+Path: processing/colour-correct/orange/saturation Description: Gets or sets the value of the orange saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT RED BRIGHTNESS
+Path: processing/colour-correct/red/brightness Description: Gets or sets the value of the red brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT RED HUE
+Path: processing/colour-correct/red/hue Description: Gets or sets the value of the red hue Data type: float Units: Degrees
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 58 of 77
+
+Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT RED SATURATION
+Path: processing/colour-correct/red/saturation Description: Gets or sets the value of the red saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT TURQUOISE BRIGHTNESS
+Path: processing/colour-correct/turquoise/brightness Description: Gets or sets the value of the turquoise brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT TURQUOISE HUE
+Path: processing/colour-correct/turquoise/hue Description: Gets or sets the value of the turquoise hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT TURQUOISE SATURATION
+Path: processing/colour-correct/turquoise/saturation Description: Gets or sets the value of the turquoise saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT VIOLET BRIGHTNESS
+Path: processing/colour-correct/violet/brightness Description: Gets or sets the value of the violet brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT VIOLET HUE
+Path: processing/colour-correct/violet/hue Description: Gets or sets the value of the violet hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 59 of 77
+
+14-WAY COLOUR CORRECT VIOLET SATURATION
+Path: processing/colour-correct/violet/saturation Description: Gets or sets the value of the violet saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT WHITE BLUE
+Path: processing/colour-correct/white/blue Description: Gets or sets the value of the white blue Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT WHITE GREEN
+Path: processing/colour-correct/white/green Description: Gets or sets the value of the white green Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT WHITE RED
+Path: processing/colour-correct/white/red Description: Gets or sets the value of the white red Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT YELLOW BRIGHTNESS
+Path: processing/colour-correct/yellow/brightness Description: Gets or sets the value of the yellow brightness Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT YELLOW HUE
+Path: processing/colour-correct/yellow/hue Description: Gets or sets the value of the yellow hue Data type: float Units: Degrees Range: -180.0 - 180.0 Decimal places: 1 Access Specifier: ReadWrite
+14-WAY COLOUR CORRECT YELLOW SATURATION
+Path: processing/colour-correct/yellow/saturation
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 60 of 77
+
+Description: Gets or sets the value of the yellow saturation Data type: float Units: Percentage Range: -100.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+COLOUR REPLACE APPLY TO BRIGHTNESS
+Path: processing/colour-replace/apply-to-brightness Description: Enables or disables apply to brightness switch for colour replace Data type: bool Access Specifier: ReadWrite
+COLOUR REPLACE APPLY TO HUE
+Path: processing/colour-replace/apply-to-hue Description: Enables or disables apply to hue switch for colour replace Data type: bool Access Specifier: ReadWrite
+COLOUR REPLACE APPLY TO SATURATION
+Path: processing/colour-replace/apply-to-saturation Description: Enables or disables apply to saturation switch for colour replace Data type: bool Access Specifier: ReadWrite
+COLOUR REPLACE BRIGHTNESS TOLERANCE
+Path: processing/colour-replace/brightness-tolerance Description: Gets or sets the value of the brightness tolerance for colour replace Data type: float Units: Percentage Range: 10.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+COLOUR REPLACE FROM BLUE
+Path: processing/colour-replace/colour-from/blue Description: Gets or sets the blue component of the colour replace source colour Data type: int Range: 0 - 255 Access Specifier: ReadWrite
+COLOUR REPLACE FROM GREEN
+Path: processing/colour-replace/colour-from/green Description: Gets or sets the green component of the colour replace source colour Data type: int Range: 0 - 255 Access Specifier: ReadWrite
+COLOUR REPLACE FROM RED
+Path: processing/colour-replace/colour-from/red Description: Gets or sets the red component of the colour replace source colour Data type: int Range: 0 - 255 Access Specifier: ReadWrite
+COLOUR REPLACE TO BLUE
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 61 of 77
+
+Path: processing/colour-replace/colour-to/blue Description: Gets or sets the blue component of the colour replace target colour Data type: int Range: 0 - 255 Access Specifier: ReadWrite
+COLOUR REPLACE TO GREEN
+Path: processing/colour-replace/colour-to/green Description: Gets or sets the green component of the colour replace target colour Data type: int Range: 0 - 255 Access Specifier: ReadWrite
+COLOUR REPLACE TO RED
+Path: processing/colour-replace/colour-to/red Description: Gets or sets the red component of the colour replace target colour Data type: int Range: 0 - 255 Access Specifier: ReadWrite
+COLOUR REPLACE COLOUR TOLERANCE
+Path: processing/colour-replace/colour-tolerance Description: Gets or sets the value of the colour tolerance for colour replace Data type: float Units: Percentage Range: 10.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+COLOUR REPLACE ENABLED
+Path: processing/colour-replace/enabled Description: Enables or disables the processor's Colour Replace feature Data type: bool Access Specifier: ReadWrite
+COLOUR REPLACE METHOD
+Path: processing/colour-replace/method Description: Gets or sets the method applied by the processor for colour replacement Data type: enum Supported values: set-to-colour, transform-to-colour Access Specifier: ReadWrite
+COLOUR REPLACE SOFTNESS
+Path: processing/colour-replace/softness Description: Gets or sets the value of the softness for colour replace Data type: float Units: Percentage Range: 6.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+COLOUR REPLACE STRENGTH
+Path: processing/colour-replace/strength Description: Gets or sets the value of the strength for colour replace Data type: float Units: Percentage
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 62 of 77
+
+Range: 6.0 - 100.0 Decimal places: 1 Access Specifier: ReadWrite
+COLOUR REPLACE VIEW MATTE
+Path: processing/colour-replace/view-matte Description: Enables or disables view matte for colour replace Data type: bool Access Specifier: ReadWrite
+CURVES BLUE POINTS
+Path: processing/curves/blue/points Description: A valid array must contain JSON objects with x and y values specified in the range [0,1] e.g. [{x:0.2, y:0.2}, {x:0.64, y:0.77}], or send an empty array to clear all points. Minimum separation between points is 0.0625 Data type: array Access Specifier: ReadWrite
+CURVES ENABLED
+Path: processing/curves/enabled Description: Enables or disables the processor's Colour Curves feature Data type: bool Access Specifier: ReadWrite
+CURVES GREEN POINTS
+Path: processing/curves/green/points Description: A valid array must contain JSON objects with x and y values specified in the range [0,1] e.g. [{x:0.2, y:0.2}, {x:0.64, y:0.77}], or send an empty array to clear all points. Minimum separation between points is 0.0625 Data type: array Access Specifier: ReadWrite
+CURVES RED POINTS
+Path: processing/curves/red/points Description: A valid array must contain JSON objects with x and y values specified in the range [0,1] e.g. [{x:0.2, y:0.2}, {x:0.64, y:0.77}], or send an empty array to clear all points. Minimum separation between points is 0.0625 Data type: array Access Specifier: ReadWrite
+CURVES WHITE POINTS
+Path: processing/curves/white/points Description: A valid array must contain JSON objects with x and y values specified in the range [0,1] e.g. [{x:0.2, y:0.2}, {x:0.64, y:0.77}], or send an empty array to clear all points. Minimum separation between points is 0.0625 Data type: array Access Specifier: ReadWrite
+OSCA MODULE CORRECTION ENABLED
+Path: processing/osca/module-correction-enabled Description: Enables or disables OSCA module correction Data type: bool Access Specifier: ReadWrite
+OSCA SEAM CORRECTION ENABLED
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 63 of 77
+
+Path: processing/osca/seam-correction-enabled Description: Enables or disables OSCA seam correction Data type: bool Access Specifier: ReadWrite
+SCALER
+Path: processing/scaler/enabled Description: Enables or disables scaler Data type: bool Access Specifier: ReadWrite
+
+PROJECT
+PROJECT NAME
+Path: project/name Description: Gets the name of the Project Data type: string Access Specifier: ReadOnly
+
+SYSTEM
+SYSTEM REBOOT
+Path: system/actions/reboot Description: If the processor password is set then this must be sent in the body. Otherwise send a blank string to trigger the reboot. Data type: string Access Specifier: WriteOnly
+SYSTEM SHUTDOWN
+Path: system/actions/shutdown Description: If the processor password is set then this must be sent in the body. Otherwise send a blank string to trigger the shutdown. Data type: string Access Specifier: WriteOnly
+CURRENT DATE AND TIME
+Path: system/current-date-time Description: Current date/time of processor in yyyy-MM-dd hh:mm:ss 24 hour format Data type: string Access Specifier: ReadOnly
+CASE FAN 1 SPEED
+Path: system/fan/case/one/speed Description: Current speed of the Case Fan Data type: float Units: RPM Range: 0 - 5000 Access Specifier: ReadOnly
+CASE FAN 1 STATUS
+Path: system/fan/case/one/status
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 64 of 77
+
+Description: Current activation status of Case Fan 1 Data type: bool Access Specifier: ReadOnly
+CASE FAN 2 SPEED
+Path: system/fan/case/two/speed Description: Current speed of Case Fan 2 Data type: float Units: RPM Range: 0 - 5000 Access Specifier: ReadOnly
+CASE FAN 2 STATUS
+Path: system/fan/case/two/status Description: Current activation status of Case Fan 2 Data type: bool Access Specifier: ReadOnly
+FPGA FAN SPEED
+Path: system/fan/fpga/speed Description: Current speed of the FPGA Fan. Supported only on SX40, S8. Data type: float Units: RPM Range: 0 - 5000 Access Specifier: ReadOnly
+FPGA FAN STATUS
+Path: system/fan/fpga/status Description: Current activation status of the FPGA Fan. Supported only on SX40, S8. Data type: bool Access Specifier: ReadOnly
+PROCESSOR NAME
+Path: system/processor-name Description: The name of the processor Data type: string Access Specifier: ReadOnly
+PROCESSOR TYPE
+Path: system/processor-type Description: Processor hardware model Data type: enum Supported values: m2, s4, s8, t1, t8, sx40 Access Specifier: ReadOnly
+SERIAL NUMBER
+Path: system/serial-number Description: Gets the Serial Number of the processor Data type: string Access Specifier: ReadOnly
+SOFTWARE VERSION
+Path: system/software-version Description: Current version of software in format x.y.z
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 65 of 77
+
+Data type: string Access Specifier: ReadOnly
+AMBIENT TEMPERATURE
+Path: system/temperature/ambient Description: Current Ambient Temperature. Supported by SX40, S8. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+CPU TEMPERATURE
+Path: system/temperature/cpu Description: Current temperature of the main CPU core. Supported by SX40, S8. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+DSP TEMPERATURE
+Path: system/temperature/dsp Description: Current Temperature of the DSP. Supported by M2, T1, S4. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+ETHERNET COPPER PHY A TEMPERATURE
+Path: system/temperature/ethernet/copper/a Description: Current Temperature of Ethernet Copper Physical Interface A. Supported by SX40, S8. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+ETHERNET COPPER PHY B TEMPERATURE
+Path: system/temperature/ethernet/copper/b Description: Current Temperature of Ethernet Copper Physical Interface B. Supported by SX40, S8. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+ETHERNET SFP A TEMPERATURE
+Path: system/temperature/ethernet/sfp/a Description: Current Temperature of Ethernet SFP A. Supported by SX40, S8. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+ETHERNET SFP B TEMPERATURE
+Path: system/temperature/ethernet/sfp/b Description: Current Temperature of Ethernet SFP B. Supported by SX40, S8. Data type: float Units: Celsius
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 66 of 77
+
+Range: 0 - 200 Access Specifier: ReadOnly
+ETHERNET SFP C TEMPERATURE
+Path: system/temperature/ethernet/sfp/c Description: Current Temperature of Ethernet SFP C. Supported by SX40, S8. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+ETHERNET SFP D TEMPERATURE
+Path: system/temperature/ethernet/sfp/d Description: Current Temperature of Ethernet SFP D. Supported by SX40, S8. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+FPGA TEMPERATURE
+Path: system/temperature/fpga Description: Current temperature of the FPGA core. Supported by SX40, S8, M2. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+FRONT TEMPERATURE
+Path: system/temperature/front Description: Current Temperature of the Front Panel. Supported by M2. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+GPU TEMPERATURE
+Path: system/temperature/gpu Description: Current Temperature of the GPU. Supported by SX40, S8. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+MAIN BOARD TEMPERATURE
+Path: system/temperature/main Description: Current Temperature of the Main Board. Supported by SX40, S8. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+PSU TEMPERATURE
+Path: system/temperature/psu Description: Current Temperature of the PSU. Supported by SX40, S8. Data type: float Units: Celsius
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 67 of 77
+
+Range: 0 - 200 Access Specifier: ReadOnly
+REAR TEMPERATURE
+Path: system/temperature/rear Description: Current Temperature of the Rear Panel. Supported by M2. Data type: float Units: Celsius Range: 0 - 200 Access Specifier: ReadOnly
+UPTIME
+Path: system/uptime Description: Time since processor boot in DDd HHh MMm SSs format Data type: string Access Specifier: ReadOnly
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 68 of 77
+
+4. PROTOCOL EXAMPLE USAGE
+HTTP
+IP Control functionality over HTTP on port 80 is accessed via the /api path root to distinguish it from other web services.
+http://192.168.0.50/api/
+All commands are accessible via the regular HTTP verbs GET (for read, list and help operations) and PUT (for set). There is also query-parameter based support for accessing all operations exclusively via GET for older clients that do not support extra verbs.
+A successful HTTP request will return the value of the parameter that has been requested, including the new value if a write command is issued. For example: {"brightness":1000}.
+An unsuccessful HTTP request will return the response code string and any error messages generated by the API, for example: {"response-code":"Path not found"}.
+READING DATA
+Use GET verb with target path. Example to get input video refresh rate:
+Client: GET http://192.168.0.50/api/input/active/refresh-rate
+Server: HTTP/1.1 200 OK Content-Type: application/json { refresh-rate: 60 }
+WRITING DATA
+Use PUT verb including data to set in a "data" tag in a JSON body. Example to set output brightness:
+Client: PUT http://192.168.0.50/api/output/global-colour/brightness Content-Type: application/json { "data": 5000 }
+Server: HTTP/1.1 200 OK Content-Type: application/json { "brightness": 5000 }
+Alternative using GET verb only: pass the value to set as a "set=" query parameter.
+Client: GET http://192.168.0.50/api/output/global-colour/brightness?set=5000
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 69 of 77
+
+HELP
+Use GET verb passing "help=1" as a query parameter
+Client: GET http://192.168.0.50/api/override?help=1
+Server: HTTP/1.1 200 OK Content-Type: application/json { "override":{ "blackout":{ "enabled":{ "Access Specifier":"R/W", "Details":"Enables or disables blackout", "Name":"Blackout Enabled", "Summary":"Enable blackout", "Type":"Boolean" }, "fade-time":{ "Access Specifier":"R/W", "Details":"The value of the blackout fade time. The fade time may be adjusted between zero (snap) and 10 seconds", "Name":"Blackout Fade Time", "Summary":"Time taken to fade to black when blackout enabled", "Type":"Float (range: 0 - 10)" } }, "freeze":{ "enabled":{ "Access Specifier":"R/W", "Details":"Enables or disables video freeze", "Name":"Freeze Enabled", "Summary":"Enable video freeze", "Type":"Boolean" } } } }
+SETTING MULTIPLE ENDPOINTS
+It is possible to query and set multiple endpoints using the same command. This method requires fewer calls to the API (is more efficient), and is generally advised when attempting to make a number of changes to the processor at the same time.
+WITH GET REQUEST
+It is possible to chain multiple commands in a basic GET request, by adding ?set=1 after the API path, and chaining multiple parameter/value pairs with the & symbol. Example: to set a processor's active video input to the first SDI port, two commands are required.
+http://192.168.0.50/api/input/active/source/port-type?set=sdi http://192.168.0.50/api/input/active/source/port-number?set=1
+We can combine these two commands into a single GET request.
+http://192.168.0.50/api/input/active/source?set=1&port-type=sdi&port-number=1
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 70 of 77
+
+WITH PUT REQUEST VIA JSON
+Where a large number of parameters should be set at the same time, it may be preferable to use a PUT request, with the body of request containing the parameter/value pairs formatted as JSON. Example: to set a processor's Output Brightness, Colour Temperature, and Output Colour Gains at the same time, we can format this into a single PUT request.
+PUT http://192.168.0.50/api/output/global-colour Content-type: application/JSON {
+"data": { "brightness": 4000, "colour-temperature": 5600, "gains": { "blue": 200, "green": 200, "intensity": 200, "red": 97.8, }
+} }
+PASSING AN ARRAY OF VALUES INTO JSON
+Some endpoints, such as specifying which frames to enable Hidden Markers on, require an array of values. This requires careful formatting using correct JSON notation Example: to enable Hidden Markers on frames 2 and 4 on a processor, the following PUT request can be used.
+PUT http://192.168.0.50/api/output/network/hidden-markers/frames-enabled-on Content-type: application/JSON {
+"data" : { "frames-enabled-on": [ 2, 4 ]
+} }
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 71 of 77
+
+BASIC REQUESTS USING A WEB BROWSER
+Basic HTTP GET requests can be sent using the URL address field of a web browser. This includes read, write, list and help operations. To read an API endpoint, enter the IP address of the processor, followed by the API path.
+Example: http://192.168.0.50/api/output/global-colour/brightness
+USING THE COMMAND LINE
+It is possible to send API commands using the processor on both Windows and macOS. One recommended method of sending HTTP requests from the command line is using curl, which is a command line utility that is installed by default on both Windows and macOS. This can be accessed by running the Command Prompt program on Windows, or the Terminal application on macOS. EXAMPLES To make a simple HTTP request using curl, open your command line application, then type curl followed by the API path, as in the previous examples. You can also specify more complex requests using command line arguments. Basic read example:
+curl http://192.168.0.50/api/output/global-colour/brightness
+Basic write example: curl http://192.168.0.50/api/output/globalcolour/brightness?set=450
+Writing data with PUT curl -X PUT --header "Content-type:application/json" --data "{\"data\":450}" http://192.168.0.50/api/output/global-colour/brightness
+Note the escaped quotes, \" \" , around data and other text strings in --data . Writing .cube file data
+curl -X PUT --header "Content-Type:application/cube" --data-binary @test_3d_table.cube http://192.168.0.50/api/processing/3d-lut/data
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 72 of 77
+
+USING BITFOCUS COMPANION
+Bitfocus Companion can be used to control a range of 3rd-party devices over IP, using pre-written modules. A Tessera module is available for controlling Brompton processors, and contains a number of widely used actions and variables. This module uses the API to communicate with the processor over HTTP, but allows the user to set up their actions in a graphical format with Companion.
+HTTP REQUESTS MODULE
+To control features of the processor that are not covered by the Tessera module, it is possible to use the Generic: HTTP module found in Companion to send HTTP requests to the processor.
+SYSTEM: RUN SHELL PATH
+The internal: System: Run shell path (local) action can be used to run a terminal command from Companion. This can be useful in the case of uploading byte arrays (see Appendix A). For example: Adding the following path to the Path (supports variables in path) in a Run shell path action allows this PUT request to be triggered from Companion.
+curl -X PUT --header "Content-type:application/png" --data-binary @C:\Users\myUser\Documents\HiddenMarkers\Green.png http://192.168.0.51/api/output/network/hidden-markers/custom/data
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 73 of 77
+
+USING OTHER APPLICATIONS
+Postman is web API client and testing platform, which offers a greater range of features for both sending and debugging requests. An example of a PUT request sent using Postman:
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 74 of 77
+
+TELNET/TCP SOCKET
+Telnet is a client/server protocol used for bi-directional communication across a network using TCP port 23. Telnet is case- and whitespace-sensitive, so commands will need to be entered exactly as written. If working inside a Telnet terminal window, delete and backspace often do not work, so careful typing is required. Alternatively, write the command out in full in a text editor, then copy and paste into your Telnet terminal.
+WINDOWS
+You may have to enable Telnet on Windows if you have not previously done so. One method of doing this is
+Open Command Prompt (right-click, Run as Administrator) dism /online /Enable-Feature /FeatureName:TelnetClient Close and re-open Command Prompt
+To connect to a processor, open Command Prompt and enter telnet 192.168.0.50 23. In the new Telnet window that opens, you can send now Telnet commands to the processor. As noted above, it may be helpful to write out commands in a separate text editor. To paste a command into the Telnet terminal, right-click on the terminal window.
+To set an endpoint: set path/to/endpoint/n-1/ endpoint=value Example: set output/global-colour/ brightness=1000
+When an endpoint has been set successfully, telnet will return the API tree from /n-1/.
+To get an endpoint: get path/to/endpoint/ . Example: get output/global-colour/brightness will return brightness=1000 .
+MACOS
+To use Telnet in the macOS terminal, Telnet must first be installed on the system. One recommended installation method is using homebrew package manager. If homebrew isn't already installed on the control device (e.g. laptop), see the homebrew documentation for installation instructions. To install Telnet, open the Terminal, and use the command brew install telnet . Once Telnet has been installed, follow the instructions for using Telnet on Windows to connect and control your processor.
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 75 of 77
+
+5. APPENDICES
+APPENDIX A | DATA TYPES EXAMPLE USAGE
+Below are brief descriptions of each type, and some examples to show how they can be used. STRING Text string of up to 128 UTF-8 encoded characters. Example endpoints: Device Type, Active Preset Name, Group Name, Frame Name. GET request using web browser:
+http://192.168.0.50/api/presets/active/name
+PUT request using command line: curl -X PUT --header "Content-type:application/json" --data "{\"data\":\"Holding Card\"}" http://192.168.0.50/api/override/test-pattern/frame-store/frames/1/name
+BOOL(EAN) Boolean state, true or false. Example endpoints: Blackout Enabled, Freeze Enabled. GET request using web browser:
+http://192.168.0.50/api/override/blackout/enabled?set=true
+PUT request using command line: curl -X PUT --header "Content-type:application/json" --data "{\"data\":true}" http://192.168.0.50/api/override/blackout/enabled
+INTEGER Signed 16-bit integer, range -32768 to 32767. Each endpoint has a range of accepted values; sending values outside this range will result in the request being rejected. Example endpoints: Output Brightness, Output Colour Temperature. GET request using web browser:
+http://192.168.0.50/api/output/global-colour/brightness?set=450
+PUT request using command line: curl -X PUT --header "Content-type:application/json" --data "{\"data\":450}" http://192.168.0.50/api/output/global-colour/brightness
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 76 of 77
+
+FLOAT
+Floating point value (i.e. has a decimal place). Each endpoint has a range of accepted values; sending values outside this range will result in the request being rejected. Example endpoints: 3D LUT Strength, ShutterSync Angle, Genlock Phase Offset Fraction. GET request using web browser:
+http://192.168.0.50/api/processing/3d-lut/strength?set=33.3 PUT request using command line:
+curl -X PUT --header "Content-type:application/json" --data "{\"data\":33.3}" http://192.168.0.50/api/processing/3d-lut/strength
+BYTE ARRAY
+This data type is used to send data to the 3D LUT Data and Hidden Markers Data. It may be advisable to specify the HTTP request to point to a file containing the byte array data, rather than including the data itself in the HTTP request itself. Example of sending a PNG image to the processor to be used as a hidden marker frame. On Windows:
+curl -X PUT --header "Content-type:application/png" --data-binary @C:\Users\myUser\Documents\HiddenMarkers\Green.png http://192.168.0.51/api/output/network/hidden-markers/custom/data On macOS:
+curl -X PUT --header "Content-type:application/png" --data-binary @/Users/myUser/Documents/HiddenMarkers/Green.png http://192.168.0.50/api/output/network/hidden-markers/custom/data
+ENUM
+String enumeration representing one of a discrete set of possible values. Example endpoints: Genlock Source, Processor Type. GET request using web browser:
+http://192.168.0.50/api/output/network/genlock/source?set=sdi PUT request using command line:
+curl -X PUT --header "Content-type:application/json" --data "{\"data\":\"sdi\"}" http://192.168.0.50/api/output/network/genlock/source
+TESTPATTERNTYPE
+Either an enum representing a test pattern, or an integer representing a frame store image by its user number. Used for Test Pattern Type endpoint. To set Test Pattern Type to one of the available test patterns, use one of the enums from the documentation (e.g. colour-bars). To recall a Frame Store, use the corresponding user number. See notes and examples for Enum and Integer data types.
+
+© 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025
+
+Page 77 of 77
+
+

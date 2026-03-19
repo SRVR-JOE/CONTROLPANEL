@@ -1,5 +1,5 @@
 /**
- * Shared utility functions for the AV Rack Control Panel.
+ * Shared utility functions for the Luminex Configurator.
  *
  * Centralises helpers that were previously duplicated across 5+ files.
  */

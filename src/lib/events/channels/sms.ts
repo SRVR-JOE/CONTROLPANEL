@@ -19,7 +19,7 @@ export async function send(event: SystemEvent, config: Record<string, unknown>):
 
   // Truncate to stay within SMS segment limits
   const MAX_SMS_BODY = 1550;
-  const rawBody = `[AV CTRL] ${event.severity.toUpperCase()}: ${event.title}\n${event.message}`;
+  const rawBody = `[LUMINEX] ${event.severity.toUpperCase()}: ${event.title}\n${event.message}`;
   const body = rawBody.length > MAX_SMS_BODY ? rawBody.slice(0, MAX_SMS_BODY) + '...' : rawBody;
 
   const results = await Promise.allSettled(

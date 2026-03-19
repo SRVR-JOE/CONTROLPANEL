@@ -1,5 +1,5 @@
 // ============================================================
-// AV Rack Control Panel - Core Type Definitions
+// Luminex Configurator - Core Type Definitions
 // ============================================================
 
 // --- Device Types ---
@@ -194,6 +194,7 @@ export interface Rack {
   id: string;
   name: string;
   location: string;
+  locationType?: LocationType;
   width: RackWidth;
   totalRU: number;
   slots: RackSlot[];
@@ -563,6 +564,29 @@ export interface CommandDefinition {
 }
 
 export type CommandRegistry = Record<string, CommandDefinition[]>;
+
+// --- Naming Ideology Types ---
+
+export type LocationType = 'truss' | 'rack' | 'floor';
+
+export interface NamingTemplate {
+  id: string;
+  name: string;
+  locationType: LocationType;
+  pattern: string; // e.g. "FOH-{type}-{number}"
+  variables: Record<string, string>; // default values for variables
+  isBuiltIn: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NamingAssignment {
+  deviceId: string;
+  templateId: string;
+  generatedName: string;
+  variableOverrides: Record<string, string>;
+  applied: boolean; // whether the name has been committed to the device
+}
 
 // --- Event & Notification Types ---
 
