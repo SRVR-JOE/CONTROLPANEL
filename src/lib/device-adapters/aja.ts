@@ -6,23 +6,27 @@ const TIMEOUT_MS = 3000;
 // ---------------------------------------------------------------------------
 // AJA Kumo REST API types
 //
-// The AJA Kumo exposes its full configuration as a flat JSON object via:
-//   GET http://{ip}/config
+// The AJA Kumo exposes parameters individually via:
+//   GET http://{ip}/config?action=get&paramid={paramId}
 //
-// Key fields we care about:
-//   eParamID_NumberOfVideoInputs   — total input count (e.g. 32)
-//   eParamID_NumberOfVideoOutputs  — total output count (e.g. 32)
+// Each response returns { "value": "...", "value_name": "..." }.
+//
+// Key parameters:
+//   eParamID_NumberOfSources           — total input count
+//   eParamID_NumberOfDestinations      — total output count
+//   eParamID_Temperature               — temperature in Celsius
+//   eParamID_PSAlarm                   — power supply alarm (0=None, 1=Error)
+//   eParamID_TemperatureAlarm          — over-temp alarm (0=None, 1=Over temp)
+//   eParamID_ReferenceAlarm            — sync ref alarm (0=None, 1=No reference)
+//   eParamID_DetectReferenceFormat     — detected sync reference format
+//   eParamID_SWVersion                 — firmware version as 32-bit integer
 //   eParamID_XPT_Destination{N}_Status — routed input index for output N
-//   eParamID_Input{N}_SignalValid  — 1 if signal present on input N, 0 if not
-//   eParamID_Input{N}_Label        — human label for input N
-//   eParamID_Output{N}_Label       — human label for output N
+//   eParamID_Input{N}_SignalValid      — 1 if signal present on input N
 // ---------------------------------------------------------------------------
 
-interface AJAConfig {
-  eParamID_NumberOfVideoInputs?: number;
-  eParamID_NumberOfVideoOutputs?: number;
-  // Crosspoint state — indexed by output number (1-based)
-  [key: string]: unknown;
+interface AJAParamResult {
+  value: string;
+  value_name: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -39,31 +43,59 @@ async function fetchWithTimeout(url: string): Promise<Response> {
   }
 }
 
-async function fetchAJAConfig(ip: string): Promise<AJAConfig | null> {
+/**
+ * Fetch a single parameter from the AJA KUMO REST API.
+ */
+async function kumoGet(
+  ip: string,
+  paramId: string
+): Promise<AJAParamResult | null> {
   try {
-    const res = await fetchWithTimeout(`http://${ip}/config`);
+    const res = await fetchWithTimeout(
+      `http://${ip}/config?action=get&paramid=${paramId}`
+    );
     if (!res.ok) return null;
-    return (await res.json()) as AJAConfig;
+    return (await res.json()) as AJAParamResult;
   } catch {
     return null;
   }
+}
+
+/**
+ * Decode a 32-bit integer firmware version into "major.minor.patch.build".
+ */
+function decodeFirmwareVersion(raw: string): string {
+  const n = parseInt(raw, 10);
+  if (Number.isNaN(n)) return raw;
+  const major = (n >>> 24) & 0xff;
+  const minor = (n >>> 16) & 0xff;
+  const patch = (n >>> 8) & 0xff;
+  const build = n & 0xff;
+  return `${major}.${minor}.${patch}.${build}`;
 }
 
 // ---------------------------------------------------------------------------
 // Helper — count inputs with an active signal
 // ---------------------------------------------------------------------------
 
-function countActiveSignals(config: AJAConfig, inputCount: number): number {
-  let active = 0;
+function countActiveSignals(
+  ip: string,
+  inputCount: number
+): Promise<number> {
+  // Query all SignalValid params in parallel, then count
+  const promises: Promise<AJAParamResult | null>[] = [];
   for (let i = 1; i <= inputCount; i++) {
-    const key = `eParamID_Input${i}_SignalValid`;
-    const value = config[key];
-    // AJA uses 1 (number) or "1" (string) for valid signal
-    if (value === 1 || value === '1' || value === true) {
-      active++;
-    }
+    promises.push(kumoGet(ip, `eParamID_Input${i}_SignalValid`));
   }
-  return active;
+  return Promise.all(promises).then((results) => {
+    let active = 0;
+    for (const r of results) {
+      if (r && (r.value === '1' || r.value === 'true')) {
+        active++;
+      }
+    }
+    return active;
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -75,49 +107,116 @@ export class AJAAdapter implements DeviceAdapter {
 
   async queryHealth(ip: string): Promise<DeviceQueryResult> {
     try {
-      const config = await fetchAJAConfig(ip);
+      // 1. Query health parameters and matrix size in parallel
+      const [
+        tempResult,
+        psAlarmResult,
+        tempAlarmResult,
+        refAlarmResult,
+        refFormatResult,
+        swVersionResult,
+        inputCountResult,
+        outputCountResult,
+      ] = await Promise.all([
+        kumoGet(ip, 'eParamID_Temperature'),
+        kumoGet(ip, 'eParamID_PSAlarm'),
+        kumoGet(ip, 'eParamID_TemperatureAlarm'),
+        kumoGet(ip, 'eParamID_ReferenceAlarm'),
+        kumoGet(ip, 'eParamID_DetectReferenceFormat'),
+        kumoGet(ip, 'eParamID_SWVersion'),
+        kumoGet(ip, 'eParamID_NumberOfSources'),
+        kumoGet(ip, 'eParamID_NumberOfDestinations'),
+      ]);
 
-      if (!config) {
+      // If we can't reach any parameter, the device is unreachable
+      if (
+        !tempResult &&
+        !psAlarmResult &&
+        !inputCountResult &&
+        !outputCountResult
+      ) {
         return { reachable: false, health: null };
       }
-
-      const numInputs = Number(config.eParamID_NumberOfVideoInputs ?? 0);
-      const numOutputs = Number(config.eParamID_NumberOfVideoOutputs ?? 0);
 
       const errors: string[] = [];
       const warnings: string[] = [];
 
-      // Count signals with valid lock across all inputs
-      const activeSignals = numInputs > 0 ? countActiveSignals(config, numInputs) : 0;
+      // 2. Temperature
+      const temperature = tempResult ? parseInt(tempResult.value, 10) : 0;
 
-      if (numInputs > 0 && activeSignals === 0) {
-        warnings.push('No input signals detected on any port');
-      } else if (numInputs > 0 && activeSignals < numInputs / 2) {
-        warnings.push(`Only ${activeSignals} of ${numInputs} inputs have active signals`);
+      // 3. Power supply alarm
+      if (psAlarmResult && psAlarmResult.value === '1') {
+        errors.push('Power supply error detected');
       }
 
-      // Sanity-check crosspoint routing — look for outputs with no valid source
+      // 4. Temperature alarm
+      if (tempAlarmResult && tempAlarmResult.value !== '0') {
+        errors.push('Over-temperature alarm');
+      }
+
+      // 5. Reference alarm
+      if (refAlarmResult && refAlarmResult.value !== '0') {
+        warnings.push('No valid sync reference signal');
+      }
+
+      // 6. Reference format (informational)
+      if (refFormatResult?.value_name) {
+        warnings.push(`Reference: ${refFormatResult.value_name}`);
+      }
+
+      // 7. Firmware version
+      let firmware: string | undefined;
+      if (swVersionResult?.value) {
+        firmware = decodeFirmwareVersion(swVersionResult.value);
+      }
+
+      // 8. Signal detection (existing logic)
+      const numInputs = inputCountResult
+        ? parseInt(inputCountResult.value, 10)
+        : 0;
+      const numOutputs = outputCountResult
+        ? parseInt(outputCountResult.value, 10)
+        : 0;
+
+      if (numInputs > 0) {
+        const activeSignals = await countActiveSignals(ip, numInputs);
+        if (activeSignals === 0) {
+          warnings.push('No input signals detected on any port');
+        } else if (activeSignals < numInputs / 2) {
+          warnings.push(
+            `Only ${activeSignals} of ${numInputs} inputs have active signals`
+          );
+        }
+      }
+
+      // Check for unrouted outputs
       if (numOutputs > 0) {
-        let unrouted = 0;
+        const routePromises: Promise<AJAParamResult | null>[] = [];
         for (let o = 1; o <= numOutputs; o++) {
-          const xptKey = `eParamID_XPT_Destination${o}_Status`;
-          const routed = config[xptKey];
-          // A value of 0 or -1 typically means no source connected
-          if (routed === 0 || routed === -1 || routed === '0' || routed === '-1') {
+          routePromises.push(
+            kumoGet(ip, `eParamID_XPT_Destination${o}_Status`)
+          );
+        }
+        const routeResults = await Promise.all(routePromises);
+        let unrouted = 0;
+        for (const r of routeResults) {
+          if (
+            r &&
+            (r.value === '0' || r.value === '-1')
+          ) {
             unrouted++;
           }
         }
         if (unrouted > 0) {
-          warnings.push(`${unrouted} output${unrouted > 1 ? 's' : ''} have no routed source`);
+          warnings.push(
+            `${unrouted} output${unrouted > 1 ? 's' : ''} have no routed source`
+          );
         }
       }
 
-      // AJA Kumo does not expose temperature or CPU metrics via REST.
-      // We use activeSignals as a proxy for a "health score" in the uptime field
-      // (uptime in seconds is not available either, so we leave it at 0).
       const health: DeviceHealth = {
-        temperature: 0, // AJA Kumo does not expose temperature via its REST API
-        uptime: 0,      // Not exposed via REST; would need SNMP or telnet for this
+        temperature: Number.isNaN(temperature) ? 0 : temperature,
+        uptime: 0, // Not exposed via AJA KUMO REST API
         errors,
         warnings,
       };
@@ -125,8 +224,7 @@ export class AJAAdapter implements DeviceAdapter {
       return {
         reachable: true,
         health,
-        // Surface the router size in the firmware field as useful metadata
-        firmware: numInputs && numOutputs ? `${numInputs}x${numOutputs}` : undefined,
+        firmware,
       };
     } catch {
       return { reachable: false, health: null };

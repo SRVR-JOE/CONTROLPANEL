@@ -27,8 +27,8 @@ export class AjaMatrixAdapter implements MatrixAdapter {
     // 1. Detect matrix size and firmware in parallel.
     const [inputCountResult, outputCountResult, firmwareResult] =
       await Promise.all([
-        kumoGet(ip, 'eParamID_NumberOfVideoInputs'),
-        kumoGet(ip, 'eParamID_NumberOfVideoOutputs'),
+        kumoGet(ip, 'eParamID_NumberOfSources'),
+        kumoGet(ip, 'eParamID_NumberOfDestinations'),
         kumoGet(ip, 'eParamID_SWVersion'),
       ]);
 
@@ -88,7 +88,7 @@ export class AjaMatrixAdapter implements MatrixAdapter {
     const n = index + 1;
     const url =
       `http://${ip}/config?action=set` +
-      `&paramid=eParamID_XPT_Source${n}_Line_1` +
+      `&paramid=eParamID_XPT_Source${n}_Line` +
       `&value=${encodeURIComponent(label)}`;
     try {
       const res = await fetch(url, {
@@ -109,7 +109,7 @@ export class AjaMatrixAdapter implements MatrixAdapter {
     const n = index + 1;
     const url =
       `http://${ip}/config?action=set` +
-      `&paramid=eParamID_XPT_Destination${n}_Line_1` +
+      `&paramid=eParamID_XPT_Destination${n}_Line` +
       `&value=${encodeURIComponent(label)}`;
     try {
       const res = await fetch(url, {
@@ -143,7 +143,7 @@ export class AjaMatrixAdapter implements MatrixAdapter {
   private async queryInput(ip: string, index: number): Promise<MatrixPort> {
     const n = index + 1; // 1-based parameter name
     const [labelResult, signalResult] = await Promise.all([
-      kumoGet(ip, `eParamID_XPT_Source${n}_Line_1`),
+      kumoGet(ip, `eParamID_XPT_Source${n}_Line`),
       kumoGet(ip, `eParamID_Input${n}_SignalValid`),
     ]);
 
@@ -175,7 +175,7 @@ export class AjaMatrixAdapter implements MatrixAdapter {
   ): Promise<MatrixPort & { routedFrom: number }> {
     const n = index + 1; // 1-based parameter name
     const [labelResult, routeResult] = await Promise.all([
-      kumoGet(ip, `eParamID_XPT_Destination${n}_Line_1`),
+      kumoGet(ip, `eParamID_XPT_Destination${n}_Line`),
       kumoGet(ip, `eParamID_XPT_Destination${n}_Status`),
     ]);
 

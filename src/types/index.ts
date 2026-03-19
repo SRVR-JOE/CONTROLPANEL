@@ -105,6 +105,19 @@ export interface DeviceHealth {
   uptime: number; // seconds
   errors: string[];
   warnings: string[];
+
+  // Matrix router health fields
+  psuStatus?: 'ok' | 'error' | 'unknown';       // Power supply status
+  psu1?: 'running' | 'off' | 'error';            // Individual PSU 1
+  psu2?: 'running' | 'off' | 'error';            // Individual PSU 2
+  referenceFormat?: string;                        // Sync reference format (e.g., "720p 50")
+  referenceStatus?: 'locked' | 'unlocked' | 'none'; // Genlock/reference status
+  temperatures?: { label: string; value: number; warning?: number; critical?: number }[]; // Multiple temperature sensors
+  fans?: { label: string; pwm: number }[];         // Multiple fan readings (0-255 PWM)
+  signalCount?: number;                            // Number of inputs with active signal
+  totalInputs?: number;                            // Total input count
+  hdcpActive?: boolean;                            // Whether HDCP is active on any port
+  inputFormats?: { index: number; format: string }[]; // Detected signal formats per input
 }
 
 export interface Device {

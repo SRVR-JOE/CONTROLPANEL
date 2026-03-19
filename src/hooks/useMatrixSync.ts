@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useStore } from '@/store';
 import { MatrixInput, MatrixOutput } from '@/types';
 
@@ -10,13 +10,6 @@ interface DeviceMapping {
   ip: string;
   port?: number;
 }
-
-// Hardcoded device mappings for the three known matrix devices
-const DEVICE_MAPPINGS: DeviceMapping[] = [
-  { routerId: 'router-lw-1', manufacturer: 'lightware', ip: '192.168.100.51' },
-  { routerId: 'router-bmd-1', manufacturer: 'blackmagic', ip: '192.168.100.52' },
-  { routerId: 'router-aja-1', manufacturer: 'aja', ip: '192.168.100.72' },
-];
 
 export type DeviceSyncStatus = 'online' | 'offline' | 'error';
 
@@ -45,6 +38,9 @@ interface UseMatrixSyncReturn {
  * Hook that periodically polls real matrix devices and syncs their
  * routing state (inputs, outputs, labels) into the Zustand store.
  *
+ * Device mappings are built dynamically from the store's routers array —
+ * any router with an `ip` field will be polled automatically.
+ *
  * @param intervalMs - polling interval in ms (default 5000)
  * @param enabled   - whether polling is active (default true)
  */
@@ -53,6 +49,20 @@ export function useMatrixSync(
   enabled = true,
 ): UseMatrixSyncReturn {
   const syncRouterState = useStore((s) => s.syncRouterState);
+  const routers = useStore((s) => s.routers);
+
+  // Build device mappings dynamically from store routers that have an IP
+  const deviceMappings: DeviceMapping[] = useMemo(
+    () =>
+      routers
+        .filter((r) => !!r.ip)
+        .map((r) => ({
+          routerId: r.id,
+          manufacturer: r.manufacturer,
+          ip: r.ip!,
+        })),
+    [routers],
+  );
 
   // Public state returned to the consumer
   const [syncing, setSyncing] = useState(false);
@@ -65,12 +75,15 @@ export function useMatrixSync(
   const isPollingRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const syncRouterStateRef = useRef(syncRouterState);
+  const deviceMappingsRef = useRef(deviceMappings);
 
-  // Keep ref in sync on every render
+  // Keep refs in sync on every render
   syncRouterStateRef.current = syncRouterState;
+  deviceMappingsRef.current = deviceMappings;
 
   const pollDevices = useCallback(async () => {
-    if (isPollingRef.current) return; // skip if previous poll still running
+    const mappings = deviceMappingsRef.current;
+    if (isPollingRef.current || mappings.length === 0) return;
     isPollingRef.current = true;
     setSyncing(true);
 
@@ -78,13 +91,13 @@ export function useMatrixSync(
       const res = await fetch('/api/matrix/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ devices: DEVICE_MAPPINGS }),
+        body: JSON.stringify({ devices: mappings }),
       });
 
       if (!res.ok) {
         // Mark all devices as error when API itself fails
         const errorStatus: Record<string, DeviceSyncStatus> = {};
-        for (const dm of DEVICE_MAPPINGS) {
+        for (const dm of mappings) {
           errorStatus[dm.routerId] = 'error';
         }
         setDeviceStatus(errorStatus);
@@ -113,7 +126,7 @@ export function useMatrixSync(
       }
 
       // Also mark any device that wasn't in the response as offline
-      for (const dm of DEVICE_MAPPINGS) {
+      for (const dm of mappings) {
         if (!(dm.routerId in nextStatus)) {
           nextStatus[dm.routerId] = 'offline';
         }
@@ -125,7 +138,7 @@ export function useMatrixSync(
       console.warn('[MatrixSync] Failed to reach /api/matrix/sync:', err);
       // Network-level failure — mark everything as error
       const errorStatus: Record<string, DeviceSyncStatus> = {};
-      for (const dm of DEVICE_MAPPINGS) {
+      for (const dm of deviceMappingsRef.current) {
         errorStatus[dm.routerId] = 'error';
       }
       setDeviceStatus(errorStatus);

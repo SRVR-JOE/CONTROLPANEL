@@ -52,6 +52,125 @@
 import { DeviceHealth } from '@/types';
 import { DeviceAdapter, DeviceQueryResult } from './types';
 import { fetchWithTimeout } from '@/lib/utils';
+import * as net from 'net';
+
+/* ------------------------------------------------------------------ */
+/*  TCP helpers for Videohub protocol                                  */
+/* ------------------------------------------------------------------ */
+
+const TCP_CONNECT_TIMEOUT_MS = 5_000;
+const TCP_READ_TIMEOUT_MS = 5_000;
+
+interface VideohubDeviceInfo {
+  devicePresent: boolean;
+  model: string;
+}
+
+/**
+ * Connect to a Videohub device on TCP port 9990, read the initial
+ * state dump, and parse the VIDEOHUB DEVICE block.
+ */
+function connectAndReadHealth(
+  ip: string,
+  port: number,
+): Promise<VideohubDeviceInfo> {
+  return new Promise((resolve, reject) => {
+    let buffer = '';
+    let settled = false;
+
+    const socket = new net.Socket();
+
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function finish() {
+      if (settled) return;
+      settled = true;
+      if (idleTimer) clearTimeout(idleTimer);
+      socket.destroy();
+
+      // Parse the VIDEOHUB DEVICE block from the buffer
+      const info: VideohubDeviceInfo = {
+        devicePresent: false,
+        model: 'Unknown',
+      };
+
+      // Split into blocks separated by blank lines
+      const normalised = buffer.replace(/\r\n/g, '\n');
+      const chunks = normalised.split(/\n\n+/);
+
+      for (const chunk of chunks) {
+        const trimmed = chunk.trim();
+        if (!trimmed) continue;
+        const lines = trimmed.split('\n');
+        const header = lines[0];
+        if (header === 'VIDEOHUB DEVICE:') {
+          for (let i = 1; i < lines.length; i++) {
+            const colonIdx = lines[i].indexOf(':');
+            if (colonIdx === -1) continue;
+            const key = lines[i].slice(0, colonIdx).trim();
+            const value = lines[i].slice(colonIdx + 1).trim();
+            switch (key) {
+              case 'Device present':
+                info.devicePresent = value === 'true';
+                break;
+              case 'Model name':
+                info.model = value;
+                break;
+            }
+          }
+          break; // Only need the VIDEOHUB DEVICE block
+        }
+      }
+
+      resolve(info);
+    }
+
+    function fail(err: Error) {
+      if (settled) return;
+      settled = true;
+      if (idleTimer) clearTimeout(idleTimer);
+      socket.destroy();
+      reject(err);
+    }
+
+    socket.setTimeout(TCP_CONNECT_TIMEOUT_MS);
+
+    socket.on('timeout', () => {
+      if (buffer.length > 0) {
+        finish();
+      } else {
+        fail(new Error('Connection timed out'));
+      }
+    });
+
+    socket.on('error', (err) => fail(err));
+
+    socket.on('data', (chunk) => {
+      buffer += chunk.toString('utf-8');
+
+      // Once we see the VIDEOHUB DEVICE block header and a blank line
+      // after it, we have enough to determine health.
+      if (buffer.includes('VIDEOHUB DEVICE:') && buffer.includes('\n\n')) {
+        // Reset idle timer — finish quickly once we have the device block
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+          finish();
+        }, 300);
+        return;
+      }
+
+      // Reset idle timer
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        finish();
+      }, 500);
+    });
+
+    socket.connect(port, ip, () => {
+      socket.setTimeout(TCP_READ_TIMEOUT_MS);
+    });
+  });
+}
 
 /** Indicates which control protocol this Blackmagic device speaks. */
 export type BlackmagicProtocolType = 'rest' | 'videohub-tcp';
@@ -90,32 +209,55 @@ export class BlackmagicAdapter implements DeviceAdapter {
   manufacturer = 'blackmagic' as const;
 
   /**
-   * queryHealthTCP — STUB for Smart Videohub devices (TCP/9990).
+   * queryHealthTCP — Health check for Smart Videohub devices (TCP/9990).
    *
-   * NOT YET IMPLEMENTED: Smart Videohub uses a raw TCP ASCII protocol on
-   * port 9990, not HTTP REST. A full implementation would:
-   *   1. Open a net.Socket to ip:9990
-   *   2. Read the initial "VIDEOHUB DEVICE:" block to confirm presence
-   *   3. Parse "Model name:", "Video inputs:", "Video outputs:" fields
-   *   4. Send "PING:" to keep the connection alive and confirm reachability
-   *   5. Close the socket
+   * Connects via raw TCP to port 9990, reads the initial state dump,
+   * and parses the VIDEOHUB DEVICE block for model name and device
+   * present status. The Smart Videohub 40x40 does NOT expose any
+   * health telemetry (no temperature, no fan speed, no alarms).
+   * VIDEO INPUT STATUS queries return NAK on this model.
    *
-   * This cannot be done with the browser fetch() API. It requires a
-   * dedicated server-side API route that uses Node's `net` module.
-   *
-   * For now, calling this on a Videohub IP will always return unreachable.
-   * Use queryHealth() only for REST-capable Blackmagic devices (see file header).
+   * The only meaningful health indicator is whether the device is
+   * reachable and reports "Device present: true".
    */
   async queryHealthTCP(ip: string, port: number = 9990): Promise<DeviceQueryResult> {
-    // TODO: implement raw TCP health check for Smart Videohub devices.
-    // The Videohub Ethernet Protocol is documented at:
-    //   https://documents.blackmagicdesign.com/DeveloperManuals/VideohubDeveloperInformation.pdf
-    console.warn(
-      `[BlackmagicAdapter] queryHealthTCP called for ${ip}:${port}. ` +
-      'Smart Videohub TCP health check is not yet implemented. ' +
-      'This device type requires a raw TCP socket on port 9990, not HTTP REST.'
-    );
-    return { reachable: false, health: null, errors: ['Videohub TCP protocol not yet implemented'] };
+    try {
+      const info = await connectAndReadHealth(ip, port);
+
+      if (!info.devicePresent) {
+        return {
+          reachable: false,
+          health: {
+            temperature: 0,
+            uptime: 0,
+            errors: ['Device present: false — device may be initialising or offline'],
+            warnings: ['Blackmagic Videohub does not expose temperature or fan data'],
+          },
+          firmware: info.model,
+        };
+      }
+
+      // Device is present and reachable — online with no errors
+      const health: DeviceHealth = {
+        temperature: 0,
+        uptime: 0,
+        errors: [],
+        warnings: ['Blackmagic Videohub does not expose temperature or fan data'],
+      };
+
+      return {
+        reachable: true,
+        health,
+        firmware: info.model,
+      };
+    } catch {
+      // Connection failed entirely — device is offline / unreachable
+      return {
+        reachable: false,
+        health: null,
+        errors: ['Failed to connect to Videohub TCP port 9990'],
+      };
+    }
   }
 
   async queryHealth(ip: string): Promise<DeviceQueryResult> {
