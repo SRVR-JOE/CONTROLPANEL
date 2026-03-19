@@ -231,6 +231,7 @@ export interface MatrixRouter {
   inputs: MatrixInput[];
   outputs: MatrixOutput[];
   size: string; // e.g. "32x32"
+  ip?: string; // device IP address for live sync
 }
 
 // --- Pin Board ---

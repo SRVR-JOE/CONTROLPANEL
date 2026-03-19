@@ -7,6 +7,8 @@ import {
   Rack,
   RackWidth,
   MatrixRouter,
+  MatrixInput,
+  MatrixOutput,
   PinBoard,
   PinBoardItem,
   MatrixPreset,
@@ -541,6 +543,7 @@ const initialRouters: MatrixRouter[] = [
     inputs: createMatrixInputs(16),
     outputs: createMatrixOutputs(16, 16),
     size: '16x16',
+    ip: '192.168.100.51',
   },
   {
     id: 'router-aja-1',
@@ -551,6 +554,7 @@ const initialRouters: MatrixRouter[] = [
     inputs: createMatrixInputs(32),
     outputs: createMatrixOutputs(32, 32),
     size: '32x32',
+    ip: '192.168.100.72',
   },
   {
     id: 'router-bmd-1',
@@ -561,6 +565,7 @@ const initialRouters: MatrixRouter[] = [
     inputs: createMatrixInputs(40),
     outputs: createMatrixOutputs(40, 40),
     size: '40x40',
+    ip: '192.168.100.52',
   },
 ];
 
@@ -861,6 +866,13 @@ interface AppStore {
   // Matrix actions
   setSelectedRouter: (routerId: string) => void;
   setRoute: (routerId: string, outputIndex: number, inputIndex: number) => void;
+  syncRouterState: (routerId: string, state: {
+    inputs: MatrixInput[];
+    outputs: MatrixOutput[];
+    name?: string;
+    model?: string;
+    size?: string;
+  }) => void;
 
   // Pin board actions
   addPinBoardItem: (boardId: string, item: Omit<PinBoardItem, 'id'>) => void;
@@ -1844,6 +1856,22 @@ export const useStore = create<AppStore>((set, get) => ({
               outputs: r.outputs.map((o) =>
                 o.index === outputIndex ? { ...o, routedFrom: inputIndex } : o
               ),
+            }
+          : r
+      ),
+    })),
+
+  syncRouterState: (routerId, state) =>
+    set((s) => ({
+      routers: s.routers.map((r) =>
+        r.id === routerId
+          ? {
+              ...r,
+              inputs: state.inputs,
+              outputs: state.outputs,
+              ...(state.name && { name: state.name }),
+              ...(state.model && { model: state.model }),
+              ...(state.size && { size: state.size }),
             }
           : r
       ),
