@@ -260,7 +260,24 @@ export class BlackmagicAdapter implements DeviceAdapter {
     }
   }
 
-  async queryHealth(ip: string): Promise<DeviceQueryResult> {
+  async queryHealth(ip: string, port?: number): Promise<DeviceQueryResult> {
+    // Try Videohub TCP first (port 9990) — this is the protocol for Smart Videohub devices.
+    // If the caller explicitly passed port 9990, use TCP directly.
+    // Otherwise, try TCP first and fall back to REST.
+    if (port === 9990) {
+      return this.queryHealthTCP(ip, port);
+    }
+
+    // Try TCP 9990 first (most Blackmagic matrix routers use this)
+    try {
+      const tcpResult = await this.queryHealthTCP(ip, 9990);
+      if (tcpResult.reachable || (tcpResult.health && tcpResult.firmware)) {
+        return tcpResult;
+      }
+    } catch {
+      // TCP failed, fall through to REST
+    }
+
     const base = `http://${ip}/control/api/v1`;
 
     try {

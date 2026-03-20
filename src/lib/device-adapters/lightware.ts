@@ -69,7 +69,9 @@ export async function lw3Query(
  */
 export function parseGetAll(raw: string): Record<string, string> {
   const props: Record<string, string> = {};
-  for (const line of raw.split('\n')) {
+  // Device sends \r\n line endings — strip \r so the $ anchor matches.
+  const cleaned = raw.replace(/\r/g, '');
+  for (const line of cleaned.split('\n')) {
     const match = line.match(/^(?:pr|pw)\s+\S+\.(\w+)=(.+)$/);
     if (match) {
       props[match[1]] = match[2].trim();

@@ -16,12 +16,14 @@ import {
   Circle,
   History,
   Type,
+  BarChart3,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: 'Racks', icon: Server },
   { href: '/matrix', label: 'Matrix', icon: Grid3x3 },
   { href: '/health', label: 'Health', icon: Activity },
+  { href: '/telemetry', label: 'Telemetry', icon: BarChart3 },
   { href: '/events', label: 'Events', icon: History },
   { href: '/brompton', label: 'Brompton', icon: Monitor },
   { href: '/robo', label: 'ROBO', icon: Camera },
