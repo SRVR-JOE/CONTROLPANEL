@@ -193,6 +193,152 @@ export interface LEDTileInfo {
 
 export type TileViewMode = 'status' | 'temperature' | 'errors';
 
+// --- Brompton Full Telemetry (live from Tessera SX40 /api/ tree) ---
+
+export interface BromptonTelemetry {
+  // System
+  processorName: string;
+  processorType: string;
+  serialNumber: string;
+  softwareVersion: string;
+  uptime: string;
+  currentDateTime: string;
+  projectName: string;
+
+  // Temperatures
+  temperatures: {
+    ambient: number;
+    cpu: number;
+    gpu: number;
+    fpga: number;
+    psu: number;
+    main: number;
+    ethernet: {
+      copper: { a: number; b: number };
+      sfp: { a: number; b: number; c: number; d: number };
+    };
+  };
+
+  // Fans
+  fans: {
+    case1: { speed: number; status: boolean };
+    case2: { speed: number; status: boolean };
+    fpga: { speed: number; status: boolean };
+  };
+
+  // Input
+  input: {
+    activeSource: { portType: string; portNumber: number };
+    metadata: {
+      bitDepth: number;
+      refreshRate: number;
+      resolution: { width: number; height: number };
+      sampling: string;
+      hdr: string;
+    };
+    controls: {
+      colourSpace: string;
+      hdmiColourFormat: string;
+      quantisationRange: string;
+      hdrFormat: string;
+    };
+    procAmp: {
+      blackLevel: number;
+      contrast: number;
+      hue: number;
+      saturation: number;
+      highlightRGB: { red: number; green: number; blue: number };
+      shadowRGB: { red: number; green: number; blue: number };
+    };
+  };
+
+  // Output / Global Colour
+  output: {
+    brightness: number;       // 0-10000 scale
+    brightnessLimit: { enabled: boolean; value: number };
+    colourTemperature: number;
+    gamma: number;
+    gains: { red: number; green: number; blue: number; intensity: number };
+    darkMagic: boolean;
+    pureTone: boolean;
+    extendedBitDepth: boolean;
+    overdrive: boolean;
+    dynacalHighlightOutOfGamut: boolean;
+    dynacalHighlightOverbright: boolean;
+  };
+
+  // Output Network
+  network: {
+    bitDepth: number;
+    frameRateMultiplier: number;
+    genlock: {
+      source: string;
+      internalRate: number;
+      phaseOffset: { mode: string; angle: number; fraction: number; lines: number; pixels: number };
+    };
+    cableRedundancy: { loop1State: string; loop2State: string };
+    failover: {
+      enabled: boolean;
+      role: string;
+      isActive: boolean;
+      isPartnerPresent: boolean;
+      partnerName: string;
+    };
+    frameRemapping: { enabled: boolean };
+    shutterSync: {
+      mode: string;
+      shutterAngle: number;
+      darkTime: number;
+      sensorType: string;
+      viewer: string;
+    };
+    hiddenMarkers: {
+      enabled: boolean;
+      mode: string;
+    };
+    starTracker: {
+      enabled: boolean;
+      red: boolean;
+      green: boolean;
+      blue: boolean;
+    };
+  };
+
+  // Override
+  override: {
+    blackout: { enabled: boolean; fadeTime: number };
+    freeze: { enabled: boolean };
+    testPattern: { enabled: boolean; type: string };
+  };
+
+  // Processing
+  processing: {
+    lut3d: { enabled: boolean; filename: string; strength: number };
+    colourCorrect: { enabled: boolean };
+    colourReplace: { enabled: boolean; method: string; strength: number };
+    curves: { enabled: boolean };
+    osca: { moduleCorrection: boolean; seamCorrection: boolean };
+    scaler: { enabled: boolean };
+  };
+
+  // Devices / Panels
+  panels: {
+    onlineCount: number;
+    errorCount: number;
+    associatedCount: number;
+    items: { serial: string; type: string; firmware: string }[];
+  };
+
+  // Presets
+  activePreset: { name: string; number: string };
+
+  // Panel types in DynaCal output
+  panelTypes: string[];
+
+  // Timestamp of fetch
+  fetchedAt: string;
+}
+
 // --- Rack Types ---
 
 export type RackWidth = 1 | 2 | 3;
